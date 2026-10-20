@@ -3,8 +3,8 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
-import { OmrIdPreview } from '@/components/OmrIdPreview';
 import {
+  Award,
   Clock,
   Download,
   ExternalLink,
@@ -231,8 +231,19 @@ function ResultsContent() {
                 </div>
               </div>
 
-              <div className="shrink-0">
-                <OmrIdPreview studentCode={student.student_code} compact />
+              <div className="shrink-0 w-full md:w-auto">
+                <div className="rounded-2xl bg-slate-950 text-white px-6 py-5 border border-indigo-500/30 shadow-md text-center">
+                  <div className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-amber-300 mb-1">
+                    <Award className="w-3.5 h-3.5" />
+                    LuminaMath {settings.edition}
+                  </div>
+                  <div className="text-3xl font-mono font-black tracking-widest text-white">
+                    {student.student_code}
+                  </div>
+                  <div className="text-xs font-bold text-indigo-200 mt-1">
+                    {t.results.gradeLabel} {student.grade} • {student.exam_language}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

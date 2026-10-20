@@ -4,9 +4,10 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import { GRADES } from '@/lib/i18n';
-import { OmrIdPreview } from '@/components/OmrIdPreview';
 import {
+  Award,
   Building2,
+  Calendar,
   CheckCircle2,
   FileSearch,
   GraduationCap,
@@ -96,11 +97,6 @@ export default function RegisterPage() {
       ? `${settings.stage2_date_en}, ${settings.exam_time}`
       : `${settings.stage2_date_ro}, ${settings.exam_time}`;
 
-  const selectedBranch = branches.find((b) => b.id === Number(branchId));
-  const previewPrefix = selectedBranch
-    ? `${selectedBranch.code}${String(grade).padStart(2, '0')}XXX`
-    : `1${String(grade).padStart(2, '0')}XXX`;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -165,11 +161,11 @@ export default function RegisterPage() {
           </div>
 
           <div className="p-6 sm:p-10">
-            {/* 6-Digit ID Highlight Box + Secret PIN + OMR Bubble Preview */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-indigo-50/60 border-2 border-dashed border-indigo-400 rounded-2xl p-6 mb-8">
+            {/* 6-Digit ID Highlight Box + Secret PIN + Official Exam Pass Card */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center bg-indigo-50/60 border-2 border-dashed border-indigo-400 rounded-2xl p-6 mb-8">
               <div className="md:col-span-7 text-center md:text-left space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="p-3.5 rounded-2xl bg-white border-2 border-indigo-300 shadow-sm">
+                  <div className="p-4 rounded-2xl bg-white border-2 border-indigo-300 shadow-sm">
                     <span className="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-700 text-white mb-1">
                       {t.register.yourIdLabel}
                     </span>
@@ -178,7 +174,7 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-emerald-50 border-2 border-emerald-400 shadow-sm">
+                  <div className="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-400 shadow-sm">
                     <span className="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-700 text-white mb-1">
                       {locale === 'RU'
                         ? 'ПАРОЛЬ / PIN-КОД'
@@ -203,8 +199,34 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div className="md:col-span-5 flex justify-center">
-                <OmrIdPreview studentCode={registered.student_code} />
+              <div className="md:col-span-5">
+                <div className="rounded-2xl bg-slate-950 text-white p-5 border border-indigo-500/30 shadow-lg space-y-3">
+                  <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-3">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-amber-300">
+                      <Award className="w-4 h-4" />
+                      LuminaMath {settings.edition}
+                    </span>
+                    <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-md bg-white/10 text-indigo-200">
+                      {t.register.gradeLabel} {registered.grade} • {registered.exam_language}
+                    </span>
+                  </div>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="text-slate-400 uppercase font-semibold">
+                      {t.register.examDateLabel}
+                    </div>
+                    <div className="font-extrabold text-amber-300 text-sm">
+                      {examDateForLocale}
+                    </div>
+                  </div>
+                  <div className="space-y-1 text-xs pt-1">
+                    <div className="text-slate-400 uppercase font-semibold">
+                      {t.register.branch}
+                    </div>
+                    <div className="font-bold text-white">
+                      {getRegisteredBranchName(registered)}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -310,11 +332,12 @@ export default function RegisterPage() {
           </div>
 
           <div className="bg-white/10 border border-white/20 rounded-2xl px-4 py-2.5 text-center shrink-0">
-            <div className="text-[10px] uppercase tracking-wider text-amber-300 font-bold">
-              {t.register.idFormatLabel}
+            <div className="text-[10px] uppercase tracking-wider text-amber-300 font-bold flex items-center justify-center gap-1">
+              <Calendar className="w-3 h-3" />
+              {t.register.examDateLabel}
             </div>
-            <div className="font-mono text-xl font-extrabold tracking-widest text-white">
-              {previewPrefix}
+            <div className="text-xs sm:text-sm font-extrabold text-white mt-0.5">
+              {examDateForLocale}
             </div>
           </div>
         </div>
@@ -398,7 +421,7 @@ export default function RegisterPage() {
               >
                 {GRADES.map((g) => (
                   <option key={g} value={g}>
-                    {t.register.gradeLabel} {g} ({t.register.codeWord}: 0{g})
+                    {t.register.gradeLabel} {g}
                   </option>
                 ))}
               </select>

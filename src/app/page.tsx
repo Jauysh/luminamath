@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
-import { OmrIdPreview } from '@/components/OmrIdPreview';
 import {
   AlertCircle,
   ArrowRight,
@@ -208,23 +207,84 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Column: Glassmorphic OMR 6-Digit ID Showcase */}
+            {/* Right Column: Official Competition Schedule & Overview Card */}
             <div className="lg:col-span-5 flex justify-center">
               <div className="relative w-full max-w-md">
                 <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-indigo-500 via-cyan-400 to-amber-400 opacity-40 blur-xl" />
-                <div className="relative bg-slate-900/90 backdrop-blur-xl border border-white/15 rounded-3xl p-6 sm:p-7 shadow-2xl text-center">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-[11px] font-extrabold uppercase tracking-wider text-indigo-300 mb-3">
-                    {t.hero.sampleIdLabel}
+                <div className="relative bg-slate-900/90 backdrop-blur-xl border border-white/15 rounded-3xl p-6 sm:p-7 shadow-2xl">
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-[11px] font-extrabold uppercase tracking-wider text-indigo-300">
+                      <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                      {t.hero.sampleIdLabel}
+                    </span>
+                    <span className="text-xs font-mono font-bold text-amber-300 bg-amber-400/10 border border-amber-400/25 px-2.5 py-0.5 rounded-full">
+                      {settings.edition}
+                    </span>
                   </div>
-                  <div className="text-4xl font-mono font-black tracking-[0.25em] text-white mb-4">
-                    201001
+
+                  <div className="space-y-2.5">
+                    <div className="p-3.5 rounded-2xl bg-indigo-500/15 border border-indigo-400/30 flex items-start gap-3">
+                      <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-mono text-xs font-black shrink-0 mt-0.5">
+                        01
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-extrabold text-white flex items-center justify-between gap-2">
+                          <span>{t.calendar.stage1Title}</span>
+                          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-black">
+                            {t.calendar.activeBadge}
+                          </span>
+                        </div>
+                        <div className="text-xs font-semibold text-amber-300 mt-0.5">
+                          {stage1Date}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 flex items-start gap-3">
+                      <span className="px-2 py-0.5 rounded-lg bg-white/10 text-slate-300 font-mono text-xs font-black shrink-0 mt-0.5">
+                        02
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-extrabold text-white">
+                          {t.calendar.stage2Title}
+                        </div>
+                        <div className="text-xs font-semibold text-cyan-300 mt-0.5">
+                          {stage2Date} • {settings.exam_time}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 flex items-start gap-3">
+                      <span className="px-2 py-0.5 rounded-lg bg-white/10 text-slate-300 font-mono text-xs font-black shrink-0 mt-0.5">
+                        03
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-extrabold text-white">
+                          {t.calendar.stage3Title}
+                        </div>
+                        <div className="text-xs text-slate-300 mt-0.5">{stage3Date}</div>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 flex items-start gap-3">
+                      <span className="px-2 py-0.5 rounded-lg bg-white/10 text-slate-300 font-mono text-xs font-black shrink-0 mt-0.5">
+                        04
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-extrabold text-white">
+                          {t.calendar.stage4Title}
+                        </div>
+                        <div className="text-xs text-slate-300 mt-0.5">{stage4Date}</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-center">
-                    <OmrIdPreview studentCode="201001" />
+
+                  <div className="mt-4 pt-3.5 border-t border-white/10 flex items-start gap-2.5 text-left">
+                    <Trophy className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {t.hero.sampleIdDesc}
+                    </p>
                   </div>
-                  <p className="mt-4 text-xs text-slate-300 leading-relaxed">
-                    {t.hero.sampleIdDesc}
-                  </p>
                 </div>
               </div>
             </div>
@@ -432,7 +492,7 @@ export default function HomePage() {
                   </p>
                   <div className="pt-1 flex flex-wrap items-center justify-between gap-2">
                     <span className="text-xs font-mono text-slate-600 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
-                      {t.branchesSection.prefixHint} <strong>{branch.code}XX001</strong>
+                      {t.branchesSection.prefixHint} <strong>#0{branch.code}</strong>
                     </span>
                     <Link
                       href="/register"
