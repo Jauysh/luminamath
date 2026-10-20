@@ -51,6 +51,7 @@ interface AdminEmailItem {
 interface AdminStudent {
   id: string;
   student_code: string;
+  access_pin?: string;
   first_name: string;
   last_name: string;
   grade: number;
@@ -1724,13 +1725,18 @@ export default function AdminPage() {
                 <tbody className="divide-y divide-slate-200">
                   {students.map((s) => (
                     <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3.5 px-4 font-mono font-black text-base text-indigo-700">
+                      <td className="py-3.5 px-4 font-mono">
                         <Link
-                          href={`/results?id=${s.student_code}`}
-                          className="hover:underline"
+                          href={`/results?id=${s.student_code}&pin=${s.access_pin || ''}`}
+                          className="font-black text-base text-indigo-700 hover:underline block"
                         >
                           {s.student_code}
                         </Link>
+                        {s.access_pin && (
+                          <span className="inline-block mt-0.5 text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            PIN: {s.access_pin}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4 font-bold text-slate-900">
                         {s.first_name} {s.last_name}

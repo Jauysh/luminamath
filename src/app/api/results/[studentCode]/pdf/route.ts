@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getStudentResultPdf } from '@/lib/db';
+import { getAdminSessionFromRequest } from '@/lib/auth';
+import {
+  getStudentByCode,
+  getStudentResultPdf,
+  isEmailAuthorizedAdmin,
+} from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: NextRequest,
@@ -7,6 +14,29 @@ export async function GET(
 ) {
   try {
     const code = (params.studentCode || '').trim();
+    const pin = (req.nextUrl.searchParams.get('pin') || '').trim();
+
+    const student = await getStudentByCode(code);
+    if (!student) {
+      return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    }
+
+    // Verify PIN or Admin session before serving private PDF
+    let authorized = Boolean(pin && student.access_pin && pin === student.access_pin);
+    if (!authorized) {
+      const adminSession = getAdminSessionFromRequest(req);
+      if (adminSession && (await isEmailAuthorizedAdmin(adminSession.email))) {
+        authorized = true;
+      }
+    }
+
+    if (!authorized) {
+      return NextResponse.json(
+        { error: 'Acces neautorizat: Parola (PIN) este necesară pentru a vizualiza PDF-ul.' },
+        { status: 401 }
+      );
+    }
+
     const result = await getStudentResultPdf(code);
 
     if (!result) {
@@ -27,8 +57,7 @@ export async function GET(
         'Content-Type': 'application/pdf',
         'Content-Disposition': disposition,
         'Content-Length': String(result.pdfBuffer.length),
-        // High-concurrency caching for Cloud Run (700+ students viewing results)
-        'Cache-Control': 'public, max-age=300, s-maxage=3600',
+        'Cache-Control': 'private, max-age=300',
       },
     });
   } catch (error) {

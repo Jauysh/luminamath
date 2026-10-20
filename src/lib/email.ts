@@ -4,6 +4,7 @@ import { getEmailConfig } from './db';
 export interface RegistrationEmailPayload {
   to: string;
   studentCode: string;
+  accessPin: string;
   firstName: string;
   lastName: string;
   grade: number;
@@ -18,6 +19,7 @@ export interface RegistrationEmailPayload {
 export interface ResultPdfEmailPayload {
   to: string;
   studentCode: string;
+  accessPin: string;
   firstName: string;
   lastName: string;
   grade: number;
@@ -59,6 +61,7 @@ export async function sendRegistrationEmail(
   const {
     to,
     studentCode,
+    accessPin,
     firstName,
     lastName,
     grade,
@@ -71,9 +74,9 @@ export async function sendRegistrationEmail(
   } = payload;
 
   const subjectByLang = {
-    RO: `LuminaMath Moldova — Numărul dvs. ID de Examen: ${studentCode}`,
-    RU: `LuminaMath Moldova — Ваш ID-номер участника: ${studentCode}`,
-    EN: `LuminaMath Moldova — Your Exam ID Number: ${studentCode}`,
+    RO: `LuminaMath Moldova — ID de Examen: ${studentCode} & Parola PIN`,
+    RU: `LuminaMath Moldova — Ваш ID: ${studentCode} и Пароль (PIN)`,
+    EN: `LuminaMath Moldova — Exam ID: ${studentCode} & Access PIN`,
   };
 
   const subject = subjectByLang[examLanguage] || subjectByLang.RO;
@@ -93,13 +96,21 @@ export async function sendRegistrationEmail(
 
         <div style="background: #eef2ff; border: 2px dashed #4f46e5; border-radius: 10px; padding: 20px; text-align: center; margin: 20px 0;">
           <div style="font-size: 12px; text-transform: uppercase; color: #3730a3; font-weight: bold; letter-spacing: 1px;">
-            NUMĂRUL DVS. ID DE EXAMEN (6 CIFRE) / ВАШ ID-НОМЕР / YOUR 6-DIGIT EXAM ID
+            NUMĂRUL DVS. ID DE EXAMEN (LOGIN) / ВАШ ID-НОМЕР / YOUR EXAM ID
           </div>
           <div style="font-size: 38px; font-weight: 800; letter-spacing: 6px; color: #1e1b4b; margin-top: 8px; font-family: monospace;">
             ${studentCode}
           </div>
-          <div style="font-size: 12px; color: #475569; margin-top: 6px;">
-            Păstrați acest cod pentru foaia optică de răspuns (OMR) și pentru verificarea rezultatelor PDF!
+          <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid #c7d2fe;">
+            <div style="font-size: 11px; text-transform: uppercase; color: #065f46; font-weight: bold; letter-spacing: 1px;">
+              PAROLA / COD PIN PENTRU VERIFICAREA REZULTATELOR (ПАРОЛЬ / ACCESS PIN)
+            </div>
+            <div style="font-size: 28px; font-weight: 800; letter-spacing: 5px; color: #047857; margin-top: 4px; font-family: monospace;">
+              ${accessPin}
+            </div>
+          </div>
+          <div style="font-size: 12px; color: #475569; margin-top: 10px;">
+            Păstrați ID-ul pentru foaia optică (OMR), iar Parola PIN pentru verificarea privată a rezultatului PDF!
           </div>
         </div>
 
@@ -166,6 +177,7 @@ export async function sendResultPdfEmail(
   const {
     to,
     studentCode,
+    accessPin,
     firstName,
     lastName,
     grade,
@@ -200,10 +212,10 @@ export async function sendResultPdfEmail(
 
         <div style="background: #ecfdf5; border: 2px solid #10b981; border-radius: 10px; padding: 18px; text-align: center; margin: 20px 0;">
           <div style="font-size: 12px; text-transform: uppercase; color: #065f46; font-weight: bold;">
-            CODUL PARTICIPANTULUI / ID УЧАСТНИКА / STUDENT ID
+            ID PARTICIPANT (LOGIN): ${studentCode} • PAROLA PIN: ${accessPin}
           </div>
-          <div style="font-size: 32px; font-weight: 800; letter-spacing: 5px; color: #064e3b; margin-top: 6px; font-family: monospace;">
-            ${studentCode}
+          <div style="font-size: 30px; font-weight: 800; letter-spacing: 5px; color: #064e3b; margin-top: 6px; font-family: monospace;">
+            ID: ${studentCode} | PIN: ${accessPin}
           </div>
           <div style="margin-top: 14px;">
             <a href="${resultsUrl}" style="display: inline-block; background: #059669; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 14px; padding: 12px 24px; border-radius: 8px;">

@@ -88,6 +88,7 @@ export const DEFAULT_EMAIL_CONFIG: EmailConfigRecord = {
 export interface StudentRecord {
   id: string;
   student_code: string; // 6-digit ID: [Branch: 1][Grade: 2][Seq: 3], e.g. 201001, 202001
+  access_pin: string; // 6-digit secret PIN/password for viewing results
   first_name: string;
   last_name: string;
   grade: number;
@@ -206,6 +207,7 @@ async function ensurePgInitialized(pool: Pool): Promise<boolean> {
       CREATE TABLE IF NOT EXISTS students (
         id VARCHAR(36) PRIMARY KEY,
         student_code VARCHAR(6) UNIQUE NOT NULL,
+        access_pin VARCHAR(12) NOT NULL DEFAULT '',
         first_name VARCHAR(100) NOT NULL,
         last_name VARCHAR(100) NOT NULL,
         grade INT NOT NULL CHECK (grade >= 1 AND grade <= 12),
@@ -224,8 +226,13 @@ async function ensurePgInitialized(pool: Pool): Promise<boolean> {
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
 
+      ALTER TABLE students ADD COLUMN IF NOT EXISTS access_pin VARCHAR(12) NOT NULL DEFAULT '';
       ALTER TABLE students ADD COLUMN IF NOT EXISTS result_email_sent BOOLEAN NOT NULL DEFAULT false;
       ALTER TABLE students ADD COLUMN IF NOT EXISTS result_email_sent_at TIMESTAMPTZ;
+
+      UPDATE students
+      SET access_pin = LPAD(FLOOR(100000 + RANDOM() * 899999)::int::text, 6, '0')
+      WHERE access_pin IS NULL OR access_pin = '';
 
       CREATE UNIQUE INDEX IF NOT EXISTS idx_students_student_code ON students(student_code);
       CREATE INDEX IF NOT EXISTS idx_students_branch_grade ON students(branch_code, grade);
@@ -416,6 +423,7 @@ function ensureLocalStore(): LocalStoreSchema {
         {
           id: crypto.randomUUID(),
           student_code: '201001',
+          access_pin: '482915',
           first_name: 'Damir',
           last_name: 'Rusu',
           grade: 2,
@@ -434,6 +442,7 @@ function ensureLocalStore(): LocalStoreSchema {
         {
           id: crypto.randomUUID(),
           student_code: '105001',
+          access_pin: '739204',
           first_name: 'Sofia',
           last_name: 'Cebotari',
           grade: 5,
@@ -865,15 +874,17 @@ export async function registerStudent(input: CreateStudentInput): Promise<Studen
       }
 
       const id = crypto.randomUUID();
+      const accessPin = String(crypto.randomInt(100000, 999999));
       const insertRes = await client.query(
         `INSERT INTO students (
-          id, student_code, first_name, last_name, grade, school,
+          id, student_code, access_pin, first_name, last_name, grade, school,
           teacher_name, exam_language, branch_id, branch_code, email, phone, email_sent
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, false)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, false)
         RETURNING *`,
         [
           id,
           studentCode,
+          accessPin,
           input.firstName.trim(),
           input.lastName.trim(),
           input.grade,
@@ -921,9 +932,11 @@ export async function registerStudent(input: CreateStudentInput): Promise<Studen
   store.counters[counterKey] = seq;
 
   const now = new Date().toISOString();
+  const accessPin = String(crypto.randomInt(100000, 999999));
   const newStudent: StudentRecord = {
     id: crypto.randomUUID(),
     student_code: studentCode,
+    access_pin: accessPin,
     first_name: input.firstName.trim(),
     last_name: input.lastName.trim(),
     grade: Number(input.grade),

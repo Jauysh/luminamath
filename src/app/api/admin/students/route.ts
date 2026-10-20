@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
       const bom = '\uFEFF';
       const header = [
         'STUDENT_ID',
+        'ACCESS_PIN',
         'FIRST_NAME',
         'LAST_NAME',
         'GRADE',
@@ -60,6 +61,7 @@ export async function GET(req: NextRequest) {
       const rows = students.map((s) =>
         [
           escapeCsv(s.student_code),
+          escapeCsv(s.access_pin),
           escapeCsv(s.first_name),
           escapeCsv(s.last_name),
           escapeCsv(s.grade),

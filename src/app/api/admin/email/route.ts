@@ -131,6 +131,7 @@ export async function POST(req: NextRequest) {
       const res = await sendRegistrationEmail({
         to: student.email,
         studentCode: student.student_code,
+        accessPin: student.access_pin,
         firstName: student.first_name,
         lastName: student.last_name,
         grade: student.grade,
@@ -179,13 +180,14 @@ export async function POST(req: NextRequest) {
       const res = await sendResultPdfEmail({
         to: student.email,
         studentCode: student.student_code,
+        accessPin: student.access_pin,
         firstName: student.first_name,
         lastName: student.last_name,
         grade: student.grade,
         school: student.school,
         examLanguage: student.exam_language,
         branchName: student.branch_name_ro || `Filiala #${student.branch_code}`,
-        resultsUrl: `${origin}/results?id=${student.student_code}`,
+        resultsUrl: `${origin}/results?id=${student.student_code}&pin=${student.access_pin}`,
         pdfBuffer: pdfRecord.pdfBuffer,
       });
 
@@ -238,13 +240,14 @@ export async function POST(req: NextRequest) {
         const res = await sendResultPdfEmail({
           to: student.email,
           studentCode: student.student_code,
+          accessPin: student.access_pin,
           firstName: student.first_name,
           lastName: student.last_name,
           grade: student.grade,
           school: student.school,
           examLanguage: student.exam_language,
           branchName: student.branch_name_ro || `Filiala #${student.branch_code}`,
-          resultsUrl: `${origin}/results?id=${student.student_code}`,
+          resultsUrl: `${origin}/results?id=${student.student_code}&pin=${student.access_pin}`,
           pdfBuffer: pdfRecord.pdfBuffer,
         });
 

@@ -83,6 +83,7 @@ export async function POST(req: NextRequest) {
     const emailResult = await sendRegistrationEmail({
       to: student.email,
       studentCode: student.student_code,
+      accessPin: student.access_pin,
       firstName: student.first_name,
       lastName: student.last_name,
       grade: student.grade,

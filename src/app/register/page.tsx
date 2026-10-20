@@ -31,6 +31,7 @@ interface BranchItem {
 
 interface RegisteredStudent {
   student_code: string;
+  access_pin: string;
   first_name: string;
   last_name: string;
   grade: number;
@@ -164,15 +165,33 @@ export default function RegisterPage() {
           </div>
 
           <div className="p-6 sm:p-10">
-            {/* 6-Digit ID Highlight Box + OMR Bubble Preview */}
+            {/* 6-Digit ID Highlight Box + Secret PIN + OMR Bubble Preview */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-indigo-50/60 border-2 border-dashed border-indigo-400 rounded-2xl p-6 mb-8">
               <div className="md:col-span-7 text-center md:text-left space-y-3">
-                <span className="inline-block text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-indigo-700 text-white">
-                  {t.register.yourIdLabel}
-                </span>
-                <div className="text-5xl sm:text-6xl font-mono font-black tracking-widest text-slate-950">
-                  {registered.student_code}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3.5 rounded-2xl bg-white border-2 border-indigo-300 shadow-sm">
+                    <span className="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-700 text-white mb-1">
+                      {t.register.yourIdLabel}
+                    </span>
+                    <div className="text-3xl sm:text-4xl font-mono font-black tracking-widest text-slate-950">
+                      {registered.student_code}
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-emerald-50 border-2 border-emerald-400 shadow-sm">
+                    <span className="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-700 text-white mb-1">
+                      {locale === 'RU'
+                        ? 'ПАРОЛЬ / PIN-КОД'
+                        : locale === 'EN'
+                        ? 'PASSWORD / ACCESS PIN'
+                        : 'PAROLA / COD PIN REZULTATE'}
+                    </span>
+                    <div className="text-3xl sm:text-4xl font-mono font-black tracking-widest text-emerald-950">
+                      {registered.access_pin}
+                    </div>
+                  </div>
                 </div>
+
                 <p className="text-xs sm:text-sm font-medium text-slate-600">
                   {t.register.idStructureHint}
                 </p>
@@ -250,7 +269,7 @@ export default function RegisterPage() {
                 </button>
 
                 <Link
-                  href={`/results?id=${registered.student_code}`}
+                  href={`/results?id=${registered.student_code}&pin=${registered.access_pin}`}
                   className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm shadow-sm transition-all"
                 >
                   <FileSearch className="w-4 h-4" />

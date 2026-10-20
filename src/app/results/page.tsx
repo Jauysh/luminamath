@@ -10,12 +10,14 @@ import {
   ExternalLink,
   FileCheck2,
   FileSearch,
+  Lock,
   Search,
   User,
 } from 'lucide-react';
 
 interface StudentLookupResult {
   student_code: string;
+  access_pin: string;
   first_name: string;
   last_name: string;
   grade: number;
@@ -35,24 +37,30 @@ function ResultsContent() {
   const { locale, t, settings } = useLanguage();
   const searchParams = useSearchParams();
   const initialId = searchParams.get('id') || '';
+  const initialPin = searchParams.get('pin') || '';
 
   const [studentId, setStudentId] = useState(initialId);
+  const [accessPin, setAccessPin] = useState(initialPin);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [student, setStudent] = useState<StudentLookupResult | null>(null);
 
-  const performLookup = async (codeToSearch: string) => {
-    const clean = codeToSearch.trim();
-    if (!clean) return;
+  const performLookup = async (codeToSearch: string, pinToSearch: string) => {
+    const cleanCode = codeToSearch.trim();
+    const cleanPin = pinToSearch.trim();
+    if (!cleanCode) return;
+
     setLoading(true);
     setError(null);
     setStudent(null);
 
     try {
-      const res = await fetch(`/api/results/${encodeURIComponent(clean)}`);
+      const res = await fetch(
+        `/api/results/${encodeURIComponent(cleanCode)}?pin=${encodeURIComponent(cleanPin)}`
+      );
       const data = await res.json();
       if (!res.ok) {
-        setError(res.status === 404 ? t.results.notFound : data.error || t.results.notFound);
+        setError(data.error || t.results.notFound);
       } else {
         setStudent(data.student);
       }
@@ -64,15 +72,15 @@ function ResultsContent() {
   };
 
   useEffect(() => {
-    if (initialId && /^\d{6}$/.test(initialId.trim())) {
-      performLookup(initialId.trim());
+    if (initialId && /^\d{6}$/.test(initialId.trim()) && initialPin.trim()) {
+      performLookup(initialId.trim(), initialPin.trim());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialId]);
+  }, [initialId, initialPin]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    performLookup(studentId);
+    performLookup(studentId, accessPin);
   };
 
   const getBranchName = (s: StudentLookupResult) => {
@@ -87,6 +95,20 @@ function ResultsContent() {
       : locale === 'EN'
       ? `${settings.stage3_date_en} / ${settings.stage4_date_en}`
       : `${settings.stage3_date_ro} / ${settings.stage4_date_ro}`;
+
+  const pinLabel =
+    locale === 'RU'
+      ? 'Пароль / PIN-код (6 цифр)'
+      : locale === 'EN'
+      ? 'Password / Access PIN (6 digits)'
+      : 'Parola / Cod PIN (6 cifre)';
+
+  const idLabel =
+    locale === 'RU'
+      ? 'ID участника (6 цифр)'
+      : locale === 'EN'
+      ? 'Student ID (6 digits)'
+      : 'ID Participant (6 cifre)';
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -107,49 +129,57 @@ function ResultsContent() {
         <div className="p-6 sm:p-8">
           <form
             onSubmit={handleSubmit}
-            className="max-w-xl mx-auto flex flex-col sm:flex-row gap-3"
+            className="max-w-2xl mx-auto grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-end"
           >
-            <div className="relative flex-1">
-              <Search className="w-5 h-5 text-slate-400 absolute left-4 top-3.5" />
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                required
-                value={studentId}
-                onChange={(e) => setStudentId(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder={t.results.inputPlaceholder}
-                className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 outline-none font-mono text-xl font-extrabold tracking-widest text-slate-900"
-              />
+            <div className="sm:col-span-5">
+              <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1.5">
+                {idLabel} *
+              </label>
+              <div className="relative">
+                <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-3.5" />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  required
+                  value={studentId}
+                  onChange={(e) => setStudentId(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="102001"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl border-2 border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 outline-none font-mono text-lg sm:text-xl font-extrabold tracking-widest text-slate-900"
+                />
+              </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading || studentId.length !== 6}
-              className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-lumina-600 hover:from-indigo-700 hover:to-lumina-700 disabled:opacity-50 text-white font-extrabold text-sm sm:text-base shadow-md transition-all shrink-0"
-            >
-              {loading ? t.results.searching : t.results.searchBtn}
-            </button>
-          </form>
+            <div className="sm:col-span-4">
+              <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1.5">
+                {pinLabel} *
+              </label>
+              <div className="relative">
+                <Lock className="w-5 h-5 text-slate-400 absolute left-3.5 top-3.5" />
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={12}
+                  required
+                  value={accessPin}
+                  onChange={(e) => setAccessPin(e.target.value.trim())}
+                  placeholder="••••••"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl border-2 border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 outline-none font-mono text-lg sm:text-xl font-extrabold tracking-widest text-slate-900"
+                />
+              </div>
+            </div>
 
-          {/* Quick Demo IDs for testing */}
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500">
-            <span>{t.results.demoHint}</span>
-            {['201001', '105001'].map((demoId) => (
+            <div className="sm:col-span-3">
               <button
-                key={demoId}
-                type="button"
-                onClick={() => {
-                  setStudentId(demoId);
-                  performLookup(demoId);
-                }}
-                className="font-mono font-bold px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-colors"
+                type="submit"
+                disabled={loading || studentId.length !== 6 || !accessPin.trim()}
+                className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-indigo-600 to-lumina-600 hover:from-indigo-700 hover:to-lumina-700 disabled:opacity-50 text-white font-extrabold text-sm sm:text-base shadow-md transition-all"
               >
-                {demoId}
+                {loading ? t.results.searching : t.results.searchBtn}
               </button>
-            ))}
-          </div>
+            </div>
+          </form>
 
           {error && (
             <div className="mt-6 max-w-xl mx-auto p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-semibold text-center">
@@ -225,7 +255,9 @@ function ResultsContent() {
 
                 <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
                   <a
-                    href={`/api/results/${student.student_code}/pdf?download=1`}
+                    href={`/api/results/${student.student_code}/pdf?pin=${encodeURIComponent(
+                      student.access_pin || accessPin
+                    )}&download=1`}
                     className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-sm transition-all"
                   >
                     <Download className="w-4 h-4 shrink-0" />
@@ -233,7 +265,9 @@ function ResultsContent() {
                   </a>
 
                   <a
-                    href={`/api/results/${student.student_code}/pdf`}
+                    href={`/api/results/${student.student_code}/pdf?pin=${encodeURIComponent(
+                      student.access_pin || accessPin
+                    )}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold text-xs sm:text-sm transition-all"
@@ -246,7 +280,9 @@ function ResultsContent() {
 
               <div className="bg-slate-800 p-2 sm:p-4">
                 <iframe
-                  src={`/api/results/${student.student_code}/pdf`}
+                  src={`/api/results/${student.student_code}/pdf?pin=${encodeURIComponent(
+                    student.access_pin || accessPin
+                  )}`}
                   title={`Result PDF ${student.student_code}`}
                   className="w-full h-[460px] sm:h-[680px] rounded-xl bg-white border-0"
                 />
