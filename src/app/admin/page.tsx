@@ -602,7 +602,7 @@ export default function AdminPage() {
   if (checkingSession) {
     return (
       <div className="max-w-md mx-auto px-4 py-24 text-center text-slate-500 text-sm">
-        Se verifică sesiunea de securitate...
+        {t.admin.checkingSession}
       </div>
     );
   }
@@ -618,7 +618,7 @@ export default function AdminPage() {
             {t.admin.loginTitle}
           </h1>
           <p className="text-xs text-center text-slate-500 mt-1.5 mb-6 leading-relaxed">
-            Acces permis doar conturilor Google / Workspace autorizate (@orizont.md)
+            {t.admin.loginAllowedNotice}
           </p>
 
           {authError && (
@@ -634,7 +634,7 @@ export default function AdminPage() {
               <div className="relative my-5 flex items-center justify-center">
                 <div className="border-t border-slate-200 w-full" />
                 <span className="bg-white px-3 text-[11px] uppercase font-bold text-slate-400">
-                  sau
+                  {t.admin.orDivider}
                 </span>
                 <div className="border-t border-slate-200 w-full" />
               </div>
@@ -644,7 +644,7 @@ export default function AdminPage() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase text-slate-600 mb-1.5">
-                Email Administrator Autorizat
+                {t.admin.emailLoginLabel}
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -732,7 +732,7 @@ export default function AdminPage() {
             className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-xs font-bold text-rose-700 transition-colors"
           >
             <LogOut className="w-4 h-4" />
-            Logout
+            {t.admin.logoutBtn}
           </button>
         </div>
       </div>
@@ -788,7 +788,9 @@ export default function AdminPage() {
           }`}
         >
           <ShieldCheck className="w-4 h-4 shrink-0" />
-          <span>Administratori ({adminEmails.length})</span>
+          <span>
+            {t.admin.tabAdmins} ({adminEmails.length})
+          </span>
         </button>
       </div>
 
@@ -799,10 +801,10 @@ export default function AdminPage() {
             <div>
               <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
                 <ShieldCheck className="w-6 h-6 text-indigo-600" />
-                Conturi Email Autorizate (Whitelist Administratori)
+                {t.admin.whitelistTitle}
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 mt-1">
-                Doar persoanele cu adresele de email din această listă au permisiunea de a se autentifica în panoul de administrare.
+                {t.admin.whitelistDesc}
               </p>
             </div>
 
@@ -825,7 +827,7 @@ export default function AdminPage() {
                         </span>
                         {isSelf && (
                           <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                            Tu (Activ)
+                            {t.admin.youActiveBadge}
                           </span>
                         )}
                       </div>
@@ -837,7 +839,7 @@ export default function AdminPage() {
                         type="button"
                         onClick={() => handleRemoveAdminEmail(adm.email)}
                         className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 transition-colors"
-                        title="Elimină accesul"
+                        title={t.admin.removeAccessTitle}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -854,17 +856,17 @@ export default function AdminPage() {
             >
               <div className="text-xs font-extrabold uppercase text-indigo-700 flex items-center gap-1.5">
                 <PlusCircle className="w-4 h-4" />
-                Adaugă un nou Administrator (Gmail / @orizont.md)
+                {t.admin.addAdminTitle}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-slate-600 mb-1">
-                    Adresa de Email *
+                    {t.admin.adminEmailInputLabel}
                   </label>
                   <input
                     type="email"
                     required
-                    placeholder="profesor@orizont.md sau nume@gmail.com"
+                    placeholder={t.admin.adminEmailInputPlaceholder}
                     value={newAdminEmail}
                     onChange={(e) => setNewAdminEmail(e.target.value)}
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-sm"
@@ -872,7 +874,7 @@ export default function AdminPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">
-                    Rol
+                    {t.admin.adminRoleLabel}
                   </label>
                   <select
                     value={newAdminRole}
@@ -886,11 +888,11 @@ export default function AdminPage() {
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">
-                  Nume și Prenume (opțional)
+                  {t.admin.adminNameLabel}
                 </label>
                 <input
                   type="text"
-                  placeholder="Ex: Prof. Ion Popescu"
+                  placeholder={t.admin.adminNamePlaceholder}
                   value={newAdminName}
                   onChange={(e) => setNewAdminName(e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-sm"
@@ -901,7 +903,7 @@ export default function AdminPage() {
                 disabled={savingAdminEmail}
                 className="px-6 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white font-extrabold text-xs sm:text-sm shadow-sm transition-all"
               >
-                {savingAdminEmail ? '...' : 'Adaugă în Lista de Administratori'}
+                {savingAdminEmail ? '...' : t.admin.addAdminBtn}
               </button>
             </form>
           </div>
@@ -913,7 +915,7 @@ export default function AdminPage() {
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
                   <Mail className="w-5 h-5 text-indigo-600" />
-                  Configurare Expediere Email (SMTP)
+                  {t.admin.smtpTitle}
                 </h3>
                 <span
                   className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full ${
@@ -922,13 +924,12 @@ export default function AdminPage() {
                       : 'bg-amber-100 text-amber-800 border border-amber-300'
                   }`}
                 >
-                  {smtpHasPassword ? 'SMTP Activ ✅' : 'Neconfigurat ⏳'}
+                  {smtpHasPassword ? t.admin.smtpActiveBadge : t.admin.smtpPendingBadge}
                 </span>
               </div>
 
               <p className="text-xs text-slate-600 leading-relaxed">
-                Folosiți contul Google Workspace (<strong>@orizont.md</strong>) sau <strong>@gmail.com</strong> împreună cu un{' '}
-                <strong>Google App Password (16 caractere)</strong> pentru a trimite automat email-uri la înregistrare și rezultatele PDF.
+                {t.admin.smtpDesc}
               </p>
 
               {smtpFeedback && (
@@ -950,7 +951,7 @@ export default function AdminPage() {
                 <div className="grid grid-cols-3 gap-2.5">
                   <div className="col-span-2">
                     <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                      Server SMTP
+                      {t.admin.smtpServerLabel}
                     </label>
                     <input
                       type="text"
@@ -961,7 +962,7 @@ export default function AdminPage() {
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                      Port
+                      {t.admin.smtpPortLabel}
                     </label>
                     <input
                       type="number"
@@ -974,7 +975,7 @@ export default function AdminPage() {
 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                    Email Expeditor (Cont Google / @orizont.md) *
+                    {t.admin.smtpSenderLabel}
                   </label>
                   <input
                     type="email"
@@ -991,13 +992,13 @@ export default function AdminPage() {
 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                    Google App Password (16 litere) *
+                    {t.admin.smtpAppPassLabel}
                   </label>
                   <input
                     type="password"
                     placeholder={
                       smtpHasPassword
-                        ? '•••••••••••••••• (Parola este salvată — scrieți pentru a schimba)'
+                        ? t.admin.smtpAppPassSavedPlaceholder
                         : 'xxxx xxxx xxxx xxxx'
                     }
                     value={smtpPass}
@@ -1008,7 +1009,7 @@ export default function AdminPage() {
 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                    Email destinatar pentru testare
+                    {t.admin.smtpTestRecipientLabel}
                   </label>
                   <input
                     type="email"
@@ -1025,7 +1026,7 @@ export default function AdminPage() {
                     disabled={savingSmtp}
                     className="flex-1 py-2.5 px-4 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs transition-all"
                   >
-                    {savingSmtp ? '...' : 'Salvează SMTP'}
+                    {savingSmtp ? '...' : t.admin.smtpSaveBtn}
                   </button>
 
                   <button
@@ -1035,7 +1036,7 @@ export default function AdminPage() {
                     className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all inline-flex items-center justify-center gap-1.5"
                   >
                     <Send className="w-3.5 h-3.5" />
-                    Salvează & Trimite Test
+                    {t.admin.smtpSaveAndTestBtn}
                   </button>
                 </div>
               </form>
@@ -1044,10 +1045,10 @@ export default function AdminPage() {
             {/* GOOGLE OAUTH CLIENT ID CARD */}
             <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-4">
               <h3 className="text-lg font-extrabold text-slate-900">
-                Google Sign-In (OAuth 2.0 Client ID)
+                {t.admin.googleOauthTitle}
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Pentru a activa butonul <strong>&ldquo;Sign in with Google&rdquo;</strong> cu un singur click (fără parolă), introduceți <code>Google OAuth Client ID</code> din Google Cloud Console (Credentials).
+                {t.admin.googleOauthDesc}
               </p>
               <form onSubmit={handleSaveCalendar} className="space-y-3">
                 <input
@@ -1064,7 +1065,7 @@ export default function AdminPage() {
                   disabled={savingCal}
                   className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all"
                 >
-                  Salvează Google Client ID
+                  {t.admin.googleOauthSaveBtn}
                 </button>
               </form>
             </div>
@@ -1589,10 +1590,10 @@ export default function AdminPage() {
                 <div>
                   <h3 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
                     <Send className="w-4 h-4 text-emerald-600" />
-                    Expediere Rezultate PDF pe Email către Elevi
+                    {t.admin.bulkEmailSectionTitle}
                   </h3>
                   <p className="text-xs text-slate-600 mt-0.5">
-                    Trimite fiecărui elev (care are PDF încărcat) email-ul oficial cu fișierul său PDF atașat direct în mesaj.
+                    {t.admin.bulkEmailSectionDesc}
                   </p>
                 </div>
 
@@ -1605,8 +1606,8 @@ export default function AdminPage() {
                   >
                     <Send className="w-4 h-4" />
                     {sendingBulkEmails
-                      ? 'Se trimit email-urile...'
-                      : 'Trimite Rezultatele pe Email (Neexpediați)'}
+                      ? t.admin.bulkEmailSendingBtn
+                      : t.admin.bulkEmailSendUnsentBtn}
                   </button>
 
                   <button
@@ -1616,7 +1617,7 @@ export default function AdminPage() {
                     className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-50 text-slate-700 font-bold text-xs transition-all"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
-                    Retrimite la Toți ({stats.withPdf})
+                    {t.admin.bulkEmailResendAllBtn} ({stats.withPdf})
                   </button>
                 </div>
               </div>
@@ -1624,24 +1625,28 @@ export default function AdminPage() {
               {bulkEmailReport && (
                 <div className="mt-4 p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-1.5">
                   <div className="font-extrabold text-emerald-950 flex flex-wrap gap-4">
-                    <span>Total procesați: {bulkEmailReport.totalTargeted}</span>
+                    <span>
+                      {t.admin.bulkEmailTotalProcessed} {bulkEmailReport.totalTargeted}
+                    </span>
                     <span className="text-emerald-700">
-                      ✅ Trimise cu succes: {bulkEmailReport.sentCount}
+                      {t.admin.bulkEmailSentSuccess} {bulkEmailReport.sentCount}
                     </span>
                     {bulkEmailReport.failedCount > 0 && (
                       <span className="text-rose-600">
-                        ❌ Eșuate: {bulkEmailReport.failedCount}
+                        {t.admin.bulkEmailFailed} {bulkEmailReport.failedCount}
                       </span>
                     )}
                   </div>
                   {bulkEmailReport.sentCodes.length > 0 && (
                     <div className="text-slate-700">
-                      <strong>Expediate către:</strong> {bulkEmailReport.sentCodes.join(', ')}
+                      <strong>{t.admin.bulkEmailSentToLabel}</strong>{' '}
+                      {bulkEmailReport.sentCodes.join(', ')}
                     </div>
                   )}
                   {bulkEmailReport.errors.length > 0 && (
                     <div className="text-rose-700 font-semibold">
-                      <strong>Erori:</strong> {bulkEmailReport.errors.join(' | ')}
+                      <strong>{t.admin.bulkEmailErrorsLabel}</strong>{' '}
+                      {bulkEmailReport.errors.join(' | ')}
                     </div>
                   )}
                 </div>
@@ -1777,10 +1782,10 @@ export default function AdminPage() {
                           >
                             <Mail className="w-3 h-3" />
                             {sendingStudentEmail === `${s.student_code}:send_registration`
-                              ? 'Se trimite...'
+                              ? t.admin.sendingSingleEmail
                               : s.email_sent
-                              ? 'Retrimite ID pe Email'
-                              : 'Trimite ID pe Email'}
+                              ? t.admin.resendIdEmailBtn
+                              : t.admin.sendIdEmailBtn}
                           </button>
                         </div>
                       </td>
@@ -1816,8 +1821,8 @@ export default function AdminPage() {
                               {sendingStudentEmail === `${s.student_code}:send_result`
                                 ? '...'
                                 : s.result_email_sent
-                                ? 'Email Trimis ✓ (Retrimite)'
-                                : 'Trimite Rezultat pe Email'}
+                                ? t.admin.resultEmailSentBadge
+                                : t.admin.sendResultEmailBtn}
                             </button>
                           </div>
                         ) : (
