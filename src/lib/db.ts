@@ -108,6 +108,7 @@ export interface StudentRecord {
   result_uploaded_at: string | null;
   result_email_sent?: boolean;
   result_email_sent_at?: string | null;
+  school_code?: number;
   created_at: string;
 }
 
@@ -116,6 +117,7 @@ export interface CreateStudentInput {
   lastName: string;
   grade: number;
   school: string;
+  schoolCode?: number; // 1..7 for Orizont branches, 8 for Other School
   teacherName: string;
   examLanguage: 'RO' | 'RU' | 'EN';
   branchId: number;
@@ -123,11 +125,23 @@ export interface CreateStudentInput {
   phone: string;
 }
 
-export function formatStudentId(branchCode: number, grade: number, seq: number): string {
-  const b = String(branchCode).slice(-1);
+export function formatStudentId(schoolCode: number, grade: number, seq: number): string {
+  const cleanSchool = Math.max(1, Math.min(99, Number(schoolCode) || 8));
   const g = String(grade).padStart(2, '0').slice(-2);
-  const s = String(seq).padStart(3, '0').slice(-3);
-  return `${b}${g}${s}`;
+  if (seq <= 99) {
+    const sPrefix = String(cleanSchool).padStart(2, '0').slice(-2);
+    const sSeq = String(seq).padStart(2, '0').slice(-2);
+    return `${sPrefix}${g}${sSeq}`;
+  }
+  const overflowBlock = Math.floor((seq - 1) / 99);
+  const remSeq = ((seq - 1) % 99) + 1;
+  const nextPrefix =
+    cleanSchool === 8
+      ? Math.min(99, 8 + overflowBlock)
+      : Math.min(99, cleanSchool * 10 + overflowBlock);
+  const sPrefix = String(nextPrefix).padStart(2, '0').slice(-2);
+  const sSeq = String(remSeq).padStart(2, '0').slice(-2);
+  return `${sPrefix}${g}${sSeq}`;
 }
 
 // ============================================================================
@@ -227,6 +241,7 @@ async function ensurePgInitialized(pool: Pool): Promise<boolean> {
       );
 
       ALTER TABLE students ADD COLUMN IF NOT EXISTS access_pin VARCHAR(12) NOT NULL DEFAULT '';
+      ALTER TABLE students ADD COLUMN IF NOT EXISTS school_code INT NOT NULL DEFAULT 8;
       ALTER TABLE students ADD COLUMN IF NOT EXISTS result_email_sent BOOLEAN NOT NULL DEFAULT false;
       ALTER TABLE students ADD COLUMN IF NOT EXISTS result_email_sent_at TIMESTAMPTZ;
 
@@ -923,6 +938,11 @@ export async function registerStudent(input: CreateStudentInput): Promise<Studen
         throw new Error('Selected branch does not exist');
       }
       const branch: BranchRecord = branchRes.rows[0];
+      const schoolCode =
+        Number(input.schoolCode) >= 1 && Number(input.schoolCode) <= 8
+          ? Number(input.schoolCode)
+          : 8;
+      const counterGroup = 100 + schoolCode;
 
       const counterRes = await client.query(
         `INSERT INTO id_counters (branch_code, grade, last_seq)
@@ -930,10 +950,10 @@ export async function registerStudent(input: CreateStudentInput): Promise<Studen
          ON CONFLICT (branch_code, grade)
          DO UPDATE SET last_seq = id_counters.last_seq + 1
          RETURNING last_seq`,
-        [branch.code, input.grade]
+        [counterGroup, input.grade]
       );
       let seq: number = counterRes.rows[0].last_seq;
-      let studentCode = formatStudentId(branch.code, input.grade, seq);
+      let studentCode = formatStudentId(schoolCode, input.grade, seq);
 
       while (true) {
         const exists = await client.query(
@@ -944,19 +964,19 @@ export async function registerStudent(input: CreateStudentInput): Promise<Studen
         const nextRes = await client.query(
           `UPDATE id_counters SET last_seq = last_seq + 1
            WHERE branch_code = $1 AND grade = $2 RETURNING last_seq`,
-          [branch.code, input.grade]
+          [counterGroup, input.grade]
         );
         seq = nextRes.rows[0].last_seq;
-        studentCode = formatStudentId(branch.code, input.grade, seq);
+        studentCode = formatStudentId(schoolCode, input.grade, seq);
       }
 
       const id = crypto.randomUUID();
       const accessPin = String(crypto.randomInt(100000, 999999));
       const insertRes = await client.query(
         `INSERT INTO students (
-          id, student_code, access_pin, first_name, last_name, grade, school,
+          id, student_code, access_pin, first_name, last_name, grade, school, school_code,
           teacher_name, exam_language, branch_id, branch_code, email, phone, email_sent
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, false)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, false)
         RETURNING *`,
         [
           id,
@@ -966,6 +986,7 @@ export async function registerStudent(input: CreateStudentInput): Promise<Studen
           input.lastName.trim(),
           input.grade,
           input.school.trim(),
+          schoolCode,
           input.teacherName.trim(),
           input.examLanguage,
           branch.id,
@@ -998,13 +1019,17 @@ export async function registerStudent(input: CreateStudentInput): Promise<Studen
     throw new Error('Selected branch does not exist');
   }
 
-  const counterKey = `${branch.code}_${input.grade}`;
+  const schoolCode =
+    Number(input.schoolCode) >= 1 && Number(input.schoolCode) <= 8
+      ? Number(input.schoolCode)
+      : 8;
+  const counterKey = `s${schoolCode}_${input.grade}`;
   let seq = (store.counters[counterKey] || 0) + 1;
-  let studentCode = formatStudentId(branch.code, input.grade, seq);
+  let studentCode = formatStudentId(schoolCode, input.grade, seq);
 
   while (store.students.some((s) => s.student_code === studentCode)) {
     seq += 1;
-    studentCode = formatStudentId(branch.code, input.grade, seq);
+    studentCode = formatStudentId(schoolCode, input.grade, seq);
   }
   store.counters[counterKey] = seq;
 
@@ -1018,6 +1043,7 @@ export async function registerStudent(input: CreateStudentInput): Promise<Studen
     last_name: input.lastName.trim(),
     grade: Number(input.grade),
     school: input.school.trim(),
+    school_code: schoolCode,
     teacher_name: input.teacherName.trim(),
     exam_language: input.examLanguage,
     branch_id: branch.id,

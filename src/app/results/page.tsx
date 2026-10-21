@@ -91,10 +91,10 @@ function ResultsContent() {
 
   const resultsPublishDate =
     locale === 'RU'
-      ? `${settings.stage3_date_ru} / ${settings.stage4_date_ru}`
+      ? settings.stage3_date_ru
       : locale === 'EN'
-      ? `${settings.stage3_date_en} / ${settings.stage4_date_en}`
-      : `${settings.stage3_date_ro} / ${settings.stage4_date_ro}`;
+      ? settings.stage3_date_en
+      : settings.stage3_date_ro;
 
   const pinLabel =
     locale === 'RU'

@@ -1246,48 +1246,6 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Stage 4 */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                <h3 className="text-sm font-extrabold text-slate-900">
-                  {t.admin.stage4Section}
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-500 mb-1">
-                      🇲🇩 {t.admin.dateRoLabel}
-                    </label>
-                    <input
-                      type="text"
-                      value={calForm.stage4_date_ro}
-                      onChange={(e) => setCalForm({ ...calForm, stage4_date_ro: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-500 mb-1">
-                      🇷🇺 {t.admin.dateRuLabel}
-                    </label>
-                    <input
-                      type="text"
-                      value={calForm.stage4_date_ru}
-                      onChange={(e) => setCalForm({ ...calForm, stage4_date_ru: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-500 mb-1">
-                      🇬🇧 {t.admin.dateEnLabel}
-                    </label>
-                    <input
-                      type="text"
-                      value={calForm.stage4_date_en}
-                      onChange={(e) => setCalForm({ ...calForm, stage4_date_en: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold"
-                    />
-                  </div>
-                </div>
-              </div>
-
               {/* Contact Info */}
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                 <h3 className="text-sm font-extrabold text-slate-900">

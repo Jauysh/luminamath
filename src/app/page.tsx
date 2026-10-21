@@ -71,13 +71,6 @@ export default function HomePage() {
       ? settings.stage3_date_en
       : settings.stage3_date_ro;
 
-  const stage4Date =
-    locale === 'RU'
-      ? settings.stage4_date_ru
-      : locale === 'EN'
-      ? settings.stage4_date_en
-      : settings.stage4_date_ro;
-
   const calendarStages = [
     {
       num: '01',
@@ -101,15 +94,6 @@ export default function HomePage() {
       date: stage3Date,
       title: t.calendar.stage3Title,
       desc: t.calendar.stage3Desc,
-      isActive: false,
-      actionHref: '/results',
-      actionLabel: t.hero.resultsBtn,
-    },
-    {
-      num: '04',
-      date: stage4Date,
-      title: t.calendar.stage4Title,
-      desc: t.calendar.stage4Desc,
       isActive: false,
       actionHref: '/results',
       actionLabel: t.hero.resultsBtn,
@@ -265,18 +249,6 @@ export default function HomePage() {
                         <div className="text-xs text-slate-300 mt-0.5">{stage3Date}</div>
                       </div>
                     </div>
-
-                    <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 flex items-start gap-3">
-                      <span className="px-2 py-0.5 rounded-lg bg-white/10 text-slate-300 font-mono text-xs font-black shrink-0 mt-0.5">
-                        04
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs font-extrabold text-white">
-                          {t.calendar.stage4Title}
-                        </div>
-                        <div className="text-xs text-slate-300 mt-0.5">{stage4Date}</div>
-                      </div>
-                    </div>
                   </div>
 
                   <div className="mt-4 pt-3.5 border-t border-white/10 flex items-start gap-2.5 text-left">
@@ -308,7 +280,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {calendarStages.map((stage, idx) => (
               <div
                 key={stage.num}

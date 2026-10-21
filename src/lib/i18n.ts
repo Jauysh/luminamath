@@ -8,6 +8,77 @@ export const LOCALES: { code: Locale; label: string; flag: string; nativeName: s
 
 export const GRADES = [2, 3, 4, 5, 6, 7, 8];
 
+export interface SchoolOption {
+  code: number; // 1..7 for Orizont, 8 for Other School
+  codeStr: string; // '01'..'08'
+  isOther?: boolean;
+  maxGrade?: number; // 4 for Kindergarten School
+  name_ro: string;
+  name_ru: string;
+  name_en: string;
+}
+
+export const SCHOOL_OPTIONS: SchoolOption[] = [
+  {
+    code: 1,
+    codeStr: '01',
+    name_ro: 'IPLT „Orizont” — Filiala Ciocana Primary',
+    name_ru: 'IPLT «Orizont» — Филиал Чеканы Primary (Ciocana Primary)',
+    name_en: 'IPLT "Orizont" — Ciocana Primary Branch',
+  },
+  {
+    code: 2,
+    codeStr: '02',
+    name_ro: 'IPLT „Orizont” — Filiala Ciocana Lumina',
+    name_ru: 'IPLT «Orizont» — Филиал Чеканы Lumina (Ciocana Lumina)',
+    name_en: 'IPLT "Orizont" — Ciocana Lumina Branch',
+  },
+  {
+    code: 3,
+    codeStr: '03',
+    name_ro: 'IPLT „Orizont” — Filiala Durlești',
+    name_ru: 'IPLT «Orizont» — Филиал Дурлешть (Durlești)',
+    name_en: 'IPLT "Orizont" — Durlesti Branch',
+  },
+  {
+    code: 4,
+    codeStr: '04',
+    name_ro: 'IPLT „Orizont” — Filiala Buiucani',
+    name_ru: 'IPLT «Orizont» — Филиал Буюканы (Buiucani)',
+    name_en: 'IPLT "Orizont" — Buiucani Branch',
+  },
+  {
+    code: 5,
+    codeStr: '05',
+    name_ro: 'IPLT „Orizont” — Filiala Bălți',
+    name_ru: 'IPLT «Orizont» — Филиал Бельцы (Bălți)',
+    name_en: 'IPLT "Orizont" — Balti Branch',
+  },
+  {
+    code: 6,
+    codeStr: '06',
+    name_ro: 'IPLT „Orizont” — Filiala Ceadîr-Lunga',
+    name_ru: 'IPLT «Orizont» — Филиал Чадыр-Лунга (Ceadîr-Lunga)',
+    name_en: 'IPLT "Orizont" — Ceadir Lunga Branch',
+  },
+  {
+    code: 7,
+    codeStr: '07',
+    maxGrade: 4,
+    name_ro: 'Orizont Kindergarten School (cl. II–IV)',
+    name_ru: 'Orizont Kindergarten School — Начальная школа-сад (II–IV кл.)',
+    name_en: 'Orizont Kindergarten School (Grades II–IV)',
+  },
+  {
+    code: 8,
+    codeStr: '08',
+    isOther: true,
+    name_ro: 'Altă școală / Altă instituție de învățământ',
+    name_ru: 'Другая школа / Другое учебное заведение',
+    name_en: 'Other School / Educational Institution',
+  },
+];
+
 export const translations = {
   RO: {
     nav: {
@@ -58,9 +129,9 @@ export const translations = {
       stage2Title: 'Etapa scrisă – proba de concurs',
       stage2Desc:
         'Susținerea probei scrise cu prezență fizică în filiala selectată la înregistrare.',
-      stage3Title: 'Publicarea rezultatelor etapei scrise',
+      stage3Title: 'Publicarea rezultatelor (PDF) și a clasamentului final',
       stage3Desc:
-        'Elevii își pot vizualiza și descărca fișa individuală de evaluare (PDF) folosind ID-ul și parola PIN.',
+        'Elevii își pot vizualiza și descărca fișa individuală de evaluare (PDF) și clasamentul final folosind ID-ul și parola PIN.',
       stage4Title: 'Publicarea rezultatelor finale',
       stage4Desc:
         'Afișarea clasamentului final și anunțarea câștigătorilor pe categorii de clasă.',
@@ -123,7 +194,10 @@ export const translations = {
       gradeLabel: 'Clasa',
       codeWord: 'Clasa',
       school: 'Școala / Liceul',
-      schoolPlaceholder: 'Ex: Liceul Teoretic Orizont',
+      schoolPlaceholder: 'Ex: Liceul Teoretic „Mihai Eminescu”, Bălți',
+      otherSchoolLabel: 'Introduceți numele școlii / liceului dvs.',
+      otherSchoolPlaceholder: 'Ex: Liceul Teoretic „Mihai Eminescu”, mun. Chișinău',
+      kindergartenGradeHint: 'Notă: Orizont Kindergarten School este destinată elevilor din clasele II – IV.',
       teacherName: 'Numele Profesorului de Matematică',
       teacherPlaceholder: 'Ex: Maria Ionescu',
       examLanguage: 'Limba în care doriți să susțineți examenul',
@@ -219,7 +293,7 @@ export const translations = {
       examTimeLabel: 'Ora Etapei Scrise (ex: 10:00 – 12:00)',
       stage1Section: '1. Perioada de Înregistrare',
       stage2Section: '2. Data Etapei Scrise (Examenul)',
-      stage3Section: '3. Publicarea Rezultatelor Scrise (PDF)',
+      stage3Section: '3. Data Publicării Rezultatelor și Clasamentului (PDF)',
       stage4Section: '4. Publicarea Rezultatelor Finale',
       contactSection: 'Date de Contact (Subsol & Suport)',
       dateRoLabel: 'Data în Română (RO)',
@@ -353,9 +427,9 @@ export const translations = {
       stage2Title: 'Письменный этап – проведение экзамена',
       stage2Desc:
         'Очное проведение письменного экзамена в выбранном при регистрации филиале.',
-      stage3Title: 'Публикация результатов письменного этапа',
+      stage3Title: 'Публикация результатов (PDF) и итогового рейтинга',
       stage3Desc:
-        'Ученики могут посмотреть и скачать свой индивидуальный PDF-табель результатов по ID-номеру и PIN-паролю.',
+        'Ученики могут посмотреть и скачать свой индивидуальный PDF-табель результатов и узнать итоговые места по ID-номеру и PIN-паролю.',
       stage4Title: 'Публикация итоговых результатов',
       stage4Desc:
         'Объявление финального рейтинга и победителей олимпиады по параллелям.',
@@ -418,7 +492,10 @@ export const translations = {
       gradeLabel: 'Класс',
       codeWord: 'Класс',
       school: 'Школа / Лицей',
-      schoolPlaceholder: 'Например: Теоретический лицей Orizont',
+      schoolPlaceholder: 'Например: Теоретический лицей им. М. Эминеску, Бельцы',
+      otherSchoolLabel: 'Введите название вашей школы / лицея',
+      otherSchoolPlaceholder: 'Например: Теоретический лицей им. М. Эминеску, мун. Кишинёв',
+      kindergartenGradeHint: 'Примечание: Orizont Kindergarten School обучает учеников 2 – 4 классов.',
       teacherName: 'ФИО учителя математики',
       teacherPlaceholder: 'Например: Мария Ионеску',
       examLanguage: 'Язык, на котором хотите сдавать экзамен',
@@ -514,7 +591,7 @@ export const translations = {
       examTimeLabel: 'Время письменного экзамена (напр.: 10:00 – 12:00)',
       stage1Section: '1. Период онлайн-регистрации',
       stage2Section: '2. Дата письменного этапа (Экзамен)',
-      stage3Section: '3. Публикация результатов письменного этапа (PDF)',
+      stage3Section: '3. Дата публикации результатов и итогового рейтинга (PDF)',
       stage4Section: '4. Публикация итоговых результатов',
       contactSection: 'Контактные данные (Подвал сайта)',
       dateRoLabel: 'Дата на румынском (RO)',
@@ -649,9 +726,9 @@ export const translations = {
       stage2Title: 'The written stage – examination session',
       stage2Desc:
         'In-person written examination held at the branch selected during registration.',
-      stage3Title: 'Publishing written stage results',
+      stage3Title: 'Publication of results (PDF) and final rankings',
       stage3Desc:
-        'Students sign in with their 6-digit ID and Access PIN to view and download their personal PDF evaluation report.',
+        'Students sign in with their 6-digit ID and Access PIN to view and download their personal PDF evaluation report and final results.',
       stage4Title: 'Publishing the final results',
       stage4Desc:
         'Official announcement of final rankings and competition winners across all grades.',
@@ -714,7 +791,10 @@ export const translations = {
       gradeLabel: 'Grade',
       codeWord: 'Grade',
       school: 'School Name',
-      schoolPlaceholder: 'e.g., Orizont Lyceum',
+      schoolPlaceholder: 'e.g., Mihai Eminescu Lyceum, Balti',
+      otherSchoolLabel: 'Enter the name of your school / lyceum',
+      otherSchoolPlaceholder: 'e.g., Mihai Eminescu Theoretical Lyceum, Chisinau',
+      kindergartenGradeHint: 'Note: Orizont Kindergarten School includes Grades II – IV.',
       teacherName: "Math Teacher's Full Name",
       teacherPlaceholder: 'e.g., Maria Ionescu',
       examLanguage: 'Preferred Exam Language',
@@ -810,7 +890,7 @@ export const translations = {
       examTimeLabel: 'Written Exam Time Interval (e.g., 10:00 – 12:00)',
       stage1Section: '1. Online Registration Period',
       stage2Section: '2. Written Stage Date (Exam Day)',
-      stage3Section: '3. Written Stage Results Publication Date (PDF)',
+      stage3Section: '3. Results & Final Rankings Publication Date (PDF)',
       stage4Section: '4. Final Results Publication Date',
       contactSection: 'Contact Information (Footer & Support)',
       dateRoLabel: 'Date in Romanian (RO)',

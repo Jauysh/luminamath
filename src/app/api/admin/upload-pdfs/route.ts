@@ -13,8 +13,11 @@ async function isAuthorized(req: NextRequest): Promise<boolean> {
 
 function extractSixDigitId(filename: string): string | null {
   const base = filename.split('/').pop() || filename;
-  const match = base.match(/(\d{6})/);
-  return match ? match[1] : null;
+  const match6 = base.match(/(\d{6})/);
+  if (match6) return match6[1];
+  const match5 = base.match(/(?<!\d)(\d{5})(?!\d)/);
+  if (match5) return match5[1].padStart(6, '0');
+  return null;
 }
 
 export async function POST(req: NextRequest) {

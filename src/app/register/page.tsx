@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
-import { GRADES } from '@/lib/i18n';
+import { GRADES, SCHOOL_OPTIONS, SchoolOption } from '@/lib/i18n';
 import {
   Award,
   Building2,
@@ -55,7 +55,8 @@ export default function RegisterPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [grade, setGrade] = useState<number>(2);
-  const [school, setSchool] = useState('');
+  const [schoolCode, setSchoolCode] = useState<number>(1);
+  const [customSchool, setCustomSchool] = useState('');
   const [teacherName, setTeacherName] = useState('');
   const [examLanguage, setExamLanguage] = useState<'RO' | 'RU' | 'EN'>('RO');
   const [branchId, setBranchId] = useState<number>(0);
@@ -97,9 +98,39 @@ export default function RegisterPage() {
       ? `${settings.stage2_date_en}, ${settings.exam_time}`
       : `${settings.stage2_date_ro}, ${settings.exam_time}`;
 
+  const getSchoolOptionLabel = (opt: SchoolOption) => {
+    const label =
+      locale === 'RU' ? opt.name_ru : locale === 'EN' ? opt.name_en : opt.name_ro;
+    return `[${opt.codeStr}] ${label}`;
+  };
+
+  const selectedSchoolOption =
+    SCHOOL_OPTIONS.find((s) => s.code === Number(schoolCode)) || SCHOOL_OPTIONS[0];
+  const availableGrades = selectedSchoolOption.maxGrade
+    ? GRADES.filter((g) => g <= selectedSchoolOption.maxGrade!)
+    : GRADES;
+
+  const handleSchoolCodeChange = (newCode: number) => {
+    setSchoolCode(newCode);
+    const opt = SCHOOL_OPTIONS.find((s) => s.code === newCode);
+    if (opt?.maxGrade && grade > opt.maxGrade) {
+      setGrade(2);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    const resolvedSchoolName = selectedSchoolOption.isOther
+      ? customSchool.trim()
+      : selectedSchoolOption.name_ro;
+
+    if (!resolvedSchoolName) {
+      setError(t.register.otherSchoolLabel);
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -110,7 +141,8 @@ export default function RegisterPage() {
           firstName,
           lastName,
           grade,
-          school,
+          school: resolvedSchoolName,
+          schoolCode: selectedSchoolOption.code,
           teacherName,
           examLanguage,
           branchId,
@@ -137,7 +169,8 @@ export default function RegisterPage() {
     setRegistered(null);
     setFirstName('');
     setLastName('');
-    setSchool('');
+    setSchoolCode(1);
+    setCustomSchool('');
     setTeacherName('');
     setEmail('');
     setPhone('');
@@ -419,32 +452,60 @@ export default function RegisterPage() {
                 onChange={(e) => setGrade(Number(e.target.value))}
                 className="w-full px-3.5 py-3 sm:py-2.5 rounded-xl border border-slate-300 bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 outline-none text-base sm:text-sm font-semibold"
               >
-                {GRADES.map((g) => (
+                {availableGrades.map((g) => (
                   <option key={g} value={g}>
                     {t.register.gradeLabel} {g}
                   </option>
                 ))}
               </select>
+              {selectedSchoolOption.maxGrade && (
+                <p className="mt-1.5 text-xs font-semibold text-amber-800">
+                  {t.register.kindergartenGradeHint}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Row 3: School & Math Teacher */}
+          {/* Row 3: School Selection (7 Orizont Branches + Other School) & Math Teacher */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1.5">
-                {t.register.school} <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <School className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                <input
-                  type="text"
+            <div className="space-y-2.5">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">
+                  <School className="w-4 h-4 inline mr-1 text-indigo-700" />
+                  {t.register.school} <span className="text-rose-500">*</span>
+                </label>
+                <select
                   required
-                  value={school}
-                  onChange={(e) => setSchool(e.target.value)}
-                  placeholder={t.register.schoolPlaceholder}
-                  className="w-full pl-10 pr-4 py-3 sm:py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 outline-none text-base sm:text-sm"
-                />
+                  value={schoolCode}
+                  onChange={(e) => handleSchoolCodeChange(Number(e.target.value))}
+                  className="w-full px-3.5 py-3 sm:py-2.5 rounded-xl border border-slate-300 bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 outline-none text-base sm:text-sm font-semibold"
+                >
+                  {SCHOOL_OPTIONS.map((opt) => (
+                    <option key={opt.code} value={opt.code}>
+                      {getSchoolOptionLabel(opt)}
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              {selectedSchoolOption.isOther && (
+                <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-300 space-y-1.5">
+                  <label className="block text-xs font-extrabold text-amber-950">
+                    {t.register.otherSchoolLabel} <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <School className="w-4 h-4 text-amber-600 absolute left-3.5 top-3" />
+                    <input
+                      type="text"
+                      required
+                      value={customSchool}
+                      onChange={(e) => setCustomSchool(e.target.value)}
+                      placeholder={t.register.otherSchoolPlaceholder}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-amber-300 bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 outline-none text-base sm:text-sm"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
