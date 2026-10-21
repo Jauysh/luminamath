@@ -402,7 +402,7 @@ export default function RegisterPage() {
               >
                 {branches.map((b) => (
                   <option key={b.id} value={b.id}>
-                    [{b.code}] {getBranchName(b)}
+                    {getBranchName(b)} — {b.address}
                   </option>
                 ))}
               </select>

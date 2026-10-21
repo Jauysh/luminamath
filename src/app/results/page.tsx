@@ -225,7 +225,7 @@ function ResultsContent() {
                   <div className="sm:col-span-2">
                     <span className="font-semibold text-slate-500">{t.results.branchLabel}</span>{' '}
                     <strong className="text-indigo-700">
-                      [{student.branch_code}] {getBranchName(student)} ({student.branch_address})
+                      {getBranchName(student)} ({student.branch_address})
                     </strong>
                   </div>
                 </div>

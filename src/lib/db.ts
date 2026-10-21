@@ -247,9 +247,17 @@ async function ensurePgInitialized(pool: Pool): Promise<boolean> {
 
       INSERT INTO branches (code, name_ro, name_ru, name_en, city, address, is_active)
       VALUES
-        (1, 'Chișinău — Filiala Lumina', 'Кишинёв — Филиал Lumina (Люмина)', 'Chișinău — Lumina Branch', 'Chișinău', 'mun. Chișinău, Filiala Lumina', true),
-        (2, 'Chișinău — Filiala Durlești', 'Кишинёв — Филиал Durlești (Дурлешть)', 'Chișinău — Durlești Branch', 'Chișinău', 'mun. Chișinău, or. Durlești', true)
-      ON CONFLICT (code) DO NOTHING;
+        (1, 'Filiala Ceadîr-Lunga', 'Филиал Чадыр-Лунга (Ceadîr-Lunga)', 'CEADIR LUNGA BRANCH', 'Ceadîr-Lunga', 'Str. Lenin 87, MD-6104, Ceadir Lunga, Moldova', true),
+        (2, 'Filiala Ciocana Primary (Chișinău)', 'Филиал Чеканы Primary (Кишинёв)', 'CIOCANA PRIMARY BRANCH', 'Chișinău', 'Str. Mircea Cel Batrin 10/2, MD-2044, Ciocana, Mun. Chisinau, Moldova', true),
+        (3, 'Filiala Buiucani (Chișinău)', 'Филиал Буюканы (Кишинёв)', 'BUIUCANI BRANCH', 'Chișinău', 'Str. Ion Pelivan 13/A, MD-2064, Buiucani, Mun. Chisinau, Moldova', true),
+        (4, 'Filiala Bălți', 'Филиал Бельцы (Bălți)', 'BALTI BRANCH', 'Bălți', 'Str. Chisinaului 28, MD-3310, Balti, Moldova', true)
+      ON CONFLICT (code) DO UPDATE SET
+        name_ro = EXCLUDED.name_ro,
+        name_ru = EXCLUDED.name_ru,
+        name_en = EXCLUDED.name_en,
+        city = EXCLUDED.city,
+        address = EXCLUDED.address,
+        is_active = true;
 
       INSERT INTO admin_emails (email, name, role)
       VALUES
@@ -364,21 +372,41 @@ function ensureLocalStore(): LocalStoreSchema {
       {
         id: 1,
         code: 1,
-        name_ro: 'Chișinău — Filiala Lumina',
-        name_ru: 'Кишинёв — Филиал Lumina (Люмина)',
-        name_en: 'Chișinău — Lumina Branch',
-        city: 'Chișinău',
-        address: 'mun. Chișinău, Filiala Lumina',
+        name_ro: 'Filiala Ceadîr-Lunga',
+        name_ru: 'Филиал Чадыр-Лунга (Ceadîr-Lunga)',
+        name_en: 'CEADIR LUNGA BRANCH',
+        city: 'Ceadîr-Lunga',
+        address: 'Str. Lenin 87, MD-6104, Ceadir Lunga, Moldova',
         is_active: true,
       },
       {
         id: 2,
         code: 2,
-        name_ro: 'Chișinău — Filiala Durlești',
-        name_ru: 'Кишинёв — Филиал Durlești (Дурлешть)',
-        name_en: 'Chișinău — Durlești Branch',
+        name_ro: 'Filiala Ciocana Primary (Chișinău)',
+        name_ru: 'Филиал Чеканы Primary (Кишинёв)',
+        name_en: 'CIOCANA PRIMARY BRANCH',
         city: 'Chișinău',
-        address: 'mun. Chișinău, or. Durlești',
+        address: 'Str. Mircea Cel Batrin 10/2, MD-2044, Ciocana, Mun. Chisinau, Moldova',
+        is_active: true,
+      },
+      {
+        id: 3,
+        code: 3,
+        name_ro: 'Filiala Buiucani (Chișinău)',
+        name_ru: 'Филиал Буюканы (Кишинёв)',
+        name_en: 'BUIUCANI BRANCH',
+        city: 'Chișinău',
+        address: 'Str. Ion Pelivan 13/A, MD-2064, Buiucani, Mun. Chisinau, Moldova',
+        is_active: true,
+      },
+      {
+        id: 4,
+        code: 4,
+        name_ro: 'Filiala Bălți',
+        name_ru: 'Филиал Бельцы (Bălți)',
+        name_en: 'BALTI BRANCH',
+        city: 'Bălți',
+        address: 'Str. Chisinaului 28, MD-3310, Balti, Moldova',
         is_active: true,
       },
     ];
@@ -468,6 +496,55 @@ function ensureLocalStore(): LocalStoreSchema {
   const parsed = JSON.parse(fs.readFileSync(DB_FILE, 'utf8')) as LocalStoreSchema;
   if (!parsed.settings) {
     parsed.settings = DEFAULT_SITE_SETTINGS;
+  }
+  if (
+    !parsed.branches ||
+    parsed.branches.length < 4 ||
+    parsed.branches[0]?.name_en !== 'CEADIR LUNGA BRANCH'
+  ) {
+    parsed.branches = [
+      {
+        id: 1,
+        code: 1,
+        name_ro: 'Filiala Ceadîr-Lunga',
+        name_ru: 'Филиал Чадыр-Лунга (Ceadîr-Lunga)',
+        name_en: 'CEADIR LUNGA BRANCH',
+        city: 'Ceadîr-Lunga',
+        address: 'Str. Lenin 87, MD-6104, Ceadir Lunga, Moldova',
+        is_active: true,
+      },
+      {
+        id: 2,
+        code: 2,
+        name_ro: 'Filiala Ciocana Primary (Chișinău)',
+        name_ru: 'Филиал Чеканы Primary (Кишинёв)',
+        name_en: 'CIOCANA PRIMARY BRANCH',
+        city: 'Chișinău',
+        address: 'Str. Mircea Cel Batrin 10/2, MD-2044, Ciocana, Mun. Chisinau, Moldova',
+        is_active: true,
+      },
+      {
+        id: 3,
+        code: 3,
+        name_ro: 'Filiala Buiucani (Chișinău)',
+        name_ru: 'Филиал Буюканы (Кишинёв)',
+        name_en: 'BUIUCANI BRANCH',
+        city: 'Chișinău',
+        address: 'Str. Ion Pelivan 13/A, MD-2064, Buiucani, Mun. Chisinau, Moldova',
+        is_active: true,
+      },
+      {
+        id: 4,
+        code: 4,
+        name_ro: 'Filiala Bălți',
+        name_ru: 'Филиал Бельцы (Bălți)',
+        name_en: 'BALTI BRANCH',
+        city: 'Bălți',
+        address: 'Str. Chisinaului 28, MD-3310, Balti, Moldova',
+        is_active: true,
+      },
+    ];
+    saveLocalStore(parsed);
   }
   if (!parsed.adminEmails || parsed.adminEmails.length === 0) {
     const now = new Date().toISOString();

@@ -460,7 +460,7 @@ export default function HomePage() {
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-extrabold uppercase tracking-wider mb-3">
               <Building2 className="w-4 h-4" />
-              {t.branchesSection.badge} • Chișinău
+              {t.branchesSection.badge} • Moldova
             </div>
             <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
               {t.branchesSection.title}
@@ -470,17 +470,14 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
             {branches.map((branch) => (
               <div
                 key={branch.id}
                 className="rounded-3xl p-5 sm:p-7 border-2 border-slate-200 hover:border-indigo-500 transition-all bg-gradient-to-br from-slate-50/80 to-white shadow-sm hover:shadow-md flex flex-col sm:flex-row items-start gap-4 sm:gap-5"
               >
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-lumina-700 text-white flex flex-col items-center justify-center shrink-0 font-mono shadow-md">
-                  <span className="text-[9px] sm:text-[10px] uppercase opacity-80 leading-none">
-                    {t.branchesSection.codeLabel}
-                  </span>
-                  <span className="text-lg sm:text-xl font-black leading-tight">{branch.code}</span>
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-lumina-700 text-white flex items-center justify-center shrink-0 shadow-md">
+                  <MapPin className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1 space-y-2 w-full">
                   <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">
@@ -491,8 +488,8 @@ export default function HomePage() {
                     <span>{branch.address}</span>
                   </p>
                   <div className="pt-1 flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-xs font-mono text-slate-600 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
-                      {t.branchesSection.prefixHint} <strong>#0{branch.code}</strong>
+                    <span className="text-xs font-semibold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-200">
+                      {branch.city}
                     </span>
                     <Link
                       href="/register"
