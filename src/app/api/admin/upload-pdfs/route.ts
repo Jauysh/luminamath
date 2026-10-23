@@ -8,21 +8,18 @@ import {
   saveStudentResultPdf,
 } from '@/lib/db';
 import { generateSampleOmrPdf } from '@/lib/sample-pdf';
+import {
+  ExtractedKarnePdf,
+  extractKarnesFromPdfBuffer,
+} from '@/lib/omr-pdf-splitter';
+
+export const dynamic = 'force-dynamic';
 
 async function isAuthorized(req: NextRequest): Promise<boolean> {
   const session = getAdminSessionFromRequest(req);
   if (!session) return false;
   const admin = await isEmailAuthorizedAdmin(session.email);
   return isSuperAdminRecord(admin);
-}
-
-function extractSixDigitId(filename: string): string | null {
-  const base = filename.split('/').pop() || filename;
-  const match6 = base.match(/(\d{6})/);
-  if (match6) return match6[1];
-  const match5 = base.match(/(?<!\d)(\d{5})(?!\d)/);
-  if (match5) return match5[1].padStart(6, '0');
-  return null;
 }
 
 export async function POST(req: NextRequest) {
@@ -51,6 +48,7 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
+        totalExtractedCount: matchedIds.length,
         matchedCount: matchedIds.length,
         unmatchedCount: 0,
         matchedIds,
@@ -58,6 +56,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const downloadZipMode = req.nextUrl.searchParams.get('downloadZip') === '1';
     const formData = await req.formData();
     const files = formData.getAll('files') as File[];
 
@@ -67,6 +66,7 @@ export async function POST(req: NextRequest) {
 
     const matchedIds: string[] = [];
     const unmatchedFiles: string[] = [];
+    const allExtractedKarnes: ExtractedKarnePdf[] = [];
 
     for (const file of files) {
       const fileName = file.name;
@@ -80,45 +80,106 @@ export async function POST(req: NextRequest) {
         for (const entry of entries) {
           if (entry.dir) continue;
           if (!entry.name.toLowerCase().endsWith('.pdf')) continue;
-          if (entry.name.includes('__MACOSX') || entry.name.split('/').pop()?.startsWith('._')) {
-            continue;
-          }
-
-          const studentCode = extractSixDigitId(entry.name);
-          if (!studentCode) {
-            unmatchedFiles.push(`${entry.name} (no 6-digit ID in filename)`);
+          if (
+            entry.name.includes('__MACOSX') ||
+            entry.name.split('/').pop()?.startsWith('._')
+          ) {
             continue;
           }
 
           const pdfBuf = await entry.async('nodebuffer');
-          const res = await saveStudentResultPdf(studentCode, `${studentCode}.pdf`, pdfBuf);
-
-          if (res.matched) {
-            matchedIds.push(studentCode);
+          const extracted = await extractKarnesFromPdfBuffer(pdfBuf, entry.name);
+          if (extracted.length === 0) {
+            unmatchedFiles.push(`${entry.name} (Student Num. / ID табылмады)`);
           } else {
-            unmatchedFiles.push(`${entry.name} (ID ${studentCode} not registered)`);
+            allExtractedKarnes.push(...extracted);
           }
         }
       } else if (fileName.toLowerCase().endsWith('.pdf')) {
-        const studentCode = extractSixDigitId(fileName);
-        if (!studentCode) {
-          unmatchedFiles.push(`${fileName} (no 6-digit ID in filename)`);
-          continue;
-        }
-
-        const res = await saveStudentResultPdf(studentCode, `${studentCode}.pdf`, buffer);
-        if (res.matched) {
-          matchedIds.push(studentCode);
+        const extracted = await extractKarnesFromPdfBuffer(buffer, fileName);
+        if (extracted.length === 0) {
+          unmatchedFiles.push(`${fileName} (Student Num. / ID табылмады)`);
         } else {
-          unmatchedFiles.push(`${fileName} (ID ${studentCode} not registered)`);
+          allExtractedKarnes.push(...extracted);
         }
       } else {
-        unmatchedFiles.push(`${fileName} (unsupported format — upload .pdf or .zip)`);
+        unmatchedFiles.push(
+          `${fileName} (unsupported format — upload .pdf or .zip)`
+        );
       }
+    }
+
+    // Match each extracted karne against registered students in DB
+    for (const karne of allExtractedKarnes) {
+      let matchedCode: string | null = null;
+
+      // 1) Try exact rawId (e.g. 608001 or 040701)
+      const resRaw = await saveStudentResultPdf(
+        karne.rawId,
+        `${karne.rawId}.pdf`,
+        karne.pdfBuffer
+      );
+      if (resRaw.matched) {
+        matchedCode = karne.rawId;
+      } else if (karne.normalizedId !== karne.rawId) {
+        // 2) Try 6-digit zero-padded ID (e.g. 40701 -> 040701)
+        const resNorm = await saveStudentResultPdf(
+          karne.normalizedId,
+          `${karne.normalizedId}.pdf`,
+          karne.pdfBuffer
+        );
+        if (resNorm.matched) {
+          matchedCode = karne.normalizedId;
+        }
+      }
+
+      if (matchedCode) {
+        matchedIds.push(
+          karne.studentName ? `${matchedCode} (${karne.studentName})` : matchedCode
+        );
+      } else {
+        const labelName = karne.studentName ? ` — ${karne.studentName}` : '';
+        unmatchedFiles.push(
+          `${karne.rawId}.pdf${labelName} (${karne.sourceFileName}, бет/p.${karne.pageNumber})`
+        );
+      }
+    }
+
+    // If admin requested a .ZIP archive of all split individual {ID}.pdf files
+    if (downloadZipMode) {
+      const outZip = new JSZip();
+      const usedNames = new Set<string>();
+
+      for (const karne of allExtractedKarnes) {
+        let outName = `${karne.rawId}.pdf`;
+        if (usedNames.has(outName)) {
+          outName = `${karne.rawId}_p${karne.pageNumber}_${karne.position}.pdf`;
+        }
+        usedNames.add(outName);
+        outZip.file(outName, karne.pdfBuffer);
+      }
+
+      const zipBuffer = await outZip.generateAsync({
+        type: 'nodebuffer',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 },
+      });
+
+      return new NextResponse(new Uint8Array(zipBuffer), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/zip',
+          'Content-Disposition':
+            'attachment; filename="LuminaMath_Individual_Karne_PDFs.zip"',
+          'X-Total-Extracted': String(allExtractedKarnes.length),
+          'X-Matched-Count': String(matchedIds.length),
+        },
+      });
     }
 
     return NextResponse.json({
       success: true,
+      totalExtractedCount: allExtractedKarnes.length,
       matchedCount: matchedIds.length,
       unmatchedCount: unmatchedFiles.length,
       matchedIds,

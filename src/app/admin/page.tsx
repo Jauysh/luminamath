@@ -78,6 +78,7 @@ interface AdminStudent {
 }
 
 interface UploadReport {
+  totalExtractedCount?: number;
   matchedCount: number;
   unmatchedCount: number;
   matchedIds: string[];
@@ -184,6 +185,7 @@ export default function AdminPage() {
   // Bulk PDF / ZIP upload state
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [splittingZip, setSplittingZip] = useState(false);
   const [uploadReport, setUploadReport] = useState<UploadReport | null>(null);
 
   // Branch form state
@@ -691,6 +693,52 @@ export default function AdminPage() {
       alert((err as Error).message);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleSplitAndDownloadZip = async () => {
+    if (selectedFiles.length === 0) return;
+    setSplittingZip(true);
+
+    try {
+      const formData = new FormData();
+      selectedFiles.forEach((file) => formData.append('files', file));
+
+      const res = await fetch('/api/admin/upload-pdfs?downloadZip=1', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || 'Failed to split PDFs into ZIP');
+        return;
+      }
+
+      const totalExtracted = Number(res.headers.get('X-Total-Extracted') || 0);
+      const matchedCount = Number(res.headers.get('X-Matched-Count') || 0);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'LuminaMath_Individual_Karne_PDFs.zip';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      setUploadReport({
+        totalExtractedCount: totalExtracted,
+        matchedCount,
+        unmatchedCount: Math.max(0, totalExtracted - matchedCount),
+        matchedIds: [],
+        unmatchedFiles: [],
+      });
+      fetchAdminData();
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setSplittingZip(false);
     }
   };
 
@@ -2182,9 +2230,24 @@ export default function AdminPage() {
                   {t.admin.uploadBadge}
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-600 mb-5 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-600 mb-3 leading-relaxed">
                 {t.admin.uploadDesc}
               </p>
+
+              <div className="mb-5 p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-200 text-xs text-indigo-950 leading-relaxed">
+                <strong>
+                  {locale === 'RU'
+                    ? '✨ Автоматическая нарезка общих PDF по классам (Auto-Split & Crop): '
+                    : locale === 'EN'
+                    ? '✨ Automatic Multi-Page Class PDF Splitter (Auto-Split & Crop): '
+                    : '✨ Împărțire Automată PDF pe Clase (Auto-Split & Crop): '}
+                </strong>
+                {locale === 'RU'
+                  ? 'Вы можете загружать общие многостраничные PDF-файлы классов из оптического сканера (например, 6_KLASS_GENEL.pdf, 7_KLASS_GENEL_RUS.pdf, 8_KLASS_GENEL.pdf — даже если на одной странице A4 расположено по 2 табеля/карне!). Система автоматически разрежет каждую страницу на отдельные карточки учеников, распознает «Student Num.» (ID) внутри каждого карне и прикрепит личный PDF к соответствующему ученику!'
+                  : locale === 'EN'
+                  ? 'You can directly upload multi-page class PDFs exported by the OMR scanner (e.g., 6_KLASS_GENEL.pdf, 7_KLASS_GENEL_RUS.pdf, 8_KLASS_GENEL.pdf — even when 2 student report cards are printed per A4 page!). The system automatically crops each student card into a separate PDF, reads the "Student Num." (6-digit ID) inside each card, and links it to the student!'
+                  : 'Puteți încărca direct fișierele PDF generale pe clase generate de programul OMR (ex: 6_KLASS_GENEL.pdf, 7_KLASS_GENEL_RUS.pdf, 8_KLASS_GENEL.pdf — chiar dacă pe o pagină A4 sunt câte 2 fișe/carnete!). Sistemul decupează automat fiecare fișă individuală, citește „Student Num.” (ID-ul de 6 cifre) din interior și o atașează elevului!'}
+              </div>
 
               <form onSubmit={handleUploadPdfs} className="space-y-4">
                 <label className="block border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-2xl p-6 text-center cursor-pointer bg-slate-50/60 transition-colors">
@@ -2193,7 +2256,11 @@ export default function AdminPage() {
                     {t.admin.dropzoneTitle}
                   </span>
                   <span className="block text-xs text-slate-500 mt-1">
-                    {t.admin.dropzoneSub}
+                    {locale === 'RU'
+                      ? 'Примеры: 6_KLASS_GENEL.pdf, 7_KLASS_GENEL_RUS.pdf, 8_KLASS_GENEL.pdf, 040701.pdf, omr_results.zip'
+                      : locale === 'EN'
+                      ? 'Examples: 6_KLASS_GENEL.pdf, 7_KLASS_GENEL_RUS.pdf, 8_KLASS_GENEL.pdf, 040701.pdf, omr_results.zip'
+                      : 'Exemple: 6_KLASS_GENEL.pdf, 7_KLASS_GENEL_RUS.pdf, 8_KLASS_GENEL.pdf, 040701.pdf, omr_results.zip'}
                   </span>
                   <input
                     type="file"
@@ -2218,7 +2285,7 @@ export default function AdminPage() {
                 <div className="flex flex-wrap items-center gap-3">
                   <button
                     type="submit"
-                    disabled={uploading || selectedFiles.length === 0}
+                    disabled={uploading || splittingZip || selectedFiles.length === 0}
                     className="px-6 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 disabled:opacity-50 text-white font-bold text-xs sm:text-sm shadow-sm transition-all"
                   >
                     {uploading ? t.admin.uploadingBtn : t.admin.uploadBtn}
@@ -2226,7 +2293,27 @@ export default function AdminPage() {
 
                   <button
                     type="button"
-                    disabled={uploading}
+                    disabled={uploading || splittingZip || selectedFiles.length === 0}
+                    onClick={handleSplitAndDownloadZip}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold text-xs sm:text-sm shadow-sm transition-all"
+                  >
+                    <Download className="w-4 h-4" />
+                    {splittingZip
+                      ? locale === 'RU'
+                        ? 'Нарезка PDF в ZIP...'
+                        : locale === 'EN'
+                        ? 'Splitting into ZIP...'
+                        : 'Se împarte în ZIP...'
+                      : locale === 'RU'
+                      ? '📦 Разрезать на {ID}.pdf и скачать .ZIP'
+                      : locale === 'EN'
+                      ? '📦 Split into {ID}.pdf & Download .ZIP'
+                      : '📦 Decupează în {ID}.pdf & Descarcă .ZIP'}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={uploading || splittingZip}
                     onClick={handleDemoGenerateAllPdfs}
                     className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-xs transition-all"
                   >
@@ -2238,7 +2325,18 @@ export default function AdminPage() {
 
               {uploadReport && (
                 <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
-                  <div className="flex items-center gap-4 font-bold">
+                  <div className="flex flex-wrap items-center gap-4 font-bold">
+                    {uploadReport.totalExtractedCount !== undefined && (
+                      <span className="text-indigo-700 flex items-center gap-1">
+                        <FileCheck2 className="w-4 h-4" />
+                        {locale === 'RU'
+                          ? 'Всего распознано карне (Student Num.):'
+                          : locale === 'EN'
+                          ? 'Total Cards Extracted (Student Num.):'
+                          : 'Total Fișe Extrase (Student Num.):'}{' '}
+                        {uploadReport.totalExtractedCount}
+                      </span>
+                    )}
                     <span className="text-emerald-700 flex items-center gap-1">
                       <CheckCircle2 className="w-4 h-4" />
                       {t.admin.matchedLabel} {uploadReport.matchedCount}
@@ -2251,13 +2349,13 @@ export default function AdminPage() {
                     )}
                   </div>
                   {uploadReport.matchedIds.length > 0 && (
-                    <div className="text-slate-600">
+                    <div className="text-slate-600 max-h-28 overflow-y-auto">
                       <strong>{t.admin.updatedIdsLabel}</strong>{' '}
                       {uploadReport.matchedIds.join(', ')}
                     </div>
                   )}
                   {uploadReport.unmatchedFiles.length > 0 && (
-                    <div className="text-rose-600">
+                    <div className="text-rose-600 max-h-28 overflow-y-auto">
                       <strong>{t.admin.unmatchedFilesLabel}</strong>{' '}
                       {uploadReport.unmatchedFiles.join('; ')}
                     </div>
