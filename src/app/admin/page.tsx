@@ -128,7 +128,9 @@ export default function AdminPage() {
     role?: string;
     picture?: string;
   } | null>(null);
-  const [googleClientId, setGoogleClientId] = useState('');
+  const [googleClientId, setGoogleClientId] = useState(
+    '592645627631-jvrb0v4vq581avfjf1o53a5rkhfvjapm.apps.googleusercontent.com'
+  );
 
   const isSuperAdmin =
     currentAdmin?.role === 'Super Admin' ||
@@ -247,7 +249,7 @@ export default function AdminPage() {
 
   // Initialize official Google Sign-In button if googleClientId is configured
   useEffect(() => {
-    if (authenticated || !googleClientId) return;
+    if (checkingSession || authenticated || !googleClientId) return;
 
     const handleGoogleCredential = async (response: { credential: string }) => {
       setSigningIn(true);
@@ -277,6 +279,7 @@ export default function AdminPage() {
 
     const initGsi = () => {
       if (window.google?.accounts?.id && googleBtnRef.current) {
+        googleBtnRef.current.innerHTML = '';
         window.google.accounts.id.initialize({
           client_id: googleClientId,
           callback: handleGoogleCredential,
@@ -299,10 +302,13 @@ export default function AdminPage() {
       script.defer = true;
       script.onload = initGsi;
       document.head.appendChild(script);
-    } else {
+    } else if (window.google?.accounts?.id) {
       initGsi();
+    } else {
+      script.addEventListener('load', initGsi);
+      return () => script?.removeEventListener('load', initGsi);
     }
-  }, [authenticated, googleClientId, t.admin.invalidPassword]);
+  }, [checkingSession, authenticated, googleClientId, t.admin.invalidPassword]);
 
   const getBranchName = (b: { name_ro?: string; name_ru?: string; name_en?: string }) => {
     if (locale === 'RU') return b.name_ru || b.name_ro;

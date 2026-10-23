@@ -69,7 +69,9 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsRecord = {
   stage4_date_en: '15 January 2027',
   contact_email: 'luminamath@orizont.md',
   contact_phone: '+373 (79) 000 073',
-  google_client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+  google_client_id:
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    '592645627631-jvrb0v4vq581avfjf1o53a5rkhfvjapm.apps.googleusercontent.com',
   registration_open: true,
   registration_deadline: '',
 };
@@ -722,10 +724,14 @@ export async function getSiteSettings(): Promise<SiteSettingsRecord> {
       !s.contact_email || s.contact_email === 'info@luminamath.md'
         ? 'luminamath@orizont.md'
         : s.contact_email,
-    contact_phone:
+      contact_phone:
       !s.contact_phone || s.contact_phone === '+373 22 000 000'
         ? '+373 (79) 000 073'
         : s.contact_phone,
+    google_client_id:
+      s.google_client_id ||
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+      '592645627631-jvrb0v4vq581avfjf1o53a5rkhfvjapm.apps.googleusercontent.com',
   });
 
   const pool = getPgPool();
