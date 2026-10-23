@@ -6,7 +6,7 @@ export const LOCALES: { code: Locale; label: string; flag: string; nativeName: s
   { code: 'EN', label: 'EN', flag: '🇬🇧', nativeName: 'English' },
 ];
 
-export const GRADES = [2, 3, 4, 5, 6, 7, 8];
+export const GRADES = [3, 4, 5, 6, 7, 8];
 
 export interface SchoolOption {
   code: number; // 1..7 for Orizont, 8 for Other School
@@ -65,9 +65,9 @@ export const SCHOOL_OPTIONS: SchoolOption[] = [
     code: 7,
     codeStr: '07',
     maxGrade: 4,
-    name_ro: 'Orizont Kindergarten School (cl. II–IV)',
-    name_ru: 'Orizont Kindergarten School — Начальная школа-сад (II–IV кл.)',
-    name_en: 'Orizont Kindergarten School (Grades II–IV)',
+    name_ro: 'Orizont Kindergarten School (cl. III–IV)',
+    name_ru: 'Orizont Kindergarten School — Начальная школа-сад (III–IV кл.)',
+    name_en: 'Orizont Kindergarten School (Grades III–IV)',
   },
   {
     code: 8,
@@ -96,11 +96,11 @@ export const translations = {
       title: 'LuminaMath',
       titleAccent: 'Moldova',
       subtitle:
-        'Competiție modernă de matematică pentru elevii claselor II – VIII. Înregistrează-te online, primește codul unic ID din 6 cifre și participă la etapa scrisă în filiala cea mai apropiată!',
+        'Competiție modernă de matematică pentru elevii claselor III – VIII. Înregistrează-te online, primește codul unic ID din 6 cifre și participă la etapa scrisă în filiala cea mai apropiată!',
       registerBtn: 'Înregistrare la Concurs',
       resultsBtn: 'Verifică Rezultatul (după ID)',
-      statGrades: 'Clasele II – VIII',
-      statGradesSub: '7 categorii de vârstă',
+      statGrades: 'Clasele III – VIII',
+      statGradesSub: '6 categorii de vârstă',
       statFormat: 'Proba Scrisă • 2 Ore',
       statFormatSub: 'Format oficial de concurs',
       statLangs: 'RO • RU • EN',
@@ -145,7 +145,7 @@ export const translations = {
         {
           num: '01',
           title: 'Înregistrare Online',
-          desc: 'Elevul completează formularul cu numele, clasa (II–VIII), școala, profesorul de matematică, limba testului, filiala apropiată, email și telefon.',
+          desc: 'Elevul completează formularul cu numele, clasa (III–VIII), școala, profesorul de matematică, limba testului, filiala apropiată, email și telefon.',
         },
         {
           num: '02',
@@ -190,14 +190,14 @@ export const translations = {
       lastName: 'Nume de familie (Last Name)',
       lastNamePlaceholder: 'Ex: Popescu',
       grade: 'Clasa',
-      selectGrade: 'Selectați clasa (II – VIII)',
+      selectGrade: 'Selectați clasa (III – VIII)',
       gradeLabel: 'Clasa',
       codeWord: 'Clasa',
       school: 'Școala / Liceul',
       schoolPlaceholder: 'Ex: Liceul Teoretic „Mihai Eminescu”, Bălți',
       otherSchoolLabel: 'Introduceți numele școlii / liceului dvs.',
       otherSchoolPlaceholder: 'Ex: Liceul Teoretic „Mihai Eminescu”, mun. Chișinău',
-      kindergartenGradeHint: 'Notă: Orizont Kindergarten School este destinată elevilor din clasele II – IV.',
+      kindergartenGradeHint: 'Notă: Orizont Kindergarten School este destinată elevilor din clasele III – IV.',
       teacherName: 'Numele Profesorului de Matematică',
       teacherPlaceholder: 'Ex: Maria Ionescu',
       examLanguage: 'Limba în care doriți să susțineți examenul',
@@ -306,7 +306,7 @@ export const translations = {
       studentsListTitle: 'Lista Elevilor Înregistrați',
       searchPlaceholder: 'Caută ID, nume, școală...',
       allBranchesFilter: 'Toate Filialele',
-      allGradesFilter: 'Toate Clasele (2–8)',
+      allGradesFilter: 'Toate Clasele (3–8)',
       allLangsFilter: 'Toate Limbile',
       colId: 'ID (6 Cifre)',
       colName: 'Nume & Prenume',
@@ -375,7 +375,7 @@ export const translations = {
     footer: {
       rights: 'Toate drepturile rezervate.',
       contact: 'Contact & Suport',
-      omrTagline: 'Concursul Național de Matematică pentru clasele II – VIII • Republica Moldova',
+      omrTagline: 'Concursul Național de Matematică pentru clasele III – VIII • Republica Moldova',
     },
   },
   RU: {
@@ -394,11 +394,11 @@ export const translations = {
       title: 'LuminaMath',
       titleAccent: 'Moldova',
       subtitle:
-        'Современный математический конкурс для учеников 2 – 8 классов. Зарегистрируйтесь онлайн, получите уникальный 6-значный ID-номер и примите участие в письменном этапе в ближайшем филиале!',
+        'Современный математический конкурс для учеников 3 – 8 классов. Зарегистрируйтесь онлайн, получите уникальный 6-значный ID-номер и примите участие в письменном этапе в ближайшем филиале!',
       registerBtn: 'Зарегистрироваться на экзамен',
       resultsBtn: 'Проверить результат (по ID)',
-      statGrades: '2 – 8 Классы',
-      statGradesSub: '7 возрастных категорий',
+      statGrades: '3 – 8 Классы',
+      statGradesSub: '6 возрастных категорий',
       statFormat: 'Письменный этап • 2 часа',
       statFormatSub: 'Официальный формат олимпиады',
       statLangs: 'RO • RU • EN',
@@ -443,7 +443,7 @@ export const translations = {
         {
           num: '01',
           title: 'Онлайн Регистрация',
-          desc: 'Ученик вводит имя, фамилию, класс (2–8), школу, ФИО учителя математики, язык экзамена, ближайший филиал, email и телефон.',
+          desc: 'Ученик вводит имя, фамилию, класс (3–8), школу, ФИО учителя математики, язык экзамена, ближайший филиал, email и телефон.',
         },
         {
           num: '02',
@@ -488,14 +488,14 @@ export const translations = {
       lastName: 'Фамилия (Last Name)',
       lastNamePlaceholder: 'Например: Руссу',
       grade: 'Класс',
-      selectGrade: 'Выберите класс (2 – 8)',
+      selectGrade: 'Выберите класс (3 – 8)',
       gradeLabel: 'Класс',
       codeWord: 'Класс',
       school: 'Школа / Лицей',
       schoolPlaceholder: 'Например: Теоретический лицей им. М. Эминеску, Бельцы',
       otherSchoolLabel: 'Введите название вашей школы / лицея',
       otherSchoolPlaceholder: 'Например: Теоретический лицей им. М. Эминеску, мун. Кишинёв',
-      kindergartenGradeHint: 'Примечание: Orizont Kindergarten School обучает учеников 2 – 4 классов.',
+      kindergartenGradeHint: 'Примечание: Orizont Kindergarten School обучает учеников 3 – 4 классов.',
       teacherName: 'ФИО учителя математики',
       teacherPlaceholder: 'Например: Мария Ионеску',
       examLanguage: 'Язык, на котором хотите сдавать экзамен',
@@ -604,7 +604,7 @@ export const translations = {
       studentsListTitle: 'Список зарегистрированных учеников',
       searchPlaceholder: 'Поиск по ID, имени, школе...',
       allBranchesFilter: 'Все филиалы',
-      allGradesFilter: 'Все классы (2–8)',
+      allGradesFilter: 'Все классы (3–8)',
       allLangsFilter: 'Все языки',
       colId: 'ID (6 цифр)',
       colName: 'Имя и Фамилия',
@@ -674,7 +674,7 @@ export const translations = {
     footer: {
       rights: 'Все права защищены.',
       contact: 'Контакты и поддержка',
-      omrTagline: 'Национальная математическая олимпиада для 2 – 8 классов • Республика Молдова',
+      omrTagline: 'Национальная математическая олимпиада для 3 – 8 классов • Республика Молдова',
     },
   },
   EN: {
@@ -693,11 +693,11 @@ export const translations = {
       title: 'LuminaMath',
       titleAccent: 'Moldova',
       subtitle:
-        'Modern mathematics competition for Grades II – VIII. Register online, receive your unique 6-digit student ID, and take the written exam at the branch closest to your home!',
+        'Modern mathematics competition for Grades III – VIII. Register online, receive your unique 6-digit student ID, and take the written exam at the branch closest to your home!',
       registerBtn: 'Register for the Exam',
       resultsBtn: 'Check Results (by ID)',
-      statGrades: 'Grades II – VIII',
-      statGradesSub: '7 grade divisions',
+      statGrades: 'Grades III – VIII',
+      statGradesSub: '6 grade divisions',
       statFormat: 'Written Stage • 2 Hours',
       statFormatSub: 'Official competition format',
       statLangs: 'RO • RU • EN',
@@ -742,7 +742,7 @@ export const translations = {
         {
           num: '01',
           title: 'Online Registration',
-          desc: 'Enter your first name, last name, grade (II–VIII), school, math teacher’s name, exam language, nearest branch, email, and phone.',
+          desc: 'Enter your first name, last name, grade (III–VIII), school, math teacher’s name, exam language, nearest branch, email, and phone.',
         },
         {
           num: '02',
@@ -787,14 +787,14 @@ export const translations = {
       lastName: 'Last Name',
       lastNamePlaceholder: 'e.g., Popescu',
       grade: 'Grade / Class',
-      selectGrade: 'Select grade (II – VIII)',
+      selectGrade: 'Select grade (III – VIII)',
       gradeLabel: 'Grade',
       codeWord: 'Grade',
       school: 'School Name',
       schoolPlaceholder: 'e.g., Mihai Eminescu Lyceum, Balti',
       otherSchoolLabel: 'Enter the name of your school / lyceum',
       otherSchoolPlaceholder: 'e.g., Mihai Eminescu Theoretical Lyceum, Chisinau',
-      kindergartenGradeHint: 'Note: Orizont Kindergarten School includes Grades II – IV.',
+      kindergartenGradeHint: 'Note: Orizont Kindergarten School includes Grades III – IV.',
       teacherName: "Math Teacher's Full Name",
       teacherPlaceholder: 'e.g., Maria Ionescu',
       examLanguage: 'Preferred Exam Language',
@@ -903,7 +903,7 @@ export const translations = {
       studentsListTitle: 'Registered Students List',
       searchPlaceholder: 'Search by ID, name, school...',
       allBranchesFilter: 'All Branches',
-      allGradesFilter: 'All Grades (2–8)',
+      allGradesFilter: 'All Grades (3–8)',
       allLangsFilter: 'All Languages',
       colId: 'ID (6 Digits)',
       colName: 'Full Name',
@@ -973,7 +973,7 @@ export const translations = {
     footer: {
       rights: 'All rights reserved.',
       contact: 'Contact & Support',
-      omrTagline: 'National Mathematics Competition for Grades II – VIII • Republic of Moldova',
+      omrTagline: 'National Mathematics Competition for Grades III – VIII • Republic of Moldova',
     },
   },
 };

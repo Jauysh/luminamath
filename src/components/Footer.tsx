@@ -3,24 +3,20 @@
 import React from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import { Mail, MapPin, Phone } from 'lucide-react';
 
 export function Footer() {
   const { t, settings } = useLanguage();
 
   return (
-    <footer className="bg-slate-950 text-slate-300 border-t border-slate-800 print:hidden">
+    <footer className="bg-slate-900 text-slate-300 border-t border-slate-800 print:hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Column 1 */}
           <div>
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white font-black">
-                ∑
-              </div>
-              <span className="font-black text-xl text-white">
-                LuminaMath <span className="text-amber-400">Moldova</span>
-              </span>
+            <div className="inline-block bg-white px-3.5 py-2 rounded-2xl mb-3 shadow-sm">
+              <LuminaLogo className="h-9 w-auto" />
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">
               {t.hero.subtitle}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LOCALES } from '@/lib/i18n';
 import { useLanguage } from '@/context/LanguageContext';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import {
   Award,
   Calendar,
@@ -33,22 +34,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 flex items-center justify-between py-3 sm:py-3.5 gap-2">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group shrink-0">
-          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-indigo-700 via-lumina-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-            <span className="font-black text-lg sm:text-xl tracking-tight">∑</span>
-          </div>
-          <div>
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <span className="font-black text-lg sm:text-xl tracking-tight text-slate-900">
-                Lumina<span className="text-indigo-600">Math</span>
-              </span>
-              <span className="text-[9px] sm:text-[10px] font-extrabold uppercase px-1.5 sm:px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 shadow-sm">
-                .MD
-              </span>
-            </div>
-            <p className="text-[11px] font-medium text-slate-500 hidden sm:block">
-              {t.nav.subtitle}
-            </p>
-          </div>
+          <LuminaLogo className="h-9 sm:h-11 w-auto group-hover:scale-[1.02] transition-transform" />
         </Link>
 
         {/* Desktop Nav */}

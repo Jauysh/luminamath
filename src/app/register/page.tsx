@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import { GRADES, SCHOOL_OPTIONS, SchoolOption } from '@/lib/i18n';
+import { LuminaLogo } from '@/components/LuminaLogo';
 import {
   Award,
   Building2,
@@ -54,7 +55,7 @@ export default function RegisterPage() {
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [grade, setGrade] = useState<number>(2);
+  const [grade, setGrade] = useState<number>(3);
   const [schoolCode, setSchoolCode] = useState<number>(1);
   const [customSchool, setCustomSchool] = useState('');
   const [teacherName, setTeacherName] = useState('');
@@ -68,6 +69,13 @@ export default function RegisterPage() {
   const [registered, setRegistered] = useState<RegisteredStudent | null>(null);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const gParam = Number(params.get('grade'));
+      if (gParam >= 3 && gParam <= 8) {
+        setGrade(gParam);
+      }
+    }
     fetch('/api/branches')
       .then((r) => r.json())
       .then((data) => {
@@ -114,7 +122,7 @@ export default function RegisterPage() {
     setSchoolCode(newCode);
     const opt = SCHOOL_OPTIONS.find((s) => s.code === newCode);
     if (opt?.maxGrade && grade > opt.maxGrade) {
-      setGrade(2);
+      setGrade(3);
     }
   };
 
@@ -180,6 +188,14 @@ export default function RegisterPage() {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-3xl border-2 border-emerald-500 shadow-xl overflow-hidden">
+          {/* Official Logo Header for Printed Admission Slip */}
+          <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between gap-4">
+            <LuminaLogo className="h-9 sm:h-10 w-auto" />
+            <span className="text-xs font-extrabold uppercase tracking-wider text-[#2C3987] bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full">
+              Clasele III – VIII • {settings.edition}
+            </span>
+          </div>
+
           {/* Top Banner */}
           <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-6 sm:p-8 text-center">
             <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-3">
@@ -350,16 +366,16 @@ export default function RegisterPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="bg-white rounded-3xl border border-slate-200 shadow-lg overflow-hidden">
         {/* Form Header */}
-        <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-indigo-900 text-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-[#2C3987] via-[#233075] to-indigo-800 text-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-300 mb-1">
-              <UserPlus className="w-4 h-4" />
-              LuminaMath Moldova • {settings.edition}
+              <UserPlus className="w-4 h-4 text-[#F59122]" />
+              LuminaMath Moldova • {settings.edition} • Clasele III – VIII
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold">
               {t.register.title}
             </h1>
-            <p className="text-slate-300 text-sm mt-1">
+            <p className="text-indigo-100 text-sm mt-1">
               {t.register.subtitle}
             </p>
           </div>
@@ -594,7 +610,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-lumina-600 hover:from-indigo-700 hover:to-lumina-700 disabled:opacity-60 text-white font-extrabold text-base shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2"
+              className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-[#F59122] to-[#ED5526] hover:from-[#e48113] hover:to-[#d94618] disabled:opacity-60 text-white font-extrabold text-base shadow-lg shadow-orange-500/20 transition-all flex items-center justify-center gap-2"
             >
               <UserPlus className="w-5 h-5" />
               {submitting ? t.register.submitting : t.register.submitBtn}
