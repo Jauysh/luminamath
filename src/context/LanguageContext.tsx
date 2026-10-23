@@ -106,6 +106,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem('luminamath_locale', loc);
   };
 
+  useEffect(() => {
+    const titles: Record<Locale, string> = {
+      RO: 'LuminaMath Moldova — Concursul Național de Matematică',
+      RU: 'LuminaMath Moldova — Национальная математическая олимпиада',
+      EN: 'LuminaMath Moldova — National Mathematics Competition',
+    };
+    document.title = titles[locale] || titles.RO;
+    document.documentElement.lang = locale.toLowerCase();
+  }, [locale]);
+
   return (
     <LanguageContext.Provider
       value={{
