@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   FileSearch,
   GraduationCap,
+  Lock,
   Mail,
   Phone,
   Printer,
@@ -50,7 +51,7 @@ interface RegisteredStudent {
 }
 
 export default function RegisterPage() {
-  const { locale, t, settings } = useLanguage();
+  const { locale, t, settings, isRegistrationOpen } = useLanguage();
   const [branches, setBranches] = useState<BranchItem[]>([]);
 
   const [firstName, setFirstName] = useState('');
@@ -355,6 +356,69 @@ export default function RegisterPage() {
               >
                 {t.register.registerAnotherBtn}
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isRegistrationOpen) {
+    const closedTitle =
+      locale === 'RU'
+        ? 'Регистрация на олимпиаду завершена'
+        : locale === 'EN'
+        ? 'Registration for the Competition is Closed'
+        : 'Înregistrarea la Concurs s-a Încheiat';
+
+    const closedDesc =
+      locale === 'RU'
+        ? 'Приём новых заявок на участие в национальной математической олимпиаде LuminaMath Moldova завершён. Зарегистрированных учеников ждём на письменном этапе в выбранном филиале!'
+        : locale === 'EN'
+        ? 'Online registration for the LuminaMath Moldova National Mathematics Competition has ended. Registered students are expected at their selected branch on the written exam day!'
+        : 'Perioada de înscriere online la concursul național de matematică LuminaMath Moldova s-a încheiat. Elevii deja înregistrați sunt așteptați la proba scrisă în filiala selectată!';
+
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="bg-white rounded-3xl border-2 border-slate-200 shadow-xl overflow-hidden text-center">
+          <div className="bg-gradient-to-r from-[#2C3987] via-[#233075] to-indigo-900 text-white p-8 sm:p-10">
+            <div className="w-16 h-16 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-8 h-8 text-[#F8A71A]" />
+            </div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-amber-300 mb-2">
+              LuminaMath Moldova • {settings.edition}
+            </div>
+            <h1 className="text-2xl sm:text-4xl font-black">{closedTitle}</h1>
+          </div>
+
+          <div className="p-6 sm:p-10 space-y-6">
+            <p className="text-slate-600 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto">
+              {closedDesc}
+            </p>
+
+            <div className="inline-flex flex-col sm:flex-row items-center gap-3 px-6 py-4 rounded-2xl bg-indigo-50 border border-indigo-200 text-[#2C3987]">
+              <Calendar className="w-5 h-5 text-[#F59122] shrink-0" />
+              <div className="text-sm font-bold">
+                <span className="text-slate-500 mr-1.5">{t.register.examDateLabel}:</span>
+                <span className="font-black text-[#2C3987]">{examDateForLocale}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+              <Link
+                href="/results"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-gradient-to-r from-[#F59122] to-[#ED5526] hover:from-[#e48113] hover:to-[#d94618] text-white font-extrabold text-sm shadow-lg shadow-orange-500/20 transition-all"
+              >
+                <FileSearch className="w-4 h-4" />
+                <span>{t.register.checkResultsNowBtn}</span>
+              </Link>
+
+              <Link
+                href="/"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm transition-all"
+              >
+                <span>{t.nav.home}</span>
+              </Link>
             </div>
           </div>
         </div>

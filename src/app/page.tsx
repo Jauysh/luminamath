@@ -45,7 +45,7 @@ interface CountdownState {
 }
 
 export default function HomePage() {
-  const { locale, t, settings } = useLanguage();
+  const { locale, t, settings, isRegistrationOpen } = useLanguage();
   const [branches, setBranches] = useState<BranchItem[]>([]);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [countdown, setCountdown] = useState<CountdownState>({
@@ -141,22 +141,32 @@ export default function HomePage() {
       ? { d: 'Days', h: 'Hours', m: 'Min', s: 'Sec' }
       : { d: 'Zile', h: 'Ore', m: 'Min', s: 'Sec' };
 
+  const closedBadgeText =
+    locale === 'RU'
+      ? 'Регистрация завершена'
+      : locale === 'EN'
+      ? 'Registration Closed'
+      : 'Înregistrare Închisă';
+
   const calendarStages = [
     {
       num: '01',
       date: stage1Date,
       title: t.calendar.stage1Title,
       desc: t.calendar.stage1Desc,
-      isActive: true,
-      actionHref: '/register',
-      actionLabel: t.hero.registerBtn,
+      isActive: isRegistrationOpen,
+      statusText: isRegistrationOpen ? t.calendar.activeBadge : closedBadgeText,
+      actionHref: isRegistrationOpen ? '/register' : undefined,
+      actionLabel: isRegistrationOpen ? t.hero.registerBtn : undefined,
+      badgeText: !isRegistrationOpen ? closedBadgeText : undefined,
     },
     {
       num: '02',
       date: `${stage2Date} (${settings.exam_time})`,
       title: `${t.calendar.stage2Title} (${settings.exam_time})`,
       desc: t.calendar.stage2Desc,
-      isActive: false,
+      isActive: !isRegistrationOpen,
+      statusText: t.calendar.upcomingBadge,
       badgeText: `${settings.exam_time} • ${t.calendar.examDurationBadge}`,
     },
     {
@@ -165,6 +175,7 @@ export default function HomePage() {
       title: t.calendar.stage3Title,
       desc: t.calendar.stage3Desc,
       isActive: false,
+      statusText: t.calendar.upcomingBadge,
       actionHref: '/results',
       actionLabel: t.hero.resultsBtn,
     },
@@ -351,18 +362,38 @@ export default function HomePage() {
 
                   {/* 3-Stage Competition Roadmap */}
                   <div className="space-y-2.5">
-                    <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 flex items-start gap-3">
-                      <span className="px-2 py-0.5 rounded-lg bg-emerald-600 text-white font-mono text-xs font-black shrink-0 mt-0.5">
+                    <div
+                      className={`p-3.5 rounded-2xl border flex items-start gap-3 ${
+                        isRegistrationOpen
+                          ? 'bg-emerald-50/70 border-emerald-200'
+                          : 'bg-slate-50 border-slate-200 opacity-85'
+                      }`}
+                    >
+                      <span
+                        className={`px-2 py-0.5 rounded-lg text-white font-mono text-xs font-black shrink-0 mt-0.5 ${
+                          isRegistrationOpen ? 'bg-emerald-600' : 'bg-slate-500'
+                        }`}
+                      >
                         01
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="text-xs font-extrabold text-slate-900 flex items-center justify-between gap-2">
                           <span>{t.calendar.stage1Title}</span>
-                          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-black shrink-0">
-                            {t.calendar.activeBadge}
+                          <span
+                            className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-black shrink-0 ${
+                              isRegistrationOpen
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-rose-100 text-rose-800'
+                            }`}
+                          >
+                            {isRegistrationOpen ? t.calendar.activeBadge : closedBadgeText}
                           </span>
                         </div>
-                        <div className="text-xs font-bold text-emerald-700 mt-0.5">
+                        <div
+                          className={`text-xs font-bold mt-0.5 ${
+                            isRegistrationOpen ? 'text-emerald-700' : 'text-slate-500'
+                          }`}
+                        >
                           {stage1Date}
                         </div>
                       </div>
@@ -453,10 +484,12 @@ export default function HomePage() {
                       className={`text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${
                         stage.isActive
                           ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                          : idx === 0 && !isRegistrationOpen
+                          ? 'bg-rose-100 text-rose-800 border border-rose-200'
                           : 'bg-slate-100 text-slate-500'
                       }`}
                     >
-                      {stage.isActive ? t.calendar.activeBadge : t.calendar.upcomingBadge}
+                      {stage.statusText}
                     </span>
                   </div>
 

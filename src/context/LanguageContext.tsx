@@ -20,6 +20,8 @@ export interface SiteSettingsClient {
   stage4_date_en: string;
   contact_email: string;
   contact_phone: string;
+  registration_open?: boolean;
+  registration_deadline?: string;
 }
 
 const DEFAULT_CLIENT_SETTINGS: SiteSettingsClient = {
@@ -39,13 +41,30 @@ const DEFAULT_CLIENT_SETTINGS: SiteSettingsClient = {
   stage4_date_en: '15 January 2027',
   contact_email: 'luminamath@orizont.md',
   contact_phone: '+373 (79) 000 073',
+  registration_open: true,
+  registration_deadline: '',
 };
+
+export function checkClientRegistrationOpen(settings: SiteSettingsClient): boolean {
+  if (settings.registration_open === false) {
+    return false;
+  }
+  const deadlineStr = settings.registration_deadline?.trim();
+  if (deadlineStr) {
+    const deadlineMs = Date.parse(deadlineStr);
+    if (!isNaN(deadlineMs) && Date.now() > deadlineMs) {
+      return false;
+    }
+  }
+  return true;
+}
 
 interface LanguageContextValue {
   locale: Locale;
   setLocale: (loc: Locale) => void;
   t: (typeof translations)['RO'];
   settings: SiteSettingsClient;
+  isRegistrationOpen: boolean;
   refreshSettings: () => Promise<void>;
 }
 
@@ -54,6 +73,7 @@ const LanguageContext = createContext<LanguageContextValue>({
   setLocale: () => {},
   t: translations.RO,
   settings: DEFAULT_CLIENT_SETTINGS,
+  isRegistrationOpen: true,
   refreshSettings: async () => {},
 });
 
@@ -93,6 +113,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         setLocale,
         t: translations[locale],
         settings,
+        isRegistrationOpen: checkClientRegistrationOpen(settings),
         refreshSettings,
       }}
     >

@@ -113,7 +113,7 @@ declare global {
 }
 
 export default function AdminPage() {
-  const { locale, t, settings, refreshSettings } = useLanguage();
+  const { locale, t, settings, isRegistrationOpen, refreshSettings } = useLanguage();
 
   const [checkingSession, setCheckingSession] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
@@ -599,6 +599,37 @@ export default function AdminPage() {
     }
   };
 
+  const handleQuickToggleRegistration = async () => {
+    const nextOpen = !isRegistrationOpen;
+    // If reopening when a past auto-deadline was set, clear the expired deadline so it reopens cleanly
+    let nextDeadline = calForm.registration_deadline || '';
+    if (nextOpen && nextDeadline) {
+      const parsed = Date.parse(nextDeadline);
+      if (!isNaN(parsed) && Date.now() > parsed) {
+        nextDeadline = '';
+      }
+    }
+    const updated = {
+      ...calForm,
+      registration_open: nextOpen,
+      registration_deadline: nextDeadline,
+    };
+    setCalForm(updated);
+    setSavingCal(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      });
+      if (res.ok) {
+        await refreshSettings();
+      }
+    } finally {
+      setSavingCal(false);
+    }
+  };
+
   if (checkingSession) {
     return (
       <div className="max-w-md mx-auto px-4 py-24 text-center text-slate-500 text-sm">
@@ -709,6 +740,36 @@ export default function AdminPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            disabled={savingCal}
+            onClick={handleQuickToggleRegistration}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 text-xs font-extrabold transition-all shadow-sm ${
+              isRegistrationOpen
+                ? 'border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900'
+                : 'border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-900'
+            }`}
+          >
+            <span
+              className={`w-2.5 h-2.5 rounded-full ${
+                isRegistrationOpen ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
+              }`}
+            />
+            <span>
+              {isRegistrationOpen
+                ? locale === 'RU'
+                  ? 'Регистрация ОТКРЫТА (Нажмите, чтобы закрыть)'
+                  : locale === 'EN'
+                  ? 'Registration OPEN (Click to Close)'
+                  : 'Înregistrare DESCHISĂ (Apasă pt. a Închide)'
+                : locale === 'RU'
+                ? 'Регистрация ЗАКРЫТА (Нажмите, чтобы открыть)'
+                : locale === 'EN'
+                ? 'Registration CLOSED (Click to Open)'
+                : 'Înregistrare ÎNCHISĂ (Apasă pt. a Deschide)'}
+            </span>
+          </button>
+
           <button
             type="button"
             onClick={() => fetchAdminData()}
@@ -1093,6 +1154,106 @@ export default function AdminPage() {
             )}
 
             <form onSubmit={handleSaveCalendar} className="space-y-6">
+              {/* REGISTRATION SWITCH & AUTO-DEADLINE CARD */}
+              <div
+                className={`p-5 rounded-2xl border-2 space-y-4 ${
+                  isRegistrationOpen
+                    ? 'bg-emerald-50/60 border-emerald-300'
+                    : 'bg-rose-50/60 border-rose-300'
+                }`}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-3 h-3 rounded-full ${
+                          isRegistrationOpen ? 'bg-emerald-500 animate-pulse' : 'bg-rose-600'
+                        }`}
+                      />
+                      <h3 className="text-base font-extrabold text-slate-900">
+                        {locale === 'RU'
+                          ? 'Управление регистрацией и дедлайн'
+                          : locale === 'EN'
+                          ? 'Registration Status & Auto-Deadline'
+                          : 'Controlul Înregistrării & Termen Limită (Deadline)'}
+                      </h3>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-1">
+                      {locale === 'RU'
+                        ? 'Вы можете в любой момент вручную закрыть/открыть регистрацию одной кнопкой или задать точное время автоматического закрытия.'
+                        : locale === 'EN'
+                        ? 'You can manually open/close registration at any time with 1 click, or set an optional automatic deadline date & time.'
+                        : 'Puteți închide sau redeschide manual înregistrarea în orice moment cu un singur click, sau puteți seta o dată și oră de închidere automată.'}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={savingCal}
+                    onClick={handleQuickToggleRegistration}
+                    className={`px-5 py-3 rounded-xl font-extrabold text-xs sm:text-sm text-white shadow-sm transition-all shrink-0 ${
+                      isRegistrationOpen
+                        ? 'bg-rose-600 hover:bg-rose-700'
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                    }`}
+                  >
+                    {isRegistrationOpen
+                      ? locale === 'RU'
+                        ? '🔴 Остановить / Закрыть регистрацию сейчас'
+                        : locale === 'EN'
+                        ? '🔴 Close Registration Now'
+                        : '🔴 Închide Înregistrarea Acum'
+                      : locale === 'RU'
+                      ? '🟢 Открыть регистрацию снова'
+                      : locale === 'EN'
+                      ? '🟢 Reopen Registration Now'
+                      : '🟢 Redeschide Înregistrarea Acum'}
+                  </button>
+                </div>
+
+                <div className="pt-3 border-t border-slate-200/80 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                  <div className="sm:col-span-8">
+                    <label className="block text-xs font-extrabold text-slate-800 mb-1">
+                      {locale === 'RU'
+                        ? 'Автоматический дедлайн закрытия (необязательно — оставьте пустым для ручного управления)'
+                        : locale === 'EN'
+                        ? 'Automatic Closing Deadline (Optional — leave empty for manual control)'
+                        : 'Termen limită de închidere automată (Opțional — lăsați gol pentru control manual)'}
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={calForm.registration_deadline || ''}
+                      onChange={(e) =>
+                        setCalForm({
+                          ...calForm,
+                          registration_deadline: e.target.value,
+                        })
+                      }
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-mono font-bold text-slate-900"
+                    />
+                  </div>
+                  <div className="sm:col-span-4">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCalForm({
+                          ...calForm,
+                          registration_deadline: '',
+                          registration_open: true,
+                        })
+                      }
+                      className="w-full py-2 px-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-xs font-bold text-slate-700"
+                    >
+                      {locale === 'RU'
+                        ? 'Очистить авто-дедлайн'
+                        : locale === 'EN'
+                        ? 'Clear Auto-Deadline'
+                        : 'Șterge termenul automat'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200">
                 <div>
                   <label className="block text-xs font-extrabold uppercase text-indigo-950 mb-1.5">

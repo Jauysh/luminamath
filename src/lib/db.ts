@@ -48,6 +48,8 @@ export interface SiteSettingsRecord {
   contact_email: string;
   contact_phone: string;
   google_client_id?: string;
+  registration_open?: boolean;
+  registration_deadline?: string;
 }
 
 export const DEFAULT_SITE_SETTINGS: SiteSettingsRecord = {
@@ -68,7 +70,26 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsRecord = {
   contact_email: 'luminamath@orizont.md',
   contact_phone: '+373 (79) 000 073',
   google_client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+  registration_open: true,
+  registration_deadline: '',
 };
+
+export function isRegistrationCurrentlyOpen(settings: {
+  registration_open?: boolean;
+  registration_deadline?: string;
+}): boolean {
+  if (settings.registration_open === false) {
+    return false;
+  }
+  const deadlineStr = settings.registration_deadline?.trim();
+  if (deadlineStr) {
+    const deadlineMs = Date.parse(deadlineStr);
+    if (!isNaN(deadlineMs) && Date.now() > deadlineMs) {
+      return false;
+    }
+  }
+  return true;
+}
 
 export interface EmailConfigRecord {
   smtp_host: string;

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit, getClientIp } from '@/lib/auth';
-import { getSiteSettings, markStudentEmailStatus, registerStudent } from '@/lib/db';
+import {
+  getSiteSettings,
+  isRegistrationCurrentlyOpen,
+  markStudentEmailStatus,
+  registerStudent,
+} from '@/lib/db';
 import { sendRegistrationEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
@@ -59,21 +64,29 @@ export async function POST(req: NextRequest) {
     const validLangs = ['RO', 'RU', 'EN'];
     const lang = (validLangs.includes(examLanguage) ? examLanguage : 'RO') as 'RO' | 'RU' | 'EN';
 
-    const [student, settings] = await Promise.all([
-      registerStudent({
-        firstName: String(firstName).slice(0, 100),
-        lastName: String(lastName).slice(0, 100),
-        grade: numericGrade,
-        school: String(school).slice(0, 200),
-        schoolCode: Number(schoolCode) || 8,
-        teacherName: String(teacherName).slice(0, 150),
-        examLanguage: lang,
-        branchId: Number(branchId),
-        email: String(email).slice(0, 150),
-        phone: String(phone).slice(0, 50),
-      }),
-      getSiteSettings(),
-    ]);
+    const settings = await getSiteSettings();
+    if (!isRegistrationCurrentlyOpen(settings)) {
+      return NextResponse.json(
+        {
+          error:
+            'Înregistrarea la concursul LuminaMath Moldova s-a încheiat. / Регистрация на олимпиаду LuminaMath Moldova завершена. / Registration for LuminaMath Moldova is now closed.',
+        },
+        { status: 403 }
+      );
+    }
+
+    const student = await registerStudent({
+      firstName: String(firstName).slice(0, 100),
+      lastName: String(lastName).slice(0, 100),
+      grade: numericGrade,
+      school: String(school).slice(0, 200),
+      schoolCode: Number(schoolCode) || 8,
+      teacherName: String(teacherName).slice(0, 150),
+      examLanguage: lang,
+      branchId: Number(branchId),
+      email: String(email).slice(0, 150),
+      phone: String(phone).slice(0, 50),
+    });
 
     const dateForLang =
       lang === 'RU'
