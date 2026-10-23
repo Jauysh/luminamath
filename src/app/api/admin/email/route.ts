@@ -142,6 +142,13 @@ export async function POST(req: NextRequest) {
           ? settings.stage2_date_en
           : settings.stage2_date_ro;
 
+      const branchNameForLang =
+        student.exam_language === 'RU'
+          ? student.branch_name_ru || student.branch_name_ro
+          : student.exam_language === 'EN'
+          ? student.branch_name_en || student.branch_name_ro
+          : student.branch_name_ro;
+
       const res = await sendRegistrationEmail({
         to: student.email,
         studentCode: student.student_code,
@@ -152,7 +159,7 @@ export async function POST(req: NextRequest) {
         school: student.school,
         teacherName: student.teacher_name,
         examLanguage: student.exam_language,
-        branchName: student.branch_name_ro || `Filiala #${student.branch_code}`,
+        branchName: branchNameForLang || `Filiala #${student.branch_code}`,
         branchAddress: student.branch_address || 'Chișinău',
         examDateText: `${dateForLang}, ${settings.exam_time}`,
       });

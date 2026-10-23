@@ -319,66 +319,6 @@ async function ensurePgInitialized(pool: Pool): Promise<boolean> {
       [JSON.stringify(DEFAULT_SITE_SETTINGS)]
     );
 
-    // Seed demo student 201001 and 105001 if not exists
-    const demoCheck = await pool.query(
-      `SELECT student_code FROM students WHERE student_code IN ('201001', '105001')`
-    );
-    if (demoCheck.rowCount === 0) {
-      const bRes2 = await pool.query(`SELECT id FROM branches WHERE code = 2 LIMIT 1`);
-      if (bRes2.rows[0]) {
-        const demoPdf = generateSampleOmrPdf({
-          studentCode: '201001',
-          fullName: 'Damir Rusu',
-          grade: 3,
-          school: 'IPLT „Orizont” — Filiala Durlești',
-          branchName: 'Filiala Ciocana Primary (Chisinau)',
-          examLanguage: 'RO',
-          score: 95.0,
-        });
-        await pool.query(
-          `INSERT INTO students (
-            id, student_code, first_name, last_name, grade, school, school_code, teacher_name,
-            exam_language, branch_id, branch_code, email, phone, email_sent, has_result_pdf, result_uploaded_at
-          ) VALUES ($1, '201001', 'Damir', 'Rusu', 3, 'IPLT „Orizont” — Filiala Durlești', 3, 'Elena Moraru', 'RO', $2, 2, 'damir.rusu@example.md', '+373 69 123 456', true, true, now())
-          ON CONFLICT (student_code) DO NOTHING`,
-          [crypto.randomUUID(), bRes2.rows[0].id]
-        );
-        await pool.query(
-          `INSERT INTO student_results (student_code, file_name, pdf_data, file_size)
-           VALUES ('201001', '201001.pdf', $1, $2)
-           ON CONFLICT (student_code) DO NOTHING`,
-          [demoPdf, demoPdf.length]
-        );
-      }
-
-      const bRes1 = await pool.query(`SELECT id FROM branches WHERE code = 1 LIMIT 1`);
-      if (bRes1.rows[0]) {
-        const demoPdf2 = generateSampleOmrPdf({
-          studentCode: '105001',
-          fullName: 'Sofia Cebotari',
-          grade: 5,
-          school: 'Liceul Teoretic Mihai Eminescu',
-          branchName: 'Chisinau - Filiala Lumina',
-          examLanguage: 'RO',
-          score: 88.5,
-        });
-        await pool.query(
-          `INSERT INTO students (
-            id, student_code, first_name, last_name, grade, school, teacher_name,
-            exam_language, branch_id, branch_code, email, phone, email_sent, has_result_pdf, result_uploaded_at
-          ) VALUES ($1, '105001', 'Sofia', 'Cebotari', 5, 'Liceul Teoretic Mihai Eminescu', 'Ion Munteanu', 'RO', $2, 1, 'sofia.cebotari@example.md', '+373 68 555 777', true, true, now())
-          ON CONFLICT (student_code) DO NOTHING`,
-          [crypto.randomUUID(), bRes1.rows[0].id]
-        );
-        await pool.query(
-          `INSERT INTO student_results (student_code, file_name, pdf_data, file_size)
-           VALUES ('105001', '105001.pdf', $1, $2)
-           ON CONFLICT (student_code) DO NOTHING`,
-          [demoPdf2, demoPdf2.length]
-        );
-      }
-    }
-
     global.__luminaPgInitialized = true;
     return true;
   } catch (err) {
@@ -1335,6 +1275,77 @@ export async function updateStudentDetails(
   };
   saveLocalStore(store);
   return store.students[idx];
+}
+
+export async function deleteStudentByCode(studentCode: string): Promise<boolean> {
+  const cleanCode = studentCode.trim();
+  const pool = getPgPool();
+
+  if (pool && (await ensurePgInitialized(pool))) {
+    const existingRes = await pool.query(
+      'SELECT school_code, grade FROM students WHERE student_code = $1 LIMIT 1',
+      [cleanCode]
+    );
+    const existing = existingRes.rows[0];
+    await pool.query('DELETE FROM student_results WHERE student_code = $1', [cleanCode]);
+    const delRes = await pool.query('DELETE FROM students WHERE student_code = $1', [
+      cleanCode,
+    ]);
+    if (existing) {
+      const sCode = Number(existing.school_code) || 8;
+      const g = Number(existing.grade);
+      const countRes = await pool.query(
+        'SELECT COUNT(*)::int AS cnt FROM students WHERE school_code = $1 AND grade = $2',
+        [sCode, g]
+      );
+      const remaining = countRes.rows[0]?.cnt || 0;
+      await pool.query(
+        `UPDATE id_counters SET last_seq = $1 WHERE branch_code = $2 AND grade = $3`,
+        [remaining, 100 + sCode, g]
+      );
+    }
+    return (delRes.rowCount || 0) > 0;
+  }
+
+  const store = ensureLocalStore();
+  const idx = store.students.findIndex((s) => s.student_code === cleanCode);
+  if (idx === -1) return false;
+  const removed = store.students[idx];
+  store.students.splice(idx, 1);
+
+  const pdfPath = path.join(PDF_DIR, `${cleanCode}.pdf`);
+  if (fs.existsSync(pdfPath)) {
+    try {
+      fs.unlinkSync(pdfPath);
+    } catch {}
+  }
+
+  const sCode = removed.school_code || 8;
+  const counterKey = `s${sCode}_${removed.grade}`;
+  const remaining = store.students.filter(
+    (s) => (s.school_code || 8) === sCode && s.grade === removed.grade
+  ).length;
+  store.counters[counterKey] = remaining;
+
+  saveLocalStore(store);
+  return true;
+}
+
+export async function deleteAllStudents(): Promise<number> {
+  const pool = getPgPool();
+  if (pool && (await ensurePgInitialized(pool))) {
+    await pool.query('DELETE FROM student_results');
+    const delRes = await pool.query('DELETE FROM students');
+    await pool.query('DELETE FROM id_counters');
+    return delRes.rowCount || 0;
+  }
+
+  const store = ensureLocalStore();
+  const count = store.students.length;
+  store.students = [];
+  store.counters = {};
+  saveLocalStore(store);
+  return count;
 }
 
 export async function saveStudentResultPdf(

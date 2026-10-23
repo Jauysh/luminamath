@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSessionFromRequest } from '@/lib/auth';
 import {
+  deleteAllStudents,
+  deleteStudentByCode,
   getAllStudents,
   getBranches,
   isEmailAuthorizedAdmin,
+  isSuperAdminRecord,
   updateStudentDetails,
 } from '@/lib/db';
 
@@ -14,6 +17,15 @@ async function isAuthorized(req: NextRequest): Promise<boolean> {
   if (session) {
     const admin = await isEmailAuthorizedAdmin(session.email);
     if (admin) return true;
+  }
+  return false;
+}
+
+async function isAuthorizedSuperAdmin(req: NextRequest): Promise<boolean> {
+  const session = getAdminSessionFromRequest(req);
+  if (session) {
+    const admin = await isEmailAuthorizedAdmin(session.email);
+    if (isSuperAdminRecord(admin)) return true;
   }
   return false;
 }
@@ -182,6 +194,44 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: true, student: updated });
   } catch (error) {
     console.error('[PUT /api/admin/students] Error:', error);
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  if (!(await isAuthorized(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const clearAll = req.nextUrl.searchParams.get('all') === 'true';
+    if (clearAll) {
+      if (!(await isAuthorizedSuperAdmin(req))) {
+        return NextResponse.json(
+          { error: 'Doar Super Admin poate șterge întreaga bază de date' },
+          { status: 403 }
+        );
+      }
+      const deletedCount = await deleteAllStudents();
+      return NextResponse.json({ success: true, deletedCount });
+    }
+
+    const studentCode = req.nextUrl.searchParams.get('studentCode')?.trim();
+    if (!studentCode) {
+      return NextResponse.json(
+        { error: 'Codul elevului (studentCode) este obligatoriu' },
+        { status: 400 }
+      );
+    }
+
+    const deleted = await deleteStudentByCode(studentCode);
+    if (!deleted) {
+      return NextResponse.json({ error: 'Elevul nu a fost găsit' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, studentCode });
+  } catch (error) {
+    console.error('[DELETE /api/admin/students] Error:', error);
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }

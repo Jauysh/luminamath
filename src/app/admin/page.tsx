@@ -218,6 +218,8 @@ export default function AdminPage() {
   const [sendingStudentEmail, setSendingStudentEmail] = useState<string | null>(null);
   const [sendingBulkEmails, setSendingBulkEmails] = useState(false);
   const [bulkEmailReport, setBulkEmailReport] = useState<BulkEmailReport | null>(null);
+  const [deletingStudentCode, setDeletingStudentCode] = useState<string | null>(null);
+  const [clearingAllStudents, setClearingAllStudents] = useState(false);
 
   // Calendar & Site Settings form state
   const [calForm, setCalForm] = useState<SiteSettingsClient & { google_client_id?: string }>(
@@ -438,6 +440,66 @@ export default function AdminPage() {
       alert((err as Error).message);
     } finally {
       setSavingEdit(false);
+    }
+  };
+
+  const handleDeleteStudent = async (studentCode: string, fullName: string) => {
+    const confirmMsg =
+      locale === 'RU'
+        ? `Вы уверены, что хотите удалить ученика «${fullName}» (ID: ${studentCode}) из базы данных?`
+        : locale === 'EN'
+        ? `Are you sure you want to delete student "${fullName}" (ID: ${studentCode}) from the database?`
+        : `Sigur doriți să ștergeți elevul „${fullName}” (ID: ${studentCode}) din baza de date?`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setDeletingStudentCode(studentCode);
+    try {
+      const res = await fetch(
+        `/api/admin/students?studentCode=${encodeURIComponent(studentCode)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Eroare la ștergerea elevului');
+      } else {
+        if (editingStudent?.student_code === studentCode) {
+          setEditingStudent(null);
+        }
+        fetchAdminData();
+      }
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setDeletingStudentCode(null);
+    }
+  };
+
+  const handleDeleteAllStudents = async () => {
+    const confirmMsg =
+      locale === 'RU'
+        ? `ВНИМАНИЕ! Вы уверены, что хотите ПОЛНОСТЬЮ ОЧИСТИТЬ базу учеников (${allStudents.length} чел.) и сбросить счетчики ID (001)? Это действие необратимо.`
+        : locale === 'EN'
+        ? `WARNING! Are you sure you want to DELETE ALL ${allStudents.length} registered students and reset ID counters back to 01? This action cannot be undone.`
+        : `ATENȚIE! Sigur doriți să ȘTERGEȚI TOȚI cei ${allStudents.length} elevi înregistrați și să resetați contoarele ID la 01? Această acțiune este ireversibilă.`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setClearingAllStudents(true);
+    try {
+      const res = await fetch('/api/admin/students?all=true', {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Eroare la curățarea bazei de date');
+      } else {
+        fetchAdminData();
+      }
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setClearingAllStudents(false);
     }
   };
 
@@ -2277,9 +2339,29 @@ export default function AdminPage() {
           {/* STUDENTS TABLE & FILTERS */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <h2 className="text-lg font-extrabold text-slate-900">
-                {t.admin.studentsListTitle} ({students.length})
-              </h2>
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="text-lg font-extrabold text-slate-900">
+                  {t.admin.studentsListTitle} ({students.length})
+                </h2>
+
+                {isSuperAdmin && allStudents.length > 0 && (
+                  <button
+                    type="button"
+                    disabled={clearingAllStudents}
+                    onClick={handleDeleteAllStudents}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-extrabold transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    {clearingAllStudents
+                      ? '...'
+                      : locale === 'RU'
+                      ? 'Очистить всю базу учеников'
+                      : locale === 'EN'
+                      ? 'Clear All Students'
+                      : 'Șterge Toți Elevii (Reset DB)'}
+                  </button>
+                )}
+              </div>
 
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative">
@@ -2391,18 +2473,41 @@ export default function AdminPage() {
                         <div>
                           {s.first_name} {s.last_name}
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(s)}
-                          className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-extrabold border border-indigo-200 transition-colors"
-                        >
-                          <Edit3 className="w-3 h-3" />
-                          {locale === 'RU'
-                            ? 'Изменить'
-                            : locale === 'EN'
-                            ? 'Edit'
-                            : 'Editează'}
-                        </button>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(s)}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-extrabold border border-indigo-200 transition-colors"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            {locale === 'RU'
+                              ? 'Изменить'
+                              : locale === 'EN'
+                              ? 'Edit'
+                              : 'Editează'}
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={deletingStudentCode === s.student_code}
+                            onClick={() =>
+                              handleDeleteStudent(
+                                s.student_code,
+                                `${s.first_name} ${s.last_name}`
+                              )
+                            }
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-extrabold border border-rose-200 transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            {deletingStudentCode === s.student_code
+                              ? '...'
+                              : locale === 'RU'
+                              ? 'Удалить'
+                              : locale === 'EN'
+                              ? 'Delete'
+                              : 'Șterge'}
+                          </button>
+                        </div>
                       </td>
                       <td className="py-3.5 px-4 font-semibold text-slate-700">
                         {t.register.gradeLabel} {s.grade}
