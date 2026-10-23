@@ -172,9 +172,9 @@ export const translations = {
       ],
       prizesTitle: 'Premii și Diplome (Etapa Scrisă)',
       prizes: [
-        { tier: 'Locul I', points: '1500 MDL', badge: 'Medalie de Aur & Diplomă', color: 'from-amber-400 to-yellow-500' },
-        { tier: 'Locul II', points: '1000 MDL', badge: 'Medalie de Argint & Diplomă', color: 'from-slate-300 to-slate-400' },
-        { tier: 'Locul III', points: '750 MDL', badge: 'Medalie de Bronz & Diplomă', color: 'from-amber-600 to-orange-700' },
+        { tier: 'Locul I', points: 'Medalie de Aur', badge: 'Diplomă de Gradul I', color: 'from-amber-400 to-yellow-500' },
+        { tier: 'Locul II', points: 'Medalie de Argint', badge: 'Diplomă de Gradul II', color: 'from-slate-300 to-slate-400' },
+        { tier: 'Locul III', points: 'Medalie de Bronz', badge: 'Diplomă de Gradul III', color: 'from-amber-600 to-orange-700' },
         { tier: 'Mențiune', points: 'Diplomă & Medalie', badge: 'Mențiune de Onoare', color: 'from-lumina-500 to-lumina-600' },
       ],
       examNote:
@@ -508,9 +508,9 @@ export const translations = {
       ],
       prizesTitle: 'Призы и Дипломы (Письменный этап)',
       prizes: [
-        { tier: 'I Место', points: '1500 MDL', badge: 'Золотая медаль и Диплом', color: 'from-amber-400 to-yellow-500' },
-        { tier: 'II Место', points: '1000 MDL', badge: 'Серебряная медаль и Диплом', color: 'from-slate-300 to-slate-400' },
-        { tier: 'III Место', points: '750 MDL', badge: 'Бронзовая медаль и Диплом', color: 'from-amber-600 to-orange-700' },
+        { tier: 'I Место', points: 'Золотая медаль', badge: 'Диплом I степени', color: 'from-amber-400 to-yellow-500' },
+        { tier: 'II Место', points: 'Серебряная медаль', badge: 'Диплом II степени', color: 'from-slate-300 to-slate-400' },
+        { tier: 'III Место', points: 'Бронзовая медаль', badge: 'Диплом III степени', color: 'from-amber-600 to-orange-700' },
         { tier: 'Грамота', points: 'Диплом и Медаль', badge: 'Почётная грамота (Mențiune)', color: 'from-lumina-500 to-lumina-600' },
       ],
       examNote:
@@ -845,9 +845,9 @@ export const translations = {
       ],
       prizesTitle: 'Prizes & Diplomas (Written Stage)',
       prizes: [
-        { tier: '1st Place', points: '1500 MDL', badge: 'Gold Medal & Diploma', color: 'from-amber-400 to-yellow-500' },
-        { tier: '2nd Place', points: '1000 MDL', badge: 'Silver Medal & Diploma', color: 'from-slate-300 to-slate-400' },
-        { tier: '3rd Place', points: '750 MDL', badge: 'Bronze Medal & Diploma', color: 'from-amber-600 to-orange-700' },
+        { tier: '1st Place', points: 'Gold Medal', badge: 'First Prize Diploma', color: 'from-amber-400 to-yellow-500' },
+        { tier: '2nd Place', points: 'Silver Medal', badge: 'Second Prize Diploma', color: 'from-slate-300 to-slate-400' },
+        { tier: '3rd Place', points: 'Bronze Medal', badge: 'Third Prize Diploma', color: 'from-amber-600 to-orange-700' },
         { tier: 'Mention', points: 'Diploma & Medal', badge: 'Honorable Mention', color: 'from-lumina-500 to-lumina-600' },
       ],
       examNote:
