@@ -162,6 +162,7 @@ export async function POST(req: NextRequest) {
         branchName: branchNameForLang || `Filiala #${student.branch_code}`,
         branchAddress: student.branch_address || 'Chișinău',
         examDateText: `${dateForLang}, ${settings.exam_time}`,
+        resultsUrl: `${origin}/results?id=${student.student_code}&pin=${student.access_pin}`,
       });
 
       if (!res.sent || res.mode !== 'smtp') {
@@ -198,6 +199,13 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      const branchNameForLang =
+        student.exam_language === 'RU'
+          ? student.branch_name_ru || student.branch_name_ro
+          : student.exam_language === 'EN'
+          ? student.branch_name_en || student.branch_name_ro
+          : student.branch_name_ro;
+
       const res = await sendResultPdfEmail({
         to: student.email,
         studentCode: student.student_code,
@@ -206,8 +214,9 @@ export async function POST(req: NextRequest) {
         lastName: student.last_name,
         grade: student.grade,
         school: student.school,
+        teacherName: student.teacher_name,
         examLanguage: student.exam_language,
-        branchName: student.branch_name_ro || `Filiala #${student.branch_code}`,
+        branchName: branchNameForLang || `Filiala #${student.branch_code}`,
         resultsUrl: `${origin}/results?id=${student.student_code}&pin=${student.access_pin}`,
         pdfBuffer: pdfRecord.pdfBuffer,
       });
@@ -258,6 +267,13 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
+        const branchNameForLang =
+          student.exam_language === 'RU'
+            ? student.branch_name_ru || student.branch_name_ro
+            : student.exam_language === 'EN'
+            ? student.branch_name_en || student.branch_name_ro
+            : student.branch_name_ro;
+
         const res = await sendResultPdfEmail({
           to: student.email,
           studentCode: student.student_code,
@@ -266,8 +282,9 @@ export async function POST(req: NextRequest) {
           lastName: student.last_name,
           grade: student.grade,
           school: student.school,
+          teacherName: student.teacher_name,
           examLanguage: student.exam_language,
-          branchName: student.branch_name_ro || `Filiala #${student.branch_code}`,
+          branchName: branchNameForLang || `Filiala #${student.branch_code}`,
           resultsUrl: `${origin}/results?id=${student.student_code}&pin=${student.access_pin}`,
           pdfBuffer: pdfRecord.pdfBuffer,
         });

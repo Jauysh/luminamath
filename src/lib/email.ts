@@ -14,6 +14,7 @@ export interface RegistrationEmailPayload {
   branchName: string;
   branchAddress: string;
   examDateText?: string;
+  resultsUrl?: string;
 }
 
 export interface ResultPdfEmailPayload {
@@ -24,6 +25,7 @@ export interface ResultPdfEmailPayload {
   lastName: string;
   grade: number;
   school: string;
+  teacherName?: string;
   examLanguage: 'RO' | 'RU' | 'EN';
   branchName: string;
   resultsUrl: string;
@@ -56,104 +58,17 @@ async function createConfiguredTransporter() {
   return { transporter, from, user };
 }
 
-const REG_COPY = {
-  RO: {
-    subject: (id: string) => `LuminaMath Moldova — Permis de Participare (ID: ${id})`,
-    headerSubtitle: 'Concursul Național de Matematică • Clasele III – VIII',
-    badge: 'CONFIRMARE ÎNREGISTRARE',
-    greeting: (name: string) => `Bună ziua, ${name}!`,
-    intro:
-      'Înregistrarea dvs. la Concursul Național de Matematică <strong>LuminaMath Moldova</strong> (organizat de IPLT „Orizont”) a fost finalizată cu succes. Participarea este <strong>100% gratuită</strong>.',
-    idBoxLabel: 'ID PARTICIPANT (6 CIFRE)',
-    idBoxHint: 'Se completează pe foaia de concurs în ziua examenului',
-    pinBoxLabel: 'PAROLA / COD PIN (6 CIFRE)',
-    pinBoxHint: 'Pentru verificarea privată a rezultatului PDF pe site',
-    detailsTitle: 'Detaliile Înregistrării & Examenului',
-    lblStudent: 'Elev / Participant',
-    lblGrade: 'Clasa',
-    lblLang: 'Limba de susținere',
-    lblSchool: 'Școala / Liceul',
-    lblTeacher: 'Profesor de matematică',
-    lblBranch: 'Centrul de examen (Filiala)',
-    lblAddress: 'Adresa centrului de examen',
-    lblExamDate: 'Data și ora probei scrise',
-    rulesTitle: 'Important pentru ziua examenului:',
-    rulesItems: [
-      'Prezentați-vă la centrul de examen cu 20–30 de minute înainte de începerea probei.',
-      'Aveți asupra dvs. carnetul de elev (sau actul de identitate), acest permis cu numărul ID și un pix sau creion.',
-      'Telefoanele mobile, ceasurile inteligente, calculatoarele și riglele sunt strict interzise în sală.',
-    ],
-    ctaBtn: 'Verifică Înregistrarea / Pagina de Rezultate',
-    trilingualNote:
-      'Notă: Păstrați acest email! După publicarea rezultatelor, veți folosi ID-ul și Parola PIN pe www.luminamath.md pentru a descărca fișa dvs. oficială PDF.',
-  },
-  RU: {
-    subject: (id: string) => `LuminaMath Moldova — Талон участника (Ваш ID: ${id})`,
-    headerSubtitle: 'Национальная математическая олимпиада • 3 – 8 классы',
-    badge: 'ПОДТВЕРЖДЕНИЕ РЕГИСТРАЦИИ',
-    greeting: (name: string) => `Здравствуйте, ${name}!`,
-    intro:
-      'Ваша регистрация на Национальную математическую олимпиаду <strong>LuminaMath Moldova</strong> (организатор — IPLT «Orizont») успешно завершена. Участие <strong>100% бесплатное</strong>.',
-    idBoxLabel: 'ID УЧАСТНИКА (6 ЦИФР)',
-    idBoxHint: 'Указывается на бланке ответов в день письменного экзамена',
-    pinBoxLabel: 'ПАРОЛЬ / PIN-КОД (6 ЦИФР)',
-    pinBoxHint: 'Для личной проверки и скачивания PDF-результата на сайте',
-    detailsTitle: 'Данные участника и место проведения экзамена',
-    lblStudent: 'Ученик / Участник',
-    lblGrade: 'Класс',
-    lblLang: 'Язык экзамена',
-    lblSchool: 'Школа / Лицей',
-    lblTeacher: 'Учитель математики',
-    lblBranch: 'Центр сдачи экзамена (Филиал)',
-    lblAddress: 'Адрес центра экзамена',
-    lblExamDate: 'Дата и время письменного этапа',
-    rulesTitle: 'Важная памятка в день экзамена:',
-    rulesItems: [
-      'Приходите в выбранный филиал за 20–30 минут до начала экзамена.',
-      'При себе необходимо иметь ученический билет (или свидетельство о рождении / удостоверение личности), ваш 6-значный ID-номер и ручку или карандаш.',
-      'Мобильные телефоны, смарт-часы, калькуляторы и линейки в аудитории строго запрещены.',
-    ],
-    ctaBtn: 'Перейти на страницу результатов',
-    trilingualNote:
-      'Примечание: Сохраните это письмо! После публикации результатов вы сможете войти по вашему ID и PIN-коду на сайте www.luminamath.md и скачать свой PDF-табель.',
-  },
-  EN: {
-    subject: (id: string) => `LuminaMath Moldova — Official Exam Pass (ID: ${id})`,
-    headerSubtitle: 'National Mathematics Competition • Grades III – VIII',
-    badge: 'REGISTRATION CONFIRMED',
-    greeting: (name: string) => `Hello, ${name}!`,
-    intro:
-      'Your registration for the <strong>LuminaMath Moldova</strong> National Mathematics Competition (organized by IPLT "Orizont") has been successfully completed. Participation is <strong>100% free of charge</strong>.',
-    idBoxLabel: 'PARTICIPANT ID (6 DIGITS)',
-    idBoxHint: 'Used on your optical answer sheet on exam day',
-    pinBoxLabel: 'ACCESS PIN / PASSWORD (6 DIGITS)',
-    pinBoxHint: 'Used to privately view and download your PDF result online',
-    detailsTitle: 'Participant & Written Exam Details',
-    lblStudent: 'Student Name',
-    lblGrade: 'Grade / Class',
-    lblLang: 'Exam Language',
-    lblSchool: 'School / Lyceum',
-    lblTeacher: 'Mathematics Teacher',
-    lblBranch: 'Examination Center (Branch)',
-    lblAddress: 'Exam Center Address',
-    lblExamDate: 'Written Exam Date & Time',
-    rulesTitle: 'Important Exam Day Reminders:',
-    rulesItems: [
-      'Please arrive at your selected examination branch 20–30 minutes before the exam starts.',
-      'Bring your student ID card (or birth certificate / ID), this 6-digit Participant ID, and a pen or pencil.',
-      'Mobile phones, smartwatches, calculators, and rulers are strictly prohibited in the exam room.',
-    ],
-    ctaBtn: 'Open Official Results Page',
-    trilingualNote:
-      'Note: Please keep this email! Once results are published, you will use your 6-digit ID and Access PIN on www.luminamath.md to download your official PDF report card.',
-  },
+const LANG_DISPLAY: Record<'RO' | 'RU' | 'EN', string> = {
+  RO: 'RO — Română',
+  RU: 'RU — Русский',
+  EN: 'EN — English',
 };
 
-const LANG_DISPLAY: Record<'RO' | 'RU' | 'EN', string> = {
-  RO: 'Română (RO)',
-  RU: 'Русский (RU)',
-  EN: 'English (EN)',
-};
+function getOrderedLanguages(primary: 'RO' | 'RU' | 'EN'): Array<'RO' | 'RU' | 'EN'> {
+  const all: Array<'RO' | 'RU' | 'EN'> = ['RO', 'RU', 'EN'];
+  const validPrimary: 'RO' | 'RU' | 'EN' = all.includes(primary) ? primary : 'RO';
+  return [validPrimary, ...all.filter((l) => l !== validPrimary)];
+}
 
 export async function sendRegistrationEmail(
   payload: RegistrationEmailPayload
@@ -171,17 +86,48 @@ export async function sendRegistrationEmail(
     branchName,
     branchAddress,
     examDateText = '05 December 2026, 10:00 – 12:00',
+    resultsUrl,
   } = payload;
 
   const lang: 'RO' | 'RU' | 'EN' = ['RO', 'RU', 'EN'].includes(examLanguage)
     ? examLanguage
     : 'RO';
-  const copy = REG_COPY[lang];
-  const subject = copy.subject(studentCode);
+  const orderedLangs = getOrderedLanguages(lang);
   const fullName = `${firstName} ${lastName}`;
-  const resultsLink = `https://luminamath.md/results?id=${encodeURIComponent(
-    studentCode
-  )}&pin=${encodeURIComponent(accessPin)}`;
+
+  const subjectByLang: Record<'RO' | 'RU' | 'EN', string> = {
+    RO: `LuminaMath Moldova — Confirmare Înregistrare / Registration Pass (ID: ${studentCode})`,
+    RU: `LuminaMath Moldova — Подтверждение регистрации / Registration Pass (ID: ${studentCode})`,
+    EN: `LuminaMath Moldova — Registration Confirmation / Exam Pass (ID: ${studentCode})`,
+  };
+  const subject = subjectByLang[lang];
+
+  const introByLang: Record<'RO' | 'RU' | 'EN', { tag: string; text: string }> = {
+    RO: {
+      tag: 'RO',
+      text: 'Înregistrarea dvs. la Concursul Național de Matematică <strong>LuminaMath Moldova</strong> a fost finalizată cu succes.',
+    },
+    RU: {
+      tag: 'RU',
+      text: 'Ваша регистрация на Национальную математическую олимпиаду <strong>LuminaMath Moldova</strong> успешно завершена.',
+    },
+    EN: {
+      tag: 'EN',
+      text: 'Your registration for the <strong>LuminaMath Moldova</strong> National Mathematics Competition has been successfully completed.',
+    },
+  };
+
+  const reminderByLang: Record<'RO' | 'RU' | 'EN', string> = {
+    RO: '<strong>RO:</strong> Păstrați <strong>ID-ul (6 cifre)</strong> pentru foaia optică (OMR) în ziua examenului, iar <strong>Codul PIN</strong> pentru verificarea privată a rezultatului PDF pe site!',
+    RU: '<strong>RU:</strong> Сохраните <strong>ID-номер (6 цифр)</strong> для бланка ответов (OMR) в день экзамена, а <strong>PIN-код</strong> — для личной проверки PDF-результата на сайте!',
+    EN: '<strong>EN:</strong> Keep your <strong>6-digit Exam ID</strong> for your optical answer sheet (OMR) on exam day, and your <strong>Access PIN</strong> to privately view your PDF result online!',
+  };
+
+  const linkUrl =
+    resultsUrl ||
+    `https://luminamath.md/results?id=${encodeURIComponent(
+      studentCode
+    )}&pin=${encodeURIComponent(accessPin)}`;
 
   const html = `
   <!DOCTYPE html>
@@ -192,61 +138,86 @@ export async function sendRegistrationEmail(
     <title>${subject}</title>
   </head>
   <body style="margin: 0; padding: 20px 10px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color: #1e293b;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 620px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 18px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);">
       <!-- Header Banner -->
       <tr>
         <td style="background: linear-gradient(135deg, #2C3987 0%, #1e2866 100%); padding: 28px 24px; text-align: center; color: #ffffff;">
-          <div style="display: inline-block; background-color: rgba(248, 167, 26, 0.2); border: 1px solid rgba(248, 167, 26, 0.5); color: #fde68a; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; padding: 4px 12px; border-radius: 999px; text-transform: uppercase; margin-bottom: 10px;">
-            ${copy.badge}
+          <div style="display: inline-block; background-color: rgba(248, 167, 26, 0.2); border: 1px solid rgba(248, 167, 26, 0.55); color: #fde68a; font-size: 11px; font-weight: 800; letter-spacing: 1px; padding: 4px 14px; border-radius: 999px; text-transform: uppercase; margin-bottom: 10px;">
+            CONFIRMARE ÎNREGISTRARE • ПОДТВЕРЖДЕНИЕ • REGISTRATION CONFIRMED
           </div>
           <h1 style="margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -0.3px; color: #ffffff;">
             Lumina<span style="color: #F8A71A;">Math</span> Moldova
           </h1>
           <p style="margin: 6px 0 0; font-size: 13px; color: #cbd5e1;">
-            ${copy.headerSubtitle}
+            www.luminamath.md • Clasele III–VIII / 3–8 Классы / Grades 3–8
           </p>
         </td>
       </tr>
 
-      <!-- Greeting & Intro -->
+      <!-- Greeting & Trilingual Intro (Ordered by Student Language) -->
       <tr>
-        <td style="padding: 28px 28px 12px 28px;">
-          <h2 style="margin: 0 0 10px 0; font-size: 19px; font-weight: 800; color: #0f172a;">
-            ${copy.greeting(fullName)}
+        <td style="padding: 26px 26px 10px 26px;">
+          <h2 style="margin: 0 0 14px 0; font-size: 19px; font-weight: 800; color: #0f172a;">
+            Bună ziua / Здравствуйте / Hello, <span style="color: #2C3987;">${fullName}</span>!
           </h2>
-          <p style="margin: 0; font-size: 14px; line-height: 1.65; color: #334155;">
-            ${copy.intro}
-          </p>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px;">
+            ${orderedLangs
+              .map(
+                (l, idx) => `
+              <tr>
+                <td style="padding: ${idx === 0 ? '2px 0 6px 0' : '6px 0 2px 0'}; ${
+                  idx < 2 ? 'border-bottom: 1px dashed #e2e8f0;' : ''
+                } font-size: 13.5px; line-height: 1.55; color: ${
+                  idx === 0 ? '#0f172a' : '#475569'
+                };">
+                  <span style="display: inline-block; font-size: 10px; font-weight: 800; background-color: ${
+                    idx === 0 ? '#2C3987' : '#cbd5e1'
+                  }; color: ${
+                  idx === 0 ? '#ffffff' : '#1e293b'
+                }; padding: 2px 6px; border-radius: 4px; margin-right: 6px; vertical-align: middle;">${
+                  introByLang[l].tag
+                }</span>
+                  ${introByLang[l].text}
+                </td>
+              </tr>`
+              )
+              .join('')}
+          </table>
         </td>
       </tr>
 
-      <!-- ID & PIN Credentials Highlight Cards -->
+      <!-- Separate Clean Cards for EXAM ID and ACCESS PIN -->
       <tr>
-        <td style="padding: 12px 28px;">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 2px dashed #6366f1; border-radius: 14px; padding: 18px;">
+        <td style="padding: 12px 26px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <!-- EXAM ID BOX -->
             <tr>
-              <td style="text-align: center; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0;">
-                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #2C3987;">
-                  ${copy.idBoxLabel}
+              <td style="background-color: #eef2ff; border: 2px solid #6366f1; border-radius: 14px; padding: 18px 16px; text-align: center;">
+                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #312e81;">
+                  NUMĂRUL ID DE EXAMEN (LOGIN) &nbsp;•&nbsp; ВАШ ID-НОМЕР &nbsp;•&nbsp; YOUR EXAM ID
                 </div>
-                <div style="font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: 900; letter-spacing: 6px; color: #1e1b4b; margin: 6px 0 4px 0;">
+                <div style="font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: 900; letter-spacing: 7px; color: #1e1b4b; margin: 6px 0 2px 0;">
                   ${studentCode}
                 </div>
-                <div style="font-size: 12px; color: #64748b;">
-                  ${copy.idBoxHint}
+                <div style="font-size: 11.5px; color: #4338ca; font-weight: 600;">
+                  6 cifre pentru foaia optică (OMR) • 6 цифр для бланка ответов • 6-digit code for OMR answer sheet
                 </div>
               </td>
             </tr>
+
+            <tr><td style="height: 10px;"></td></tr>
+
+            <!-- PIN CODE BOX -->
             <tr>
-              <td style="text-align: center; padding-top: 14px;">
-                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #047857;">
-                  ${copy.pinBoxLabel}
+              <td style="background-color: #ecfdf5; border: 2px solid #10b981; border-radius: 14px; padding: 16px; text-align: center;">
+                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #065f46;">
+                  PAROLA / COD PIN REZULTATE &nbsp;•&nbsp; ПАРОЛЬ (PIN-КОД) &nbsp;•&nbsp; RESULTS ACCESS PIN
                 </div>
-                <div style="font-family: 'Courier New', Courier, monospace; font-size: 30px; font-weight: 900; letter-spacing: 5px; color: #065f46; margin: 6px 0 4px 0;">
+                <div style="font-family: 'Courier New', Courier, monospace; font-size: 32px; font-weight: 900; letter-spacing: 6px; color: #064e3b; margin: 6px 0 2px 0;">
                   ${accessPin}
                 </div>
-                <div style="font-size: 12px; color: #64748b;">
-                  ${copy.pinBoxHint}
+                <div style="font-size: 11.5px; color: #047857; font-weight: 600;">
+                  Pentru verificarea rezultatului PDF • Для проверки результата • For checking your PDF result
                 </div>
               </td>
             </tr>
@@ -254,79 +225,95 @@ export async function sendRegistrationEmail(
         </td>
       </tr>
 
-      <!-- Student & Exam Information Table -->
+      <!-- Student & Exam Information Table (Full RO / RU / EN Labels) -->
       <tr>
-        <td style="padding: 12px 28px;">
-          <div style="font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: #2C3987; margin-bottom: 10px;">
-            ${copy.detailsTitle}
-          </div>
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; font-size: 14px; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <td style="padding: 10px 26px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; font-size: 13.5px; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
             <tr style="background-color: #f8fafc;">
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; width: 42%;">${copy.lblStudent}:</td>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a;">${fullName}</td>
+              <td style="padding: 11px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; width: 46%; font-weight: 600;">
+                Elev / Ученик / Student:
+              </td>
+              <td style="padding: 11px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 800; color: #0f172a;">
+                ${fullName}
+              </td>
             </tr>
             <tr>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b;">${copy.lblGrade}:</td>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a;">${grade}</td>
+              <td style="padding: 11px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">
+                Clasa / Класс / Grade:
+              </td>
+              <td style="padding: 11px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 800; color: #0f172a;">
+                ${grade}
+              </td>
             </tr>
             <tr style="background-color: #f8fafc;">
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b;">${copy.lblLang}:</td>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a;">${LANG_DISPLAY[lang]}</td>
+              <td style="padding: 11px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">
+                Limba / Язык / Language:
+              </td>
+              <td style="padding: 11px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 800; color: #0f172a;">
+                ${LANG_DISPLAY[lang]}
+              </td>
             </tr>
             <tr>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b;">${copy.lblSchool}:</td>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a;">${school}</td>
+              <td style="padding: 11px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">
+                Școala / Школа / School:
+              </td>
+              <td style="padding: 11px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a;">
+                ${school}
+              </td>
             </tr>
             <tr style="background-color: #f8fafc;">
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b;">${copy.lblTeacher}:</td>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a;">${teacherName}</td>
+              <td style="padding: 11px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">
+                Profesor / Учитель / Teacher:
+              </td>
+              <td style="padding: 11px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a;">
+                ${teacherName}
+              </td>
             </tr>
             <tr>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b;">${copy.lblBranch}:</td>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 800; color: #2C3987;">${branchName}</td>
-            </tr>
-            <tr style="background-color: #f8fafc;">
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b;">${copy.lblAddress}:</td>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #334155;">${branchAddress}</td>
+              <td style="padding: 11px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">
+                Filiala / Филиал / Branch:
+              </td>
+              <td style="padding: 11px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 800; color: #2C3987;">
+                ${branchName}
+                <div style="font-size: 12px; font-weight: 500; color: #475569; margin-top: 2px;">
+                  ${branchAddress}
+                </div>
+              </td>
             </tr>
             <tr style="background-color: #fffbeb;">
-              <td style="padding: 12px 14px; color: #92400e; font-weight: 700;">${copy.lblExamDate}:</td>
-              <td style="padding: 12px 14px; font-weight: 900; color: #b45309; font-size: 15px;">${examDateText}</td>
+              <td style="padding: 12px 14px; color: #92400e; font-weight: 700;">
+                Data Examenului / Дата экзамена / Exam Date:
+              </td>
+              <td style="padding: 12px 14px; font-weight: 900; color: #b45309; font-size: 14.5px;">
+                ${examDateText}
+              </td>
             </tr>
           </table>
         </td>
       </tr>
 
-      <!-- Exam Day Guidelines Box -->
+      <!-- Trilingual Reminder Note -->
       <tr>
-        <td style="padding: 12px 28px;">
-          <div style="background-color: #f8fafc; border-left: 4px solid #F59122; border-radius: 8px; padding: 14px 16px;">
-            <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 6px;">
-              ${copy.rulesTitle}
-            </div>
-            <ul style="margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.55; color: #475569;">
-              ${copy.rulesItems.map((item) => `<li style="margin-bottom: 4px;">${item}</li>`).join('')}
-            </ul>
+        <td style="padding: 10px 26px;">
+          <div style="background-color: #fffbeb; border-left: 4px solid #F59122; border-radius: 8px; padding: 12px 14px; font-size: 12.5px; line-height: 1.55; color: #78350f;">
+            ${orderedLangs.map((l) => `<div style="margin-bottom: 4px;">${reminderByLang[l]}</div>`).join('')}
           </div>
         </td>
       </tr>
 
       <!-- CTA Button -->
       <tr>
-        <td style="padding: 16px 28px 24px 28px; text-align: center;">
-          <a href="${resultsLink}" style="display: inline-block; background: linear-gradient(90deg, #F59122, #ED5526); color: #ffffff; text-decoration: none; font-weight: 800; font-size: 14px; padding: 14px 28px; border-radius: 12px;">
-            ${copy.ctaBtn}
+        <td style="padding: 14px 26px 24px 26px; text-align: center;">
+          <a href="${linkUrl}" style="display: inline-block; background: linear-gradient(90deg, #2C3987, #4338ca); color: #ffffff; text-decoration: none; font-weight: 800; font-size: 13.5px; padding: 13px 26px; border-radius: 12px;">
+            Verifică pe Site &nbsp;•&nbsp; Проверить на сайте &nbsp;•&nbsp; Check Online
           </a>
-          <p style="margin: 12px 0 0; font-size: 12px; color: #64748b; line-height: 1.5;">
-            ${copy.trilingualNote}
-          </p>
         </td>
       </tr>
 
       <!-- Footer -->
       <tr>
         <td style="background-color: #0f172a; color: #94a3b8; padding: 18px 24px; text-align: center; font-size: 12px; line-height: 1.6;">
-          <strong style="color: #ffffff;">LuminaMath Moldova • IPLT „Orizont”</strong><br/>
+          <strong style="color: #ffffff;">© LuminaMath Moldova • IPLT „Orizont”</strong><br/>
           Web: <a href="https://luminamath.md" style="color: #F8A71A; text-decoration: none;">www.luminamath.md</a> &nbsp;|&nbsp;
           Email: <a href="mailto:luminamath@orizont.md" style="color: #F8A71A; text-decoration: none;">luminamath@orizont.md</a> &nbsp;|&nbsp;
           Tel: +373 (79) 000 073
@@ -357,45 +344,6 @@ export async function sendRegistrationEmail(
   return { sent: true, mode: 'simulated' };
 }
 
-const RESULT_COPY = {
-  RO: {
-    subject: (id: string) => `LuminaMath Moldova — Rezultatul Oficial PDF (ID: ${id})`,
-    headerSubtitle: 'Rezultate Oficiale • Fișa Individuală de Evaluare (PDF)',
-    greeting: (name: string) => `Felicitări, ${name}!`,
-    intro:
-      'Rezultatul dvs. oficial la Concursul Național de Matematică <strong>LuminaMath Moldova</strong> a fost publicat. <strong>Fișierul PDF cu rezultatul detaliat este atașat direct la acest email!</strong>',
-    ctaBtn: 'Deschide Rezultatul pe Site',
-    lblStudent: 'Elev / Participant',
-    lblGrade: 'Clasa',
-    lblSchool: 'Școala / Liceul',
-    lblBranch: 'Centrul de examen',
-  },
-  RU: {
-    subject: (id: string) => `LuminaMath Moldova — Официальный результат PDF (ID: ${id})`,
-    headerSubtitle: 'Официальные результаты • Индивидуальный табель (PDF)',
-    greeting: (name: string) => `Поздравляем, ${name}!`,
-    intro:
-      'Официальный результат Национальной математической олимпиады <strong>LuminaMath Moldova</strong> опубликован. <strong>PDF-файл с вашим подробным результатом прикреплен к этому письму!</strong>',
-    ctaBtn: 'Открыть результат на сайте',
-    lblStudent: 'Ученик / Участник',
-    lblGrade: 'Класс',
-    lblSchool: 'Школа / Лицей',
-    lblBranch: 'Центр экзамена',
-  },
-  EN: {
-    subject: (id: string) => `LuminaMath Moldova — Official PDF Result (ID: ${id})`,
-    headerSubtitle: 'Official Results • Individual Evaluation Report (PDF)',
-    greeting: (name: string) => `Congratulations, ${name}!`,
-    intro:
-      'Your official result for the <strong>LuminaMath Moldova</strong> National Mathematics Competition has been published. <strong>Your detailed PDF evaluation report is attached directly to this email!</strong>',
-    ctaBtn: 'Open Result on Website',
-    lblStudent: 'Student Name',
-    lblGrade: 'Grade / Class',
-    lblSchool: 'School / Lyceum',
-    lblBranch: 'Exam Branch',
-  },
-};
-
 export async function sendResultPdfEmail(
   payload: ResultPdfEmailPayload
 ): Promise<{ sent: boolean; mode: 'smtp' | 'simulated'; error?: string }> {
@@ -407,6 +355,7 @@ export async function sendResultPdfEmail(
     lastName,
     grade,
     school,
+    teacherName,
     examLanguage,
     branchName,
     resultsUrl,
@@ -416,9 +365,31 @@ export async function sendResultPdfEmail(
   const lang: 'RO' | 'RU' | 'EN' = ['RO', 'RU', 'EN'].includes(examLanguage)
     ? examLanguage
     : 'RO';
-  const copy = RESULT_COPY[lang];
-  const subject = copy.subject(studentCode);
+  const orderedLangs = getOrderedLanguages(lang);
   const fullName = `${firstName} ${lastName}`;
+  const pdfFilename = `LuminaMath_Result_${studentCode}.pdf`;
+
+  const subjectByLang: Record<'RO' | 'RU' | 'EN', string> = {
+    RO: `LuminaMath Moldova — Rezultatul Oficial PDF / Official Result (ID: ${studentCode})`,
+    RU: `LuminaMath Moldova — Официальный результат PDF / Official Result (ID: ${studentCode})`,
+    EN: `LuminaMath Moldova — Official Exam Result PDF (ID: ${studentCode})`,
+  };
+  const subject = subjectByLang[lang];
+
+  const resultIntroByLang: Record<'RO' | 'RU' | 'EN', { tag: string; text: string }> = {
+    RO: {
+      tag: 'RO',
+      text: 'Rezultatul dvs. oficial la Concursul Național de Matematică <strong>LuminaMath Moldova</strong> a fost publicat. Fișierul <strong>PDF</strong> cu fișa detaliată de evaluare (OMR) este atașat direct la acest email!',
+    },
+    RU: {
+      tag: 'RU',
+      text: 'Официальный результат Национальной математической олимпиады <strong>LuminaMath Moldova</strong> опубликован. <strong>PDF-файл</strong> с вашим подробным табелем (OMR) прикреплен прямо к этому письму!',
+    },
+    EN: {
+      tag: 'EN',
+      text: 'Your official result for the <strong>LuminaMath Moldova</strong> National Mathematics Competition has been published. Your detailed <strong>PDF</strong> evaluation report (OMR) is attached directly to this email!',
+    },
+  };
 
   const html = `
   <!DOCTYPE html>
@@ -429,53 +400,157 @@ export async function sendResultPdfEmail(
     <title>${subject}</title>
   </head>
   <body style="margin: 0; padding: 20px 10px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color: #1e293b;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 18px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);">
+      <!-- Emerald Header Banner -->
       <tr>
-        <td style="background: linear-gradient(135deg, #065f46, #047857); color: #ffffff; padding: 26px 24px; text-align: center;">
-          <h1 style="margin: 0; font-size: 24px; font-weight: 900;">LuminaMath Moldova</h1>
-          <p style="margin: 6px 0 0; opacity: 0.92; font-size: 13px;">${copy.headerSubtitle}</p>
+        <td style="background: linear-gradient(135deg, #065f46 0%, #047857 100%); color: #ffffff; padding: 28px 24px; text-align: center;">
+          <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.35); color: #ecfdf5; font-size: 11px; font-weight: 800; letter-spacing: 1px; padding: 4px 14px; border-radius: 999px; text-transform: uppercase; margin-bottom: 10px;">
+            REZULTATE OFICIALE • ОФИЦИАЛЬНЫЕ РЕЗУЛЬТАТЫ • OFFICIAL RESULTS
+          </div>
+          <h1 style="margin: 0; font-size: 26px; font-weight: 900; color: #ffffff;">
+            Lumina<span style="color: #fde68a;">Math</span> Moldova
+          </h1>
+          <p style="margin: 6px 0 0; color: #d1fae5; font-size: 13px;">
+            Fișa individuală de evaluare OMR (PDF) • Индивидуальный табель • Individual Score Report
+          </p>
         </td>
       </tr>
-      <tr>
-        <td style="padding: 26px;">
-          <h2 style="margin: 0 0 10px 0; font-size: 18px; color: #0f172a;">${copy.greeting(fullName)}</h2>
-          <p style="margin: 0 0 18px 0; font-size: 14px; line-height: 1.6; color: #334155;">
-            ${copy.intro}
-          </p>
 
-          <div style="background: #ecfdf5; border: 2px solid #10b981; border-radius: 12px; padding: 18px; text-align: center; margin: 18px 0;">
-            <div style="font-size: 12px; text-transform: uppercase; color: #065f46; font-weight: 800;">
-              ID: ${studentCode} &nbsp;•&nbsp; PIN: ${accessPin}
-            </div>
-            <div style="font-size: 28px; font-weight: 900; letter-spacing: 4px; color: #064e3b; margin-top: 6px; font-family: monospace;">
-              ID: ${studentCode} | PIN: ${accessPin}
-            </div>
-            <div style="margin-top: 14px;">
-              <a href="${resultsUrl}" style="display: inline-block; background: #059669; color: #ffffff; text-decoration: none; font-weight: 800; font-size: 14px; padding: 12px 24px; border-radius: 10px;">
-                ${copy.ctaBtn}
+      <!-- Greeting & Trilingual Announcement -->
+      <tr>
+        <td style="padding: 26px 26px 10px 26px;">
+          <h2 style="margin: 0 0 14px 0; font-size: 19px; font-weight: 800; color: #0f172a;">
+            Felicitări / Поздравляем / Congratulations, <span style="color: #047857;">${fullName}</span>!
+          </h2>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px;">
+            ${orderedLangs
+              .map(
+                (l, idx) => `
+              <tr>
+                <td style="padding: ${idx === 0 ? '2px 0 6px 0' : '6px 0 2px 0'}; ${
+                  idx < 2 ? 'border-bottom: 1px dashed #e2e8f0;' : ''
+                } font-size: 13.5px; line-height: 1.55; color: ${
+                  idx === 0 ? '#0f172a' : '#475569'
+                };">
+                  <span style="display: inline-block; font-size: 10px; font-weight: 800; background-color: ${
+                    idx === 0 ? '#047857' : '#cbd5e1'
+                  }; color: ${
+                  idx === 0 ? '#ffffff' : '#1e293b'
+                }; padding: 2px 6px; border-radius: 4px; margin-right: 6px; vertical-align: middle;">${
+                  resultIntroByLang[l].tag
+                }</span>
+                  ${resultIntroByLang[l].text}
+                </td>
+              </tr>`
+              )
+              .join('')}
+          </table>
+        </td>
+      </tr>
+
+      <!-- Attached PDF Notice Banner -->
+      <tr>
+        <td style="padding: 8px 26px;">
+          <div style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 12px 16px; text-align: center; font-size: 13px; color: #92400e; font-weight: 700;">
+            📎 Fișier PDF atașat / Прикрепленный PDF / Attached PDF: <span style="font-family: monospace; color: #78350f; font-weight: 900;">${pdfFilename}</span>
+          </div>
+        </td>
+      </tr>
+
+      <!-- Credentials & Direct Online Result Link (Clean Side-by-Side Cards, No Duplication) -->
+      <tr>
+        <td style="padding: 10px 26px;">
+          <div style="background-color: #ecfdf5; border: 2px solid #10b981; border-radius: 14px; padding: 18px; text-align: center;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+              <tr>
+                <td width="50%" style="padding: 6px; border-right: 1px solid #a7f3d0; text-align: center;">
+                  <div style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; color: #065f46; letter-spacing: 0.5px;">
+                    ID PARTICIPANT / ID УЧАСТНИКА / EXAM ID
+                  </div>
+                  <div style="font-family: 'Courier New', Courier, monospace; font-size: 28px; font-weight: 900; letter-spacing: 4px; color: #064e3b; margin-top: 4px;">
+                    ${studentCode}
+                  </div>
+                </td>
+                <td width="50%" style="padding: 6px; text-align: center;">
+                  <div style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; color: #065f46; letter-spacing: 0.5px;">
+                    COD PIN / ПАРОЛЬ PIN / ACCESS PIN
+                  </div>
+                  <div style="font-family: 'Courier New', Courier, monospace; font-size: 28px; font-weight: 900; letter-spacing: 4px; color: #064e3b; margin-top: 4px;">
+                    ${accessPin}
+                  </div>
+                </td>
+              </tr>
+            </table>
+
+            <div style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed #a7f3d0;">
+              <a href="${resultsUrl}" style="display: inline-block; background: linear-gradient(90deg, #059669, #047857); color: #ffffff; text-decoration: none; font-weight: 800; font-size: 13.5px; padding: 13px 26px; border-radius: 10px;">
+                Deschide Rezultatul pe Site &nbsp;•&nbsp; Открыть на сайте &nbsp;•&nbsp; Open Result Online
               </a>
             </div>
           </div>
+        </td>
+      </tr>
 
-          <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 16px;">
-            <tr>
-              <td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;">${copy.lblStudent}:</td>
-              <td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-weight: 700; text-align: right;">${fullName} (${copy.lblGrade} ${grade})</td>
+      <!-- Student Summary Table (Full RO / RU / EN Labels) -->
+      <tr>
+        <td style="padding: 10px 26px 24px 26px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; font-size: 13.5px; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+            <tr style="background-color: #f8fafc;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; width: 46%; font-weight: 600;">
+                Elev / Ученик / Student:
+              </td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 800; color: #0f172a;">
+                ${fullName}
+              </td>
             </tr>
             <tr>
-              <td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;">${copy.lblSchool}:</td>
-              <td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-weight: 700; text-align: right;">${school}</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">
+                Clasa / Класс / Grade:
+              </td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 800; color: #0f172a;">
+                ${grade} (${LANG_DISPLAY[lang]})
+              </td>
             </tr>
+            <tr style="background-color: #f8fafc;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">
+                Școala / Школа / School:
+              </td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a;">
+                ${school}
+              </td>
+            </tr>
+            ${
+              teacherName
+                ? `
             <tr>
-              <td style="padding: 8px 0; color: #64748b;">${copy.lblBranch}:</td>
-              <td style="padding: 8px 0; font-weight: 700; text-align: right;">${branchName}</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">
+                Profesor / Учитель / Teacher:
+              </td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a;">
+                ${teacherName}
+              </td>
+            </tr>`
+                : ''
+            }
+            <tr style="background-color: #f8fafc;">
+              <td style="padding: 10px 14px; color: #64748b; font-weight: 600;">
+                Filiala / Филиал / Branch:
+              </td>
+              <td style="padding: 10px 14px; font-weight: 800; color: #065f46;">
+                ${branchName}
+              </td>
             </tr>
           </table>
         </td>
       </tr>
+
+      <!-- Footer -->
       <tr>
-        <td style="background: #0f172a; padding: 16px; text-align: center; font-size: 12px; color: #94a3b8;">
-          © LuminaMath Moldova • www.luminamath.md • luminamath@orizont.md
+        <td style="background-color: #0f172a; color: #94a3b8; padding: 18px 24px; text-align: center; font-size: 12px; line-height: 1.6;">
+          <strong style="color: #ffffff;">© LuminaMath Moldova • IPLT „Orizont”</strong><br/>
+          Web: <a href="https://luminamath.md" style="color: #F8A71A; text-decoration: none;">www.luminamath.md</a> &nbsp;|&nbsp;
+          Email: <a href="mailto:luminamath@orizont.md" style="color: #F8A71A; text-decoration: none;">luminamath@orizont.md</a> &nbsp;|&nbsp;
+          Document PDF: <span style="color: #e2e8f0;">${pdfFilename}</span>
         </td>
       </tr>
     </table>
@@ -501,7 +576,7 @@ export async function sendResultPdfEmail(
       html,
       attachments: [
         {
-          filename: `LuminaMath_Result_${studentCode}.pdf`,
+          filename: pdfFilename,
           content: pdfBuffer,
           contentType: 'application/pdf',
         },
@@ -530,13 +605,14 @@ export async function sendTestSmtpEmail(
     await mailSetup.transporter.sendMail({
       from: mailSetup.from,
       to: recipientEmail,
-      subject: 'LuminaMath Moldova — Test Configurare Email (SMTP Activ)',
+      subject: 'LuminaMath Moldova — Test Configurare Email / SMTP Test',
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; border: 2px solid #10b981; border-radius: 12px;">
-          <h2 style="color: #065f46; margin-top: 0;">✅ Configurarea Email LuminaMath funcționează!</h2>
+        <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; border: 2px solid #10b981; border-radius: 14px; background: #ffffff;">
+          <h2 style="color: #065f46; margin-top: 0;">✅ LuminaMath Moldova — SMTP Email Active!</h2>
           <p style="color: #334155; font-size: 14px; line-height: 1.6;">
-            Acesta este un mesaj de test trimis din panoul de administrare <strong>LuminaMath Moldova</strong>.<br/>
-            De acum, toate confirmările de înregistrare (cu ID-ul de 6 cifre) și rezultatele PDF vor fi expediate automat de pe contul <strong>${mailSetup.user}</strong>.
+            <strong>RO:</strong> Configurarea email funcționează! Toate confirmările de înregistrare și rezultatele PDF vor fi trimise de pe <strong>${mailSetup.user}</strong>.<br/><br/>
+            <strong>RU:</strong> Настройка почты работает! Все подтверждения регистрации и PDF-результаты будут отправляться с <strong>${mailSetup.user}</strong>.<br/><br/>
+            <strong>EN:</strong> Email configuration is working! All registration confirmations and PDF results will be sent from <strong>${mailSetup.user}</strong>.
           </p>
         </div>
       `,
