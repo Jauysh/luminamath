@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import JSZip from 'jszip';
 import { getAdminSessionFromRequest } from '@/lib/auth';
-import { getAllStudents, isEmailAuthorizedAdmin, saveStudentResultPdf } from '@/lib/db';
+import {
+  getAllStudents,
+  isEmailAuthorizedAdmin,
+  isSuperAdminRecord,
+  saveStudentResultPdf,
+} from '@/lib/db';
 import { generateSampleOmrPdf } from '@/lib/sample-pdf';
 
 async function isAuthorized(req: NextRequest): Promise<boolean> {
   const session = getAdminSessionFromRequest(req);
   if (!session) return false;
   const admin = await isEmailAuthorizedAdmin(session.email);
-  return Boolean(admin);
+  return isSuperAdminRecord(admin);
 }
 
 function extractSixDigitId(filename: string): string | null {

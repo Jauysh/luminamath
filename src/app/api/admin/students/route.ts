@@ -151,10 +151,18 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    const numGrade = Number(grade);
+    if (isNaN(numGrade) || numGrade < 3 || numGrade > 8) {
+      return NextResponse.json(
+        { error: 'Clasa trebuie să fie între 3 și 8' },
+        { status: 400 }
+      );
+    }
+
     const updated = await updateStudentDetails(String(studentCode), {
       firstName: String(firstName),
       lastName: String(lastName),
-      grade: Number(grade),
+      grade: numGrade,
       school: String(school),
       schoolCode: Number(schoolCode) || 8,
       teacherName: String(teacherName),

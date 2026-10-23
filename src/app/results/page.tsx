@@ -145,7 +145,7 @@ function ResultsContent() {
                   required
                   value={studentId}
                   onChange={(e) => setStudentId(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="102001"
+                  placeholder="010301"
                   className="w-full pl-11 pr-4 py-3 rounded-xl border-2 border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 outline-none font-mono text-lg sm:text-xl font-extrabold tracking-widest text-slate-900"
                 />
               </div>

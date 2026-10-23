@@ -263,7 +263,7 @@ export const translations = {
       subtitle:
         'Introduceți numărul ID din 6 cifre și parola PIN primite la înregistrare pentru a vizualiza și descărca fișa dvs. oficială de evaluare PDF',
       inputLabel: 'Numărul ID al Elevului (6 cifre)',
-      inputPlaceholder: 'Ex: 102001',
+      inputPlaceholder: 'Ex: 010301',
       searchBtn: 'Caută Rezultatul',
       searching: 'Se caută...',
       demoHint: '',
@@ -303,9 +303,9 @@ export const translations = {
       uploadTitle: 'Încărcare Rezultate PDF în Masă (Bulk PDF sau Arhivă .ZIP)',
       uploadBadge: 'Metoda 1 (OMR)',
       uploadDesc:
-        'Încărcați fișierele PDF generate de scanerul optic (ex: 201001.pdf, 202001.pdf) sau o arhivă .zip care conține toate PDF-urile. Sistemul extrage automat codul ID din 6 cifre din numele fișierului și îl atașează elevului!',
+        'Încărcați fișierele PDF generate de scanerul optic (ex: 010301.pdf, 040501.pdf) sau o arhivă .zip care conține toate PDF-urile. Sistemul extrage automat codul ID din 6 cifre din numele fișierului și îl atașează elevului!',
       dropzoneTitle: 'Selectați fișiere .PDF multiple sau o arhivă .ZIP',
-      dropzoneSub: 'Exemplu nume fișiere: 201001.pdf, 202001.pdf, rezultate_omr.zip',
+      dropzoneSub: 'Exemplu nume fișiere: 010301.pdf, 040501.pdf, rezultate_omr.zip',
       selectedFilesLabel: 'Fișiere selectate',
       uploadBtn: 'Încarcă și Asociază după ID',
       uploadingBtn: 'Se procesează...',
@@ -599,7 +599,7 @@ export const translations = {
       subtitle:
         'Введите ваш 6-значный ID-номер и PIN-пароль, полученные при регистрации, чтобы открыть и скачать официальный PDF-табель результатов',
       inputLabel: 'ID-номер ученика (6 цифр)',
-      inputPlaceholder: 'Например: 102001',
+      inputPlaceholder: 'Например: 010301',
       searchBtn: 'Показать результат',
       searching: 'Поиск...',
       demoHint: '',
@@ -639,9 +639,9 @@ export const translations = {
       uploadTitle: 'Массовая загрузка PDF-результатов (Bulk PDF или .ZIP архив)',
       uploadBadge: 'Метод 1 (OMR)',
       uploadDesc:
-        'Загрузите PDF-файлы от оптического сканера (например: 201001.pdf, 202001.pdf) или .zip архив со всеми PDF. Система автоматически распознает 6-значный ID из имени файла и прикрепляет табель к ученику!',
+        'Загрузите PDF-файлы от оптического сканера (например: 010301.pdf, 040501.pdf) или .zip архив со всеми PDF. Система автоматически распознает 6-значный ID из имени файла и прикрепляет табель к ученику!',
       dropzoneTitle: 'Выберите несколько .PDF файлов или .ZIP архив',
-      dropzoneSub: 'Пример имен файлов: 201001.pdf, 202001.pdf, results_omr.zip',
+      dropzoneSub: 'Пример имен файлов: 010301.pdf, 040501.pdf, results_omr.zip',
       selectedFilesLabel: 'Выбрано файлов',
       uploadBtn: 'Загрузить и привязать по ID',
       uploadingBtn: 'Обработка...',
@@ -936,7 +936,7 @@ export const translations = {
       subtitle:
         'Enter your 6-digit Participant ID and Access PIN received upon registration to view and download your official PDF evaluation report',
       inputLabel: '6-Digit Student ID Number',
-      inputPlaceholder: 'e.g., 102001',
+      inputPlaceholder: 'e.g., 010301',
       searchBtn: 'View Results',
       searching: 'Searching...',
       demoHint: '',
@@ -976,9 +976,9 @@ export const translations = {
       uploadTitle: 'Bulk Upload PDF Results (Multiple PDFs or .ZIP Archive)',
       uploadBadge: 'Method 1 (OMR)',
       uploadDesc:
-        'Upload individual PDF files produced by the optical scanner (e.g., 201001.pdf, 202001.pdf) or a .zip archive containing all PDFs. The system automatically extracts the 6-digit ID from each filename and links it to the student!',
+        'Upload individual PDF files produced by the optical scanner (e.g., 010301.pdf, 040501.pdf) or a .zip archive containing all PDFs. The system automatically extracts the 6-digit ID from each filename and links it to the student!',
       dropzoneTitle: 'Select multiple .PDF files or a .ZIP archive',
-      dropzoneSub: 'Example filenames: 201001.pdf, 202001.pdf, omr_results.zip',
+      dropzoneSub: 'Example filenames: 010301.pdf, 040501.pdf, omr_results.zip',
       selectedFilesLabel: 'Selected files',
       uploadBtn: 'Upload & Match by 6-Digit ID',
       uploadingBtn: 'Processing...',

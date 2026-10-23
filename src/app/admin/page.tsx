@@ -2633,6 +2633,9 @@ export default function AdminPage() {
                       if (found && code !== 8) {
                         setEditCustomSchool(found.name_ro);
                       }
+                      if (found?.maxGrade && editGrade > found.maxGrade) {
+                        setEditGrade(3);
+                      }
                     }}
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-semibold"
                   >

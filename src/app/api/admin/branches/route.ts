@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSessionFromRequest } from '@/lib/auth';
-import { createOrUpdateBranch, getBranches, isEmailAuthorizedAdmin } from '@/lib/db';
+import {
+  createOrUpdateBranch,
+  getBranches,
+  isEmailAuthorizedAdmin,
+  isSuperAdminRecord,
+} from '@/lib/db';
 
 async function isAuthorized(req: NextRequest): Promise<boolean> {
   const session = getAdminSessionFromRequest(req);
   if (!session) return false;
   const admin = await isEmailAuthorizedAdmin(session.email);
-  return Boolean(admin);
+  return isSuperAdminRecord(admin);
 }
 
 export async function POST(req: NextRequest) {

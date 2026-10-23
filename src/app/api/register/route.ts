@@ -57,8 +57,19 @@ export async function POST(req: NextRequest) {
     }
 
     const numericGrade = Number(grade);
-    if (isNaN(numericGrade) || numericGrade < 1 || numericGrade > 12) {
-      return NextResponse.json({ error: 'Invalid grade selected' }, { status: 400 });
+    if (isNaN(numericGrade) || numericGrade < 3 || numericGrade > 8) {
+      return NextResponse.json(
+        { error: 'Clasa trebuie să fie între III și VIII (3–8) / Класс должен быть с 3 по 8 / Grade must be between 3 and 8' },
+        { status: 400 }
+      );
+    }
+
+    const numericSchoolCode = Number(schoolCode) || 8;
+    if (numericSchoolCode === 7 && numericGrade > 4) {
+      return NextResponse.json(
+        { error: 'Orizont Kindergarten School este destinată doar claselor III – IV (3–4).' },
+        { status: 400 }
+      );
     }
 
     const validLangs = ['RO', 'RU', 'EN'];

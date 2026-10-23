@@ -7,6 +7,7 @@ import {
   getStudentByCode,
   getStudentResultPdf,
   isEmailAuthorizedAdmin,
+  isSuperAdminRecord,
   markStudentEmailStatus,
   updateEmailConfig,
 } from '@/lib/db';
@@ -22,12 +23,12 @@ async function requireAdmin(req: NextRequest) {
   const session = getAdminSessionFromRequest(req);
   if (!session) return null;
   const admin = await isEmailAuthorizedAdmin(session.email);
-  return admin ? session : null;
+  return admin ? { session, admin } : null;
 }
 
 export async function GET(req: NextRequest) {
-  const session = await requireAdmin(req);
-  if (!session) {
+  const auth = await requireAdmin(req);
+  if (!auth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -44,9 +45,12 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const session = await requireAdmin(req);
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const auth = await requireAdmin(req);
+  if (!auth || !isSuperAdminRecord(auth.admin)) {
+    return NextResponse.json(
+      { error: 'Acces permis doar pentru Super Admin' },
+      { status: 403 }
+    );
   }
 
   try {
@@ -95,8 +99,8 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await requireAdmin(req);
-  if (!session) {
+  const auth = await requireAdmin(req);
+  if (!auth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -106,6 +110,16 @@ export async function POST(req: NextRequest) {
       | 'send_registration'
       | 'send_result'
       | 'send_bulk_results';
+
+    if (
+      (action === 'send_result' || action === 'send_bulk_results') &&
+      !isSuperAdminRecord(auth.admin)
+    ) {
+      return NextResponse.json(
+        { error: 'Acces permis doar pentru Super Admin' },
+        { status: 403 }
+      );
+    }
 
     const origin =
       req.headers.get('origin') ||

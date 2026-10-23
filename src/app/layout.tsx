@@ -7,7 +7,7 @@ import { Footer } from '@/components/Footer';
 export const metadata: Metadata = {
   title: 'LuminaMath Moldova (luminamath.md) — Concursul Național de Matematică',
   description:
-    'Platforma oficială de înregistrare și rezultate PDF pentru concursul de matematică LuminaMath Moldova (Clasele II – VIII, Chișinău: Lumina & Durlești).',
+    'Platforma oficială de înregistrare și rezultate PDF pentru concursul național de matematică LuminaMath Moldova (Clasele III – VIII • Chișinău, Bălți, Ceadîr-Lunga • IPLT „Orizont”).',
 };
 
 export default function RootLayout({

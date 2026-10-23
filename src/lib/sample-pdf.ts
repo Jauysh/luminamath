@@ -84,7 +84,7 @@ export function generateSampleOmrPdf(params: {
     '/F1 11 Tf',
     '(Correct Answers: 28   |   Wrong Answers: 1   |   Blank: 1) Tj',
     '0 -20 Td',
-    `(Qualification Tier: ${score >= 85 ? 'FIRST PRIZE (Premiul I)' : score >= 70 ? 'SECOND PRIZE (Premiul II)' : 'PARTICIPANT'}) Tj`,
+    '(Official Evaluation Status: VERIFIED - LUMINAMATH MOLDOVA) Tj',
     '0 -35 Td',
     '/F1 9 Tf',
     '(Verified by LuminaMath Optical Scanner System - www.luminamath.md) Tj',

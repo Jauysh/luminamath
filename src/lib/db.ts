@@ -271,6 +271,11 @@ async function ensurePgInitialized(pool: Pool): Promise<boolean> {
       SET access_pin = LPAD(FLOOR(100000 + RANDOM() * 899999)::int::text, 6, '0')
       WHERE access_pin IS NULL OR access_pin = '';
 
+      UPDATE students
+      SET grade = 3,
+          school_code = CASE WHEN school_code = 8 AND school ILIKE '%Orizont%' THEN 3 ELSE school_code END
+      WHERE grade < 3;
+
       CREATE UNIQUE INDEX IF NOT EXISTS idx_students_student_code ON students(student_code);
       CREATE INDEX IF NOT EXISTS idx_students_branch_grade ON students(branch_code, grade);
 
@@ -322,17 +327,17 @@ async function ensurePgInitialized(pool: Pool): Promise<boolean> {
         const demoPdf = generateSampleOmrPdf({
           studentCode: '201001',
           fullName: 'Damir Rusu',
-          grade: 2,
-          school: 'Liceul Teoretic Orizont (Durlești)',
-          branchName: 'Chisinau - Filiala Durlesti',
+          grade: 3,
+          school: 'IPLT „Orizont” — Filiala Durlești',
+          branchName: 'Filiala Ciocana Primary (Chisinau)',
           examLanguage: 'RO',
           score: 95.0,
         });
         await pool.query(
           `INSERT INTO students (
-            id, student_code, first_name, last_name, grade, school, teacher_name,
+            id, student_code, first_name, last_name, grade, school, school_code, teacher_name,
             exam_language, branch_id, branch_code, email, phone, email_sent, has_result_pdf, result_uploaded_at
-          ) VALUES ($1, '201001', 'Damir', 'Rusu', 2, 'Liceul Teoretic Orizont', 'Elena Moraru', 'RO', $2, 2, 'damir.rusu@example.md', '+373 69 123 456', true, true, now())
+          ) VALUES ($1, '201001', 'Damir', 'Rusu', 3, 'IPLT „Orizont” — Filiala Durlești', 3, 'Elena Moraru', 'RO', $2, 2, 'damir.rusu@example.md', '+373 69 123 456', true, true, now())
           ON CONFLICT (student_code) DO NOTHING`,
           [crypto.randomUUID(), bRes2.rows[0].id]
         );
@@ -452,9 +457,9 @@ function ensureLocalStore(): LocalStoreSchema {
     const demoPdf201001 = generateSampleOmrPdf({
       studentCode: '201001',
       fullName: 'Damir Rusu',
-      grade: 2,
-      school: 'Liceul Teoretic Orizont (Durlești)',
-      branchName: 'Chisinau - Filiala Durlesti',
+      grade: 3,
+      school: 'IPLT „Orizont” — Filiala Durlești',
+      branchName: 'Filiala Ciocana Primary (Chisinau)',
       examLanguage: 'RO',
       score: 95.0,
     });
@@ -465,7 +470,7 @@ function ensureLocalStore(): LocalStoreSchema {
       fullName: 'Sofia Cebotari',
       grade: 5,
       school: 'Liceul Teoretic Mihai Eminescu',
-      branchName: 'Chisinau - Filiala Lumina',
+      branchName: 'Filiala Ceadir-Lunga',
       examLanguage: 'RO',
       score: 88.5,
     });
@@ -482,7 +487,7 @@ function ensureLocalStore(): LocalStoreSchema {
       })),
       settings: DEFAULT_SITE_SETTINGS,
       counters: {
-        '2_1': 1,
+        '2_3': 1,
         '1_5': 1,
       },
       students: [
@@ -492,8 +497,9 @@ function ensureLocalStore(): LocalStoreSchema {
           access_pin: '482915',
           first_name: 'Damir',
           last_name: 'Rusu',
-          grade: 2,
-          school: 'Liceul Teoretic Orizont (Durlești)',
+          grade: 3,
+          school: 'IPLT „Orizont” — Filiala Durlești',
+          school_code: 3,
           teacher_name: 'Elena Moraru',
           exam_language: 'RO',
           branch_id: 2,
