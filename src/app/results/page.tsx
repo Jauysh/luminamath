@@ -113,15 +113,15 @@ function ResultsContent() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Search Card */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-lg overflow-hidden mb-8">
-        <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-indigo-900 text-white p-6 sm:p-8 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center mx-auto mb-3 text-amber-300">
+      <div className="bg-white rounded-3xl border-2 border-orange-200 shadow-lg overflow-hidden mb-8">
+        <div className="bg-gradient-to-r from-[#1B56A5] via-[#174b91] to-[#EB5A24] text-white p-6 sm:p-8 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-[#F5B316] flex items-center justify-center mx-auto mb-3 text-slate-950 shadow-md">
             <FileSearch className="w-6 h-6" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold">
             {t.results.title}
           </h1>
-          <p className="text-slate-300 text-sm sm:text-base mt-2 max-w-2xl mx-auto">
+          <p className="text-blue-100 text-sm sm:text-base mt-2 max-w-2xl mx-auto">
             {t.results.subtitle}
           </p>
         </div>
@@ -174,7 +174,7 @@ function ResultsContent() {
               <button
                 type="submit"
                 disabled={loading || studentId.length !== 6 || !accessPin.trim()}
-                className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-indigo-600 to-lumina-600 hover:from-indigo-700 hover:to-lumina-700 disabled:opacity-50 text-white font-extrabold text-sm sm:text-base shadow-md transition-all"
+                className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#EB5A24] to-[#F58220] hover:from-[#d94e1b] hover:to-[#e07114] disabled:opacity-50 text-white font-black text-sm sm:text-base shadow-md transition-all"
               >
                 {loading ? t.results.searching : t.results.searchBtn}
               </button>
