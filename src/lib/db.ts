@@ -24,6 +24,7 @@ export interface AdminEmailRecord {
 }
 
 export const INITIAL_ADMIN_EMAILS: { email: string; name: string; role: string }[] = [
+  { email: 'luminamath@orizont.md', name: 'LuminaMath Moldova (Orizont)', role: 'Super Admin' },
   { email: 'azamatjauysh@orizont.md', name: 'Azamat Jauysh (Orizont)', role: 'Super Admin' },
   { email: 'jeyhunalakbarov@orizont.md', name: 'Jeyhun Alakbarov (Orizont)', role: 'Admin' },
   { email: 'a.jauysh@gmail.com', name: 'Azamat Jauysh (Gmail)', role: 'Super Admin' },
@@ -64,8 +65,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsRecord = {
   stage4_date_ro: '15 Ianuarie 2027',
   stage4_date_ru: '15 Января 2027',
   stage4_date_en: '15 January 2027',
-  contact_email: 'info@luminamath.md',
-  contact_phone: '+373 22 000 000',
+  contact_email: 'luminamath@orizont.md',
+  contact_phone: '+373 (79) 000 073',
   google_client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
 };
 
@@ -276,6 +277,7 @@ async function ensurePgInitialized(pool: Pool): Promise<boolean> {
 
       INSERT INTO admin_emails (email, name, role)
       VALUES
+        ('luminamath@orizont.md', 'LuminaMath Moldova (Orizont)', 'Super Admin'),
         ('azamatjauysh@orizont.md', 'Azamat Jauysh (Orizont)', 'Super Admin'),
         ('jeyhunalakbarov@orizont.md', 'Jeyhun Alakbarov (Orizont)', 'Admin'),
         ('a.jauysh@gmail.com', 'Azamat Jauysh (Gmail)', 'Super Admin')
@@ -674,29 +676,41 @@ export async function removeAdminEmail(emailToRemove: string): Promise<AdminEmai
 // ============================================================================
 
 export async function getSiteSettings(): Promise<SiteSettingsRecord> {
+  const normalizeContact = (s: SiteSettingsRecord): SiteSettingsRecord => ({
+    ...s,
+    contact_email:
+      !s.contact_email || s.contact_email === 'info@luminamath.md'
+        ? 'luminamath@orizont.md'
+        : s.contact_email,
+    contact_phone:
+      !s.contact_phone || s.contact_phone === '+373 22 000 000'
+        ? '+373 (79) 000 073'
+        : s.contact_phone,
+  });
+
   const pool = getPgPool();
   if (pool && (await ensurePgInitialized(pool))) {
     const res = await pool.query('SELECT settings_json FROM site_settings WHERE id = 1 LIMIT 1');
     if (res.rows[0]?.settings_json) {
-      return {
+      return normalizeContact({
         ...DEFAULT_SITE_SETTINGS,
         ...res.rows[0].settings_json,
         google_client_id:
           res.rows[0].settings_json.google_client_id ||
           process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
           '',
-      };
+      });
     }
     return DEFAULT_SITE_SETTINGS;
   }
 
   const store = ensureLocalStore();
-  return {
+  return normalizeContact({
     ...DEFAULT_SITE_SETTINGS,
     ...(store.settings || {}),
     google_client_id:
       store.settings?.google_client_id || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
-  };
+  });
 }
 
 export async function updateSiteSettings(

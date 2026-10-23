@@ -606,6 +606,25 @@ export default function RegisterPage() {
             </div>
           </div>
 
+          {/* Official Terms & Personal Data Protection Consent */}
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                required
+                defaultChecked
+                className="mt-1 w-4 h-4 rounded border-slate-300 text-[#2C3987] focus:ring-[#2C3987]"
+              />
+              <span className="text-xs text-slate-600 leading-relaxed">
+                {locale === 'RU'
+                  ? 'Подтверждаю, что ознакомился(ась) с правилами проведения олимпиады LuminaMath Moldova (IPLT «Orizont»), участием на бесплатной основе и даю согласие на обработку персональных данных для организации экзамена и публикации результатов.'
+                  : locale === 'EN'
+                  ? 'I confirm that I have read and understood the rules of the LuminaMath Moldova competition (IPLT "Orizont"), free participation, and consent to the processing of personal data for organizing the competition and publishing results.'
+                  : 'Confirm că am citit și am înțeles regulamentul concursului LuminaMath Moldova (IPLT „Orizont”), participarea gratuită și îmi exprim acordul pentru prelucrarea datelor cu caracter personal în scopul organizării concursului și afișării rezultatelor.'}
+              </span>
+            </label>
+          </div>
+
           <div className="pt-2">
             <button
               type="submit"

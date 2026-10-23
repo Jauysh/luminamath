@@ -36,7 +36,7 @@ async function createConfiguredTransporter() {
   const port = Number(cfg.smtp_port || 465);
   const user = cfg.smtp_user?.trim();
   const pass = cfg.smtp_pass?.trim();
-  const from = cfg.smtp_from?.trim() || `LuminaMath Moldova <${user || 'info@luminamath.md'}>`;
+  const from = cfg.smtp_from?.trim() || `LuminaMath Moldova <${user || 'luminamath@orizont.md'}>`;
 
   if (!host || !user || !pass) {
     return null;

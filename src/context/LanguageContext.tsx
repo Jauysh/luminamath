@@ -37,8 +37,8 @@ const DEFAULT_CLIENT_SETTINGS: SiteSettingsClient = {
   stage4_date_ro: '15 Ianuarie 2027',
   stage4_date_ru: '15 Января 2027',
   stage4_date_en: '15 January 2027',
-  contact_email: 'info@luminamath.md',
-  contact_phone: '+373 22 000 000',
+  contact_email: 'luminamath@orizont.md',
+  contact_phone: '+373 (79) 000 073',
 };
 
 interface LanguageContextValue {

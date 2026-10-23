@@ -102,12 +102,12 @@ export const translations = {
       statGrades: 'Clasele III – VIII',
       statGradesSub: '6 categorii de vârstă',
       statFormat: 'Proba Scrisă • 2 Ore',
-      statFormatSub: 'Format oficial de concurs',
+      statFormatSub: 'Participare 100% Gratuită',
       statLangs: 'RO • RU • EN',
       statLangsSub: '3 limbi de susținere',
       sampleIdLabel: 'Calendar & Informații Oficiale',
       sampleIdDesc:
-        'Fiecare elev înregistrat primește un cod unic de participant (ID din 6 cifre) și o parolă PIN personală pentru accesarea rezultatelor.',
+        'Fiecare elev înregistrat primește un cod unic de participant (ID din 6 cifre) și o parolă PIN personală pentru accesarea rezultatelor. Participarea este gratuită!',
     },
     omr: {
       gridTitle: 'Cod Participant • ID',
@@ -139,12 +139,19 @@ export const translations = {
     rules: {
       badge: 'Regulament & Premiere',
       title: 'Regulamentul Concursului și Premii',
-      subtitle: 'Etapele de participare, desfășurarea probei scrise și criteriile de premiere',
+      subtitle: 'Etapele de participare, desfășurarea probei scrise și premiile oficiale LuminaMath Moldova',
+      aboutTitle: 'Despre Concursul Național LuminaMath Moldova',
+      aboutDesc:
+        'LuminaMath este un concurs național de matematică pentru elevii claselor III – VIII din Republica Moldova, organizat de IPLT „Orizont” și adaptat curriculumului național. Competiția urmărește atragerea copiilor către științele exacte, creșterea performanței la matematică, familiarizarea elevilor cu atmosfera de examen și testele grilă (cu 5 variante de răspuns, dintre care unul singur corect), precum și pregătirea lor pentru olimpiadele naționale și internaționale.',
+      freeBadge: 'Taxă de participare: Nu se percepe taxă de participare (100% Gratuit)',
+      answerSheetRulesTitle: 'Reguli de Completare a Foii de Concurs',
+      answerSheetRulesDesc:
+        'Completarea corectă a foii de răspuns face parte din joc! Foile sunt evaluate automat prin citire optică pentru un calcul 100% imparțial al punctajelor și clasamentului. Încercuirea (înnegrirea cercului) trebuie realizată complet cu pixul sau creionul, fără depășiri, cruciulițe, linii, puncte, pete sau ștersături. Lucrul este strict individual.',
       stepsTitle: 'Pașii pentru Participanți',
       steps: [
         {
           num: '01',
-          title: 'Înregistrare Online',
+          title: 'Înregistrare Online Gratuită',
           desc: 'Elevul completează formularul cu numele, clasa (III–VIII), școala, profesorul de matematică, limba testului, filiala apropiată, email și telefon.',
         },
         {
@@ -155,7 +162,7 @@ export const translations = {
         {
           num: '03',
           title: 'Susținerea Probei Scrise',
-          desc: 'La data examenului scris, elevul se prezintă la filiala aleasă și rezolvă subiectele de concurs corespunzătoare clasei sale.',
+          desc: 'La data examenului scris (10:00 – 12:00, durata 2 ore), elevul se prezintă la filiala aleasă și rezolvă subiectele de concurs corespunzătoare clasei sale.',
         },
         {
           num: '04',
@@ -163,15 +170,46 @@ export const translations = {
           desc: 'La data publicării rezultatelor, elevul se autentifică cu ID-ul și parola PIN pentru a descărca fișa sa oficială de evaluare în format PDF.',
         },
       ],
-      prizesTitle: 'Criterii de Premiere (Etapa Scrisă)',
+      prizesTitle: 'Premii și Diplome (Etapa Scrisă)',
       prizes: [
-        { tier: 'Premiul I', points: '85 – 100 puncte', badge: 'Locul I', color: 'from-amber-400 to-yellow-500' },
-        { tier: 'Premiul II', points: '70 – 84.9 puncte', badge: 'Locul II', color: 'from-slate-300 to-slate-400' },
-        { tier: 'Premiul III', points: '60 – 69.9 puncte', badge: 'Locul III', color: 'from-amber-600 to-orange-700' },
-        { tier: 'Mențiune', points: '50 – 59.9 puncte', badge: 'Mențiune', color: 'from-lumina-500 to-lumina-600' },
+        { tier: 'Locul I', points: '1500 MDL', badge: 'Medalie de Aur & Diplomă', color: 'from-amber-400 to-yellow-500' },
+        { tier: 'Locul II', points: '1000 MDL', badge: 'Medalie de Argint & Diplomă', color: 'from-slate-300 to-slate-400' },
+        { tier: 'Locul III', points: '750 MDL', badge: 'Medalie de Bronz & Diplomă', color: 'from-amber-600 to-orange-700' },
+        { tier: 'Mențiune', points: 'Diplomă & Medalie', badge: 'Mențiune de Onoare', color: 'from-lumina-500 to-lumina-600' },
       ],
       examNote:
-        'Important pentru ziua examenului: Elevii trebuie să aibă asupra lor carnetul de elev, permisul de participare (cu numărul ID) și instrumente de scris (creion HB / pix negru). Telefoanele mobile și calculatoarele sunt strict interzise în sala de examen.',
+        'Important pentru ziua examenului: Elevii trebuie să aibă asupra lor carnetul de elev (sau actul de identitate), permisul de participare (cu numărul ID din 6 cifre) și instrumente de scris (pix / creion). Obiectele precum telefonul mobil, ceasul inteligent, calculatorul sau rigla sunt strict interzise în sala de examen.',
+    },
+    faq: {
+      badge: 'Întrebări Frecvente (FAQ)',
+      title: 'Întrebări și Răspunsuri Utile',
+      subtitle: 'Tot ce trebuie să știți despre pregătire, înscriere și ziua examenului LuminaMath Moldova',
+      items: [
+        {
+          q: 'Cum mă pregătesc pentru concursul LuminaMath?',
+          a: 'Cunoașterea programei școlare de matematică din Republica Moldova parcurse până la data concursului și exersarea problemelor de logică și matematică tip grilă sunt suficiente pentru o participare de succes.',
+        },
+        {
+          q: 'Există vreo taxă de participare la concurs?',
+          a: 'Nu. Participarea la concursul național de matematică LuminaMath Moldova este 100% gratuită pentru toți elevii din clasele III – VIII.',
+        },
+        {
+          q: 'Cum mă înscriu la concurs?',
+          a: 'Pentru a vă înscrie, completați formularul de înregistrare pe site-ul www.luminamath.md. Imediat după trimitere veți primi pe ecran și pe adresa de e-mail permisul de participare cu ID-ul unic din 6 cifre și parola PIN.',
+        },
+        {
+          q: 'Ce trebuie să am la mine în ziua examenului?',
+          a: 'La proba scrisă trebuie să aveți carnetul de elev (sau certificatul de naștere / buletinul), permisul de participare cu ID-ul din 6 cifre și un pix sau creion. Telefoanele mobile, calculatoarele, ceasurile inteligente sau riglele sunt strict interzise.',
+        },
+        {
+          q: 'Cum trebuie completată foaia de răspuns?',
+          a: 'Foile de răspuns sunt citite de scanere optice pentru o evaluare automată și imparțială. Cercul corespunzător variantei alese trebuie înnegrit complet cu pixul sau creionul (nu sunt recunoscute cruciulițele, liniile, punctele sau ștersăturile).',
+        },
+        {
+          q: 'Ce se întâmplă dacă nu mă pot prezenta; poate participa altcineva în locul meu?',
+          a: 'Înregistrarea se face individual, iar pentru fiecare elev înscris se pregătesc foi de concurs personalizate cu ID-ul său. Prin urmare, niciun alt elev nu poate participa în locul persoanei înscrise.',
+        },
+      ],
     },
     branchesSection: {
       badge: 'Centre de Examen',
@@ -400,12 +438,12 @@ export const translations = {
       statGrades: '3 – 8 Классы',
       statGradesSub: '6 возрастных категорий',
       statFormat: 'Письменный этап • 2 часа',
-      statFormatSub: 'Официальный формат олимпиады',
+      statFormatSub: 'Участие 100% бесплатное',
       statLangs: 'RO • RU • EN',
       statLangsSub: '3 языка сдачи экзамена',
       sampleIdLabel: 'Расписание и информация об олимпиаде',
       sampleIdDesc:
-        'При регистрации каждый ученик получает личный 6-значный ID-номер участника и персональный PIN-пароль для доступа к результатам.',
+        'При регистрации каждый ученик получает личный 6-значный ID-номер участника и персональный PIN-пароль для доступа к результатам. Участие бесплатное!',
     },
     omr: {
       gridTitle: 'Код участника • ID',
@@ -437,12 +475,19 @@ export const translations = {
     rules: {
       badge: 'Правила и Награды',
       title: 'Правила Олимпиады и Призовые Места',
-      subtitle: 'Порядок регистрации, проведения письменного экзамена и критерии награждения',
+      subtitle: 'Порядок регистрации, проведения письменного экзамена и призы LuminaMath Moldova',
+      aboutTitle: 'О Национальной Олимпиаде LuminaMath Moldova',
+      aboutDesc:
+        'LuminaMath — это национальный математический конкурс для учеников 3 – 8 классов Республики Молдова, организованный IPLT «Orizont» и адаптированный к национальной школьной программе. Цель олимпиады — привлечь детей к точным наукам, повысить их успеваемость по математике, познакомить учеников с атмосферой экзамена и тестовыми заданиями (с 5 вариантами ответа, из которых только один верный), а также подготовить их к национальным и международным олимпиадам.',
+      freeBadge: 'Стоимость участия: Участие в олимпиаде полностью бесплатное (100% Бесплатно)',
+      answerSheetRulesTitle: 'Правила заполнения бланка ответов',
+      answerSheetRulesDesc:
+        'Правильное заполнение бланка ответов — важная часть соревнования! Бланки проверяются автоматически оптическим сканером, что гарантирует 100% объективный подсчет баллов и рейтинга. Выбранный кружок необходимо закрашивать полностью ручкой или карандашом — без крестиков, галочек, линий, точек, пятен или исправлений. Работа выполняется строго индивидуально.',
       stepsTitle: 'Этапы для Участников',
       steps: [
         {
           num: '01',
-          title: 'Онлайн Регистрация',
+          title: 'Бесплатная Онлайн-Регистрация',
           desc: 'Ученик вводит имя, фамилию, класс (3–8), школу, ФИО учителя математики, язык экзамена, ближайший филиал, email и телефон.',
         },
         {
@@ -453,7 +498,7 @@ export const translations = {
         {
           num: '03',
           title: 'Письменный Экзамен',
-          desc: 'В день экзамена ученик приходит в выбранный филиал и выполняет конкурсные задания по математике для своего класса.',
+          desc: 'В день экзамена (10:00 – 12:00, длительность 2 часа) ученик приходит в выбранный филиал и решает конкурсные задачи для своего класса.',
         },
         {
           num: '04',
@@ -461,15 +506,46 @@ export const translations = {
           desc: 'После публикации результатов ученик входит по своему ID и PIN-коду и скачивает официальный PDF-табель с результатами.',
         },
       ],
-      prizesTitle: 'Критерии Награждения (Письменный этап)',
+      prizesTitle: 'Призы и Дипломы (Письменный этап)',
       prizes: [
-        { tier: 'I Место (Premiul I)', points: '85 – 100 баллов', badge: '1-е место', color: 'from-amber-400 to-yellow-500' },
-        { tier: 'II Место (Premiul II)', points: '70 – 84.9 баллов', badge: '2-е место', color: 'from-slate-300 to-slate-400' },
-        { tier: 'III Место (Premiul III)', points: '60 – 69.9 баллов', badge: '3-е место', color: 'from-amber-600 to-orange-700' },
-        { tier: 'Грамота (Mențiune)', points: '50 – 59.9 баллов', badge: 'Почетная грамота', color: 'from-lumina-500 to-lumina-600' },
+        { tier: 'I Место', points: '1500 MDL', badge: 'Золотая медаль и Диплом', color: 'from-amber-400 to-yellow-500' },
+        { tier: 'II Место', points: '1000 MDL', badge: 'Серебряная медаль и Диплом', color: 'from-slate-300 to-slate-400' },
+        { tier: 'III Место', points: '750 MDL', badge: 'Бронзовая медаль и Диплом', color: 'from-amber-600 to-orange-700' },
+        { tier: 'Грамота', points: 'Диплом и Медаль', badge: 'Почётная грамота (Mențiune)', color: 'from-lumina-500 to-lumina-600' },
       ],
       examNote:
-        'Важно в день экзамена: При себе необходимо иметь ученический билет, талон участника (с 6-значным ID-номером) и письменные принадлежности (карандаш HB / черную ручку). Мобильные телефоны и калькуляторы на экзамене строго запрещены.',
+        'Важно в день экзамена: При себе необходимо иметь ученический билет (или удостоверение личности / свидетельство о рождении), талон участника (с 6-значным ID-номером) и письменные принадлежности (ручку / карандаш). Мобильные телефоны, смарт-часы, калькуляторы и линейки на экзамене строго запрещены.',
+    },
+    faq: {
+      badge: 'Частые вопросы (FAQ)',
+      title: 'Ответы на часто задаваемые вопросы',
+      subtitle: 'Всё, что нужно знать о подготовке, регистрации и дне проведения экзамена LuminaMath Moldova',
+      items: [
+        {
+          q: 'Как подготовиться к олимпиаде LuminaMath?',
+          a: 'Достаточно хорошо знать школьную программу по математике Республики Молдова, пройденную к моменту проведения экзамена, и тренироваться в решении логических и тестовых задач.',
+        },
+        {
+          q: 'Платно ли участие в олимпиаде?',
+          a: 'Нет. Участие в национальной математической олимпиаде LuminaMath Moldova на 100% бесплатное для всех учеников 3 – 8 классов.',
+        },
+        {
+          q: 'Как зарегистрироваться на конкурс?',
+          a: 'Заполните регистрационную анкету на сайте www.luminamath.md. Сразу после отправки формы вы получите на экране и на указанный email талон участника с вашим 6-значным ID-номером и PIN-паролем.',
+        },
+        {
+          q: 'Что нужно принести с собой на экзамен?',
+          a: 'На письменный этап необходимо принести ученический билет (или свидетельство о рождении / удостоверение личности), талон участника с 6-значным ID и ручку или карандаш. Мобильные телефоны, калькуляторы, смарт-часы и линейки строго запрещены.',
+        },
+        {
+          q: 'Как правильно заполнять бланк ответов?',
+          a: 'Бланки ответов проверяются оптическими сканерами для объективной автоматической оценки. Кружок с выбранным ответом нужно полностью закрасить ручкой или карандашом (крестики, линии, точки и исправления сканером не распознаются).',
+        },
+        {
+          q: 'Что делать, если я не смогу прийти; может ли другой ученик участвовать вместо меня?',
+          a: 'Регистрация проводится индивидуально, и для каждого зарегистрированного участника печатается именной бланк ответов с его ID. Поэтому другой ученик не может принять участие вместо зарегистрированного.',
+        },
+      ],
     },
     branchesSection: {
       badge: 'Экзаменационные центры',
@@ -699,12 +775,12 @@ export const translations = {
       statGrades: 'Grades III – VIII',
       statGradesSub: '6 grade divisions',
       statFormat: 'Written Stage • 2 Hours',
-      statFormatSub: 'Official competition format',
+      statFormatSub: '100% Free Participation',
       statLangs: 'RO • RU • EN',
       statLangsSub: '3 examination languages',
       sampleIdLabel: 'Official Schedule & Key Information',
       sampleIdDesc:
-        'Every registered student receives a unique 6-digit Participant ID and a personal Access PIN to view and download their official results.',
+        'Every registered student receives a unique 6-digit Participant ID and a personal Access PIN to view and download their official results. Participation is free of charge!',
     },
     omr: {
       gridTitle: 'Participant Code • ID',
@@ -735,13 +811,20 @@ export const translations = {
     },
     rules: {
       badge: 'Rules & Awards',
-      title: 'Competition Rules & Prize Categories',
-      subtitle: 'How registration, the written examination stage, and awards work',
+      title: 'Competition Rules & Official Prizes',
+      subtitle: 'How registration, the written examination stage, and LuminaMath Moldova awards work',
+      aboutTitle: 'About the LuminaMath Moldova National Competition',
+      aboutDesc:
+        'LuminaMath is a national mathematics competition for students in Grades III – VIII in the Republic of Moldova, organized by IPLT "Orizont" and adapted to the national school curriculum. Our competition aims to attract children to the exact sciences, increase their performance in mathematics, familiarize students with the exam atmosphere and multiple-choice grid tests (5 options, only one correct answer), as well as prepare them for national and international olympiads.',
+      freeBadge: 'Participation Fee: There is no participation fee (100% Free of Charge)',
+      answerSheetRulesTitle: 'Answer Sheet Completion Guidelines',
+      answerSheetRulesDesc:
+        'Filling in the answer sheet properly is part of the game! Answer sheets are graded automatically by optical readers to ensure 100% impartial scoring and ranking. The selected circle must be shaded completely with a pen or pencil — crosses, lines, dots, stains, or erasures are not recognized. All work must be strictly individual.',
       stepsTitle: 'How It Works',
       steps: [
         {
           num: '01',
-          title: 'Online Registration',
+          title: 'Free Online Registration',
           desc: 'Enter your first name, last name, grade (III–VIII), school, math teacher’s name, exam language, nearest branch, email, and phone.',
         },
         {
@@ -752,7 +835,7 @@ export const translations = {
         {
           num: '03',
           title: 'Written Examination Stage',
-          desc: 'On the written exam date, students attend their selected branch to solve the mathematics competition problems for their grade.',
+          desc: 'On the written exam date (10:00 – 12:00, duration 2 hours), students attend their selected branch to solve the competition problems for their grade.',
         },
         {
           num: '04',
@@ -760,15 +843,46 @@ export const translations = {
           desc: 'Once results are published, students enter their ID and Access PIN to view and download their official PDF evaluation report.',
         },
       ],
-      prizesTitle: 'Written Stage Award Tiers',
+      prizesTitle: 'Prizes & Diplomas (Written Stage)',
       prizes: [
-        { tier: 'First Prize', points: '85 – 100 points', badge: '1st Place', color: 'from-amber-400 to-yellow-500' },
-        { tier: 'Second Prize', points: '70 – 84.9 points', badge: '2nd Place', color: 'from-slate-300 to-slate-400' },
-        { tier: 'Third Prize', points: '60 – 69.9 points', badge: '3rd Place', color: 'from-amber-600 to-orange-700' },
-        { tier: 'Mention', points: '50 – 59.9 points', badge: 'Honorable Mention', color: 'from-lumina-500 to-lumina-600' },
+        { tier: '1st Place', points: '1500 MDL', badge: 'Gold Medal & Diploma', color: 'from-amber-400 to-yellow-500' },
+        { tier: '2nd Place', points: '1000 MDL', badge: 'Silver Medal & Diploma', color: 'from-slate-300 to-slate-400' },
+        { tier: '3rd Place', points: '750 MDL', badge: 'Bronze Medal & Diploma', color: 'from-amber-600 to-orange-700' },
+        { tier: 'Mention', points: 'Diploma & Medal', badge: 'Honorable Mention', color: 'from-lumina-500 to-lumina-600' },
       ],
       examNote:
-        'Exam Day Reminder: Students must bring their student ID card, their admission slip (with their 6-digit LuminaMath ID), and writing instruments (HB pencil / black pen). Mobile phones and calculators are strictly prohibited.',
+        'Exam Day Reminder: Students must bring their student ID card (or ID / birth certificate), their admission slip (with their 6-digit LuminaMath ID), and writing instruments (pen / pencil). Mobile phones, smartwatches, calculators, and rulers are strictly prohibited.',
+    },
+    faq: {
+      badge: 'Frequently Asked Questions (FAQ)',
+      title: 'Frequently Asked Questions',
+      subtitle: 'Everything you need to know about preparing, registering, and attending LuminaMath Moldova',
+      items: [
+        {
+          q: 'How do I prepare for the LuminaMath competition?',
+          a: 'Mastering the school mathematics curriculum of the Republic of Moldova covered up to the exam date and practicing multiple-choice math and logic problems is sufficient.',
+        },
+        {
+          q: 'Is there a participation fee?',
+          a: 'No. There is no participation fee — taking part in the LuminaMath Moldova competition is 100% free of charge for all students in Grades III – VIII.',
+        },
+        {
+          q: 'How do I enroll in the contest?',
+          a: 'To enroll in the contest, complete the online registration form on www.luminamath.md. Immediately after submitting, you will receive your official admission slip with your 6-digit Participant ID and personal PIN code on screen and via email.',
+        },
+        {
+          q: 'What do I have to bring to the exam?',
+          a: 'At the Written Stage you will need to bring your student card (or identity card / birth certificate), your Participation Slip (with your 6-digit ID), and a pen or pencil. Objects such as mobile phones, smartwatches, calculators, or rulers are strictly prohibited.',
+        },
+        {
+          q: 'How should I fill in the answer sheet?',
+          a: 'Answer forms are fed into optical readers for automatic, impartial grading. The circle corresponding to your chosen answer must be filled in completely using a pen or pencil (crosses, lines, dots, or erasures are not recognized).',
+        },
+        {
+          q: 'What happens if I cannot attend; can someone else participate in my place?',
+          a: 'Registration is done individually, after which personalized answer sheets are prepared for each student’s ID; therefore, no other student can participate in place of the registered student.',
+        },
+      ],
     },
     branchesSection: {
       badge: 'Exam Centers',

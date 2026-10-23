@@ -12,10 +12,13 @@ import {
   Building2,
   Calendar,
   CheckCircle2,
+  ChevronDown,
   Clock,
+  FileCheck2,
   FileSearch,
   Globe2,
   GraduationCap,
+  HelpCircle,
   MapPin,
   Medal,
   Sparkles,
@@ -44,6 +47,7 @@ interface CountdownState {
 export default function HomePage() {
   const { locale, t, settings } = useLanguage();
   const [branches, setBranches] = useState<BranchItem[]>([]);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [countdown, setCountdown] = useState<CountdownState>({
     days: 43,
     hours: 10,
@@ -165,8 +169,6 @@ export default function HomePage() {
       actionLabel: t.hero.resultsBtn,
     },
   ];
-
-  const prizeProgress = [95, 80, 68, 55];
 
   return (
     <div className="overflow-hidden">
@@ -516,6 +518,49 @@ export default function HomePage() {
             </p>
           </div>
 
+          {/* Official About LuminaMath Moldova & Answer Sheet Guidelines */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
+            <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-indigo-100 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-indigo-50 text-[#2C3987] text-xs font-extrabold mb-3">
+                  <Sparkles className="w-4 h-4 text-[#F59122]" />
+                  <span>LuminaMath Moldova • IPLT „Orizont”</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 mb-3">
+                  {t.rules.aboutTitle}
+                </h3>
+                <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+                  {t.rules.aboutDesc}
+                </p>
+              </div>
+              <div className="mt-5 pt-4 border-t border-slate-100">
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-extrabold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{t.rules.freeBadge}</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 bg-gradient-to-br from-[#2C3987] to-[#1e296b] text-white rounded-3xl p-6 sm:p-8 shadow-md flex flex-col justify-between">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-white/10 border border-white/15 text-amber-300 text-xs font-extrabold mb-3">
+                  <FileCheck2 className="w-4 h-4 text-[#F8A71A]" />
+                  <span>Etapa Scrisă • 10:00 – 12:00</span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-white mb-3">
+                  {t.rules.answerSheetRulesTitle}
+                </h3>
+                <p className="text-sm text-indigo-100 leading-relaxed">
+                  {t.rules.answerSheetRulesDesc}
+                </p>
+              </div>
+              <div className="mt-5 pt-4 border-t border-white/15 flex items-center justify-between text-xs font-bold text-amber-300">
+                <span>A • B • C • D • E (1 răspuns corect)</span>
+                <span>Clasele III – VIII</span>
+              </div>
+            </div>
+          </div>
+
           {/* 4 Steps Bento */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-14">
             {t.rules.steps.map((step, idx) => (
@@ -542,7 +587,7 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* 3D Medal Prizes Card */}
+          {/* 3D Medal Prizes Card (Cash & Medal Prizes per Grade — No 85-100 Score Thresholds) */}
           <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-sm">
             <h3 className="text-xl sm:text-2xl font-black text-slate-900 mb-6 flex items-center gap-2.5">
               <Trophy className="w-6 h-6 text-[#F59122]" />
@@ -562,19 +607,13 @@ export default function HomePage() {
                         <Medal className="w-3.5 h-3.5" />
                         {p.tier}
                       </span>
-                      <span className="text-[11px] font-bold text-slate-400">
-                        {p.badge}
-                      </span>
                     </div>
-                    <div className="text-2xl font-black text-slate-900 mb-3">
+                    <div className="text-2xl sm:text-3xl font-black text-[#2C3987] mb-2">
                       {p.points}
                     </div>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full bg-gradient-to-r ${p.color}`}
-                      style={{ width: `${prizeProgress[idx] || 60}%` }}
-                    />
+                    <div className="text-xs font-bold text-slate-600">
+                      {p.badge}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -589,7 +628,7 @@ export default function HomePage() {
       </section>
 
       {/* BRANCHES SECTION (4 Official Exam Centers) */}
-      <section id="branches" className="py-20 bg-white">
+      <section id="branches" className="py-20 bg-white border-b border-slate-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 text-[#2C3987] border border-indigo-200 text-xs font-extrabold uppercase tracking-wider mb-3">
@@ -635,6 +674,60 @@ export default function HomePage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FREQUENTLY ASKED QUESTIONS (FAQ) SECTION */}
+      <section id="faq" className="py-20 bg-slate-50/80">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-50 text-[#F59122] border border-orange-200 text-xs font-extrabold uppercase tracking-wider mb-3">
+              <HelpCircle className="w-4 h-4 text-[#F59122]" />
+              {t.faq.badge}
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              {t.faq.title}
+            </h2>
+            <p className="mt-3 text-slate-600 text-base sm:text-lg">
+              {t.faq.subtitle}
+            </p>
+          </div>
+
+          <div className="space-y-3.5">
+            {t.faq.items.map((item, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div
+                  key={idx}
+                  className={`rounded-2xl border-2 transition-all overflow-hidden ${
+                    isOpen
+                      ? 'bg-white border-[#2C3987] shadow-md'
+                      : 'bg-white/90 border-slate-200/90 hover:border-indigo-200'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(isOpen ? null : idx)}
+                    className="w-full px-6 py-4 sm:py-5 text-left flex items-center justify-between gap-4"
+                  >
+                    <span className="font-extrabold text-sm sm:text-base text-slate-900">
+                      {item.q}
+                    </span>
+                    <ChevronDown
+                      className={`w-5 h-5 text-[#2C3987] shrink-0 transition-transform duration-200 ${
+                        isOpen ? 'rotate-180 text-[#F59122]' : ''
+                      }`}
+                    />
+                  </button>
+                  {isOpen && (
+                    <div className="px-6 pb-5 pt-1 text-sm text-slate-600 leading-relaxed border-t border-slate-100">
+                      {item.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
