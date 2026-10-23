@@ -4,20 +4,21 @@ import {
   addAdminEmail,
   getAdminEmails,
   isEmailAuthorizedAdmin,
+  isSuperAdminRecord,
   removeAdminEmail,
 } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-async function requireAdmin(req: NextRequest) {
+async function requireSuperAdmin(req: NextRequest) {
   const session = getAdminSessionFromRequest(req);
   if (!session) return null;
   const record = await isEmailAuthorizedAdmin(session.email);
-  return record ? session : null;
+  return record && isSuperAdminRecord(record) ? session : null;
 }
 
 export async function GET(req: NextRequest) {
-  const session = await requireAdmin(req);
+  const session = await requireSuperAdmin(req);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -27,9 +28,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await requireAdmin(req);
+  const session = await requireSuperAdmin(req);
   if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Acces permis doar pentru Super Admin' }, { status: 403 });
   }
 
   try {
@@ -52,9 +53,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const session = await requireAdmin(req);
+  const session = await requireSuperAdmin(req);
   if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Acces permis doar pentru Super Admin' }, { status: 403 });
   }
 
   const emailToRemove = (req.nextUrl.searchParams.get('email') || '').toLowerCase().trim();

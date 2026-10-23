@@ -634,6 +634,19 @@ export async function isEmailAuthorizedAdmin(email: string): Promise<AdminEmailR
   return (store.adminEmails || []).find((a) => a.email.toLowerCase() === clean) || null;
 }
 
+export function isSuperAdminRecord(admin: AdminEmailRecord | null | undefined): boolean {
+  if (!admin) return false;
+  const email = admin.email.toLowerCase().trim();
+  if (
+    email === 'luminamath@orizont.md' ||
+    email === 'azamatjauysh@orizont.md' ||
+    email === 'a.jauysh@gmail.com'
+  ) {
+    return true;
+  }
+  return admin.role === 'Super Admin';
+}
+
 export async function addAdminEmail(input: {
   email: string;
   name?: string;
@@ -1133,6 +1146,7 @@ export async function getStudentByCode(studentCode: string): Promise<StudentReco
 
 export async function getAllStudents(filters?: {
   branchCode?: number;
+  schoolCode?: number;
   grade?: number;
   language?: string;
   search?: string;
@@ -1146,6 +1160,10 @@ export async function getAllStudents(filters?: {
       values.push(filters.branchCode);
       conditions.push(`s.branch_code = $${values.length}`);
     }
+    if (filters?.schoolCode) {
+      values.push(filters.schoolCode);
+      conditions.push(`s.school_code = $${values.length}`);
+    }
     if (filters?.grade) {
       values.push(filters.grade);
       conditions.push(`s.grade = $${values.length}`);
@@ -1157,7 +1175,7 @@ export async function getAllStudents(filters?: {
     if (filters?.search) {
       values.push(`%${filters.search.trim()}%`);
       conditions.push(
-        `(s.student_code ILIKE $${values.length} OR s.first_name ILIKE $${values.length} OR s.last_name ILIKE $${values.length} OR s.school ILIKE $${values.length})`
+        `(s.student_code ILIKE $${values.length} OR s.first_name ILIKE $${values.length} OR s.last_name ILIKE $${values.length} OR s.school ILIKE $${values.length} OR s.teacher_name ILIKE $${values.length})`
       );
     }
 
@@ -1188,6 +1206,7 @@ export async function getAllStudents(filters?: {
     })
     .filter((s) => {
       if (filters?.branchCode && s.branch_code !== Number(filters.branchCode)) return false;
+      if (filters?.schoolCode && (s.school_code || 8) !== Number(filters.schoolCode)) return false;
       if (filters?.grade && s.grade !== Number(filters.grade)) return false;
       if (filters?.language && s.exam_language !== filters.language) return false;
       if (filters?.search) {
@@ -1196,11 +1215,114 @@ export async function getAllStudents(filters?: {
           s.student_code.toLowerCase().includes(q) ||
           s.first_name.toLowerCase().includes(q) ||
           s.last_name.toLowerCase().includes(q) ||
-          s.school.toLowerCase().includes(q);
+          s.school.toLowerCase().includes(q) ||
+          s.teacher_name.toLowerCase().includes(q);
         if (!match) return false;
       }
       return true;
     });
+}
+
+export async function updateStudentDetails(
+  studentCode: string,
+  input: {
+    firstName: string;
+    lastName: string;
+    grade: number;
+    school: string;
+    schoolCode?: number;
+    teacherName: string;
+    examLanguage: 'RO' | 'RU' | 'EN';
+    branchCode: number;
+    email: string;
+    phone: string;
+  }
+): Promise<StudentRecord | null> {
+  const cleanCode = studentCode.trim();
+  const schoolCode =
+    Number(input.schoolCode) >= 1 && Number(input.schoolCode) <= 8
+      ? Number(input.schoolCode)
+      : 8;
+
+  const pool = getPgPool();
+  if (pool && (await ensurePgInitialized(pool))) {
+    const branchRes = await pool.query(
+      'SELECT * FROM branches WHERE code = $1 LIMIT 1',
+      [Number(input.branchCode)]
+    );
+    const branch = branchRes.rows[0];
+    if (!branch) {
+      throw new Error('Selected branch does not exist');
+    }
+
+    const res = await pool.query(
+      `UPDATE students
+       SET first_name = $1,
+           last_name = $2,
+           grade = $3,
+           school = $4,
+           school_code = $5,
+           teacher_name = $6,
+           exam_language = $7,
+           branch_id = $8,
+           branch_code = $9,
+           email = $10,
+           phone = $11
+       WHERE student_code = $12
+       RETURNING *`,
+      [
+        input.firstName.trim(),
+        input.lastName.trim(),
+        Number(input.grade),
+        input.school.trim(),
+        schoolCode,
+        input.teacherName.trim(),
+        input.examLanguage,
+        branch.id,
+        branch.code,
+        input.email.trim(),
+        input.phone.trim(),
+        cleanCode,
+      ]
+    );
+    if (res.rowCount === 0) return null;
+    return {
+      ...res.rows[0],
+      branch_name_ro: branch.name_ro,
+      branch_name_ru: branch.name_ru,
+      branch_name_en: branch.name_en,
+      branch_address: branch.address,
+    };
+  }
+
+  const store = ensureLocalStore();
+  const idx = store.students.findIndex((s) => s.student_code === cleanCode);
+  if (idx === -1) return null;
+
+  const branch =
+    store.branches.find((b) => b.code === Number(input.branchCode)) ||
+    store.branches[0];
+
+  store.students[idx] = {
+    ...store.students[idx],
+    first_name: input.firstName.trim(),
+    last_name: input.lastName.trim(),
+    grade: Number(input.grade),
+    school: input.school.trim(),
+    school_code: schoolCode,
+    teacher_name: input.teacherName.trim(),
+    exam_language: input.examLanguage,
+    branch_id: branch.id,
+    branch_code: branch.code,
+    branch_name_ro: branch.name_ro,
+    branch_name_ru: branch.name_ru,
+    branch_name_en: branch.name_en,
+    branch_address: branch.address,
+    email: input.email.trim(),
+    phone: input.phone.trim(),
+  };
+  saveLocalStore(store);
+  return store.students[idx];
 }
 
 export async function saveStudentResultPdf(

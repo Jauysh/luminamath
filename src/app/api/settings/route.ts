@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSessionFromRequest } from '@/lib/auth';
-import { getSiteSettings, isEmailAuthorizedAdmin, updateSiteSettings } from '@/lib/db';
+import {
+  getSiteSettings,
+  isEmailAuthorizedAdmin,
+  isSuperAdminRecord,
+  updateSiteSettings,
+} from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,8 +21,12 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const session = getAdminSessionFromRequest(req);
-  if (!session || !(await isEmailAuthorizedAdmin(session.email))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const admin = session ? await isEmailAuthorizedAdmin(session.email) : null;
+  if (!admin || !isSuperAdminRecord(admin)) {
+    return NextResponse.json(
+      { error: 'Acces permis doar pentru Super Admin' },
+      { status: 403 }
+    );
   }
 
   try {

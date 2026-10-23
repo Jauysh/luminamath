@@ -8,7 +8,7 @@ import {
   getClientIp,
   verifyGoogleIdToken,
 } from '@/lib/auth';
-import { getSiteSettings, isEmailAuthorizedAdmin } from '@/lib/db';
+import { getSiteSettings, isEmailAuthorizedAdmin, isSuperAdminRecord } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     admin: {
       email: adminRecord.email,
       name: session.name || adminRecord.name,
-      role: adminRecord.role,
+      role: isSuperAdminRecord(adminRecord) ? 'Super Admin' : adminRecord.role,
       picture: session.picture,
     },
     googleClientId: settings.google_client_id || '',
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
         admin: {
           email: adminRecord.email,
           name: googleUser.name || adminRecord.name,
-          role: adminRecord.role,
+          role: isSuperAdminRecord(adminRecord) ? 'Super Admin' : adminRecord.role,
           picture: googleUser.picture,
         },
       });
@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
       admin: {
         email: adminRecord.email,
         name: adminRecord.name,
-        role: adminRecord.role,
+        role: isSuperAdminRecord(adminRecord) ? 'Super Admin' : adminRecord.role,
       },
     });
 

@@ -2,13 +2,15 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { GRADES } from '@/lib/i18n';
+import { GRADES, SCHOOL_OPTIONS, SchoolOption } from '@/lib/i18n';
 import { useLanguage, SiteSettingsClient } from '@/context/LanguageContext';
 import {
+  BarChart3,
   Building2,
   Calendar,
   CheckCircle2,
   Download,
+  Edit3,
   ExternalLink,
   FileArchive,
   FileCheck2,
@@ -19,6 +21,7 @@ import {
   PlusCircle,
   RefreshCw,
   Save,
+  School,
   Search,
   Send,
   ShieldCheck,
@@ -26,6 +29,7 @@ import {
   Trash2,
   UserCheck,
   Users,
+  X,
   XCircle,
 } from 'lucide-react';
 
@@ -56,6 +60,7 @@ interface AdminStudent {
   last_name: string;
   grade: number;
   school: string;
+  school_code?: number;
   teacher_name: string;
   exam_language: string;
   branch_code: number;
@@ -125,6 +130,12 @@ export default function AdminPage() {
   } | null>(null);
   const [googleClientId, setGoogleClientId] = useState('');
 
+  const isSuperAdmin =
+    currentAdmin?.role === 'Super Admin' ||
+    ['luminamath@orizont.md', 'azamatjauysh@orizont.md', 'a.jauysh@gmail.com'].includes(
+      currentAdmin?.email?.toLowerCase() || ''
+    );
+
   // Login form state (NO pre-filled password!)
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -134,20 +145,39 @@ export default function AdminPage() {
   const googleBtnRef = useRef<HTMLDivElement | null>(null);
 
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'calendar' | 'branches' | 'admins'
-  >('overview');
+    'stats' | 'overview' | 'calendar' | 'branches' | 'admins'
+  >('stats');
 
   const [students, setStudents] = useState<AdminStudent[]>([]);
+  const [allStudents, setAllStudents] = useState<AdminStudent[]>([]);
   const [branches, setBranches] = useState<AdminBranch[]>([]);
   const [adminEmails, setAdminEmails] = useState<AdminEmailItem[]>([]);
   const [stats, setStats] = useState({ totalStudents: 0, withPdf: 0, withoutPdf: 0 });
   const [loading, setLoading] = useState(false);
 
+  // Statistics Tab Filter
+  const [statsBranchFilter, setStatsBranchFilter] = useState<string>('ALL');
+
   // Filters
   const [filterBranch, setFilterBranch] = useState('');
+  const [filterSchool, setFilterSchool] = useState('');
   const [filterGrade, setFilterGrade] = useState('');
   const [filterLang, setFilterLang] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Edit Student Modal State
+  const [editingStudent, setEditingStudent] = useState<AdminStudent | null>(null);
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [editGrade, setEditGrade] = useState<number>(3);
+  const [editSchoolCode, setEditSchoolCode] = useState<number>(8);
+  const [editCustomSchool, setEditCustomSchool] = useState('');
+  const [editTeacherName, setEditTeacherName] = useState('');
+  const [editExamLanguage, setEditExamLanguage] = useState<'RO' | 'RU' | 'EN'>('RO');
+  const [editBranchCode, setEditBranchCode] = useState<number>(1);
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   // Bulk PDF / ZIP upload state
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -280,20 +310,23 @@ export default function AdminPage() {
     return b.name_ro;
   };
 
+  const getSchoolOptionLabel = (opt: SchoolOption) => {
+    const label =
+      locale === 'RU' ? opt.name_ru : locale === 'EN' ? opt.name_en : opt.name_ro;
+    return `${opt.codeStr} — ${label}`;
+  };
+
   const fetchAdminData = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (filterBranch) params.set('branchCode', filterBranch);
+      if (filterSchool) params.set('schoolCode', filterSchool);
       if (filterGrade) params.set('grade', filterGrade);
       if (filterLang) params.set('language', filterLang);
       if (searchQuery) params.set('search', searchQuery);
 
-      const [studentsRes, adminsRes, emailCfgRes] = await Promise.all([
-        fetch(`/api/admin/students?${params.toString()}`),
-        fetch('/api/admin/admins'),
-        fetch('/api/admin/email'),
-      ]);
+      const studentsRes = await fetch(`/api/admin/students?${params.toString()}`);
 
       if (studentsRes.status === 401) {
         setAuthenticated(false);
@@ -303,24 +336,32 @@ export default function AdminPage() {
 
       const data = await studentsRes.json();
       setStudents(data.students || []);
+      setAllStudents(data.allStudents || data.students || []);
       setBranches(data.branches || []);
       setStats(data.stats || { totalStudents: 0, withPdf: 0, withoutPdf: 0 });
 
-      if (adminsRes.ok) {
-        const adminsData = await adminsRes.json();
-        setAdminEmails(adminsData.admins || []);
-      }
+      if (isSuperAdmin) {
+        const [adminsRes, emailCfgRes] = await Promise.all([
+          fetch('/api/admin/admins'),
+          fetch('/api/admin/email'),
+        ]);
 
-      if (emailCfgRes.ok) {
-        const emailData = await emailCfgRes.json();
-        if (emailData.config) {
-          setSmtpHost(emailData.config.smtp_host || 'smtp.gmail.com');
-          setSmtpPort(Number(emailData.config.smtp_port || 465));
-          setSmtpUser(emailData.config.smtp_user || 'azamatjauysh@orizont.md');
-          setSmtpFrom(
-            emailData.config.smtp_from || 'LuminaMath Moldova <azamatjauysh@orizont.md>'
-          );
-          setSmtpHasPassword(Boolean(emailData.config.has_password));
+        if (adminsRes.ok) {
+          const adminsData = await adminsRes.json();
+          setAdminEmails(adminsData.admins || []);
+        }
+
+        if (emailCfgRes.ok) {
+          const emailData = await emailCfgRes.json();
+          if (emailData.config) {
+            setSmtpHost(emailData.config.smtp_host || 'smtp.gmail.com');
+            setSmtpPort(Number(emailData.config.smtp_port || 465));
+            setSmtpUser(emailData.config.smtp_user || 'azamatjauysh@orizont.md');
+            setSmtpFrom(
+              emailData.config.smtp_from || 'LuminaMath Moldova <azamatjauysh@orizont.md>'
+            );
+            setSmtpHasPassword(Boolean(emailData.config.has_password));
+          }
         }
       }
     } catch (err) {
@@ -335,7 +376,64 @@ export default function AdminPage() {
       fetchAdminData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authenticated, filterBranch, filterGrade, filterLang]);
+  }, [authenticated, filterBranch, filterSchool, filterGrade, filterLang, isSuperAdmin]);
+
+  const openEditModal = (s: AdminStudent) => {
+    setEditingStudent(s);
+    setEditFirstName(s.first_name);
+    setEditLastName(s.last_name);
+    setEditGrade(s.grade);
+    const sCode = s.school_code && s.school_code >= 1 && s.school_code <= 8 ? s.school_code : 8;
+    setEditSchoolCode(sCode);
+    setEditCustomSchool(s.school || '');
+    setEditTeacherName(s.teacher_name);
+    setEditExamLanguage((['RO', 'RU', 'EN'].includes(s.exam_language) ? s.exam_language : 'RO') as 'RO' | 'RU' | 'EN');
+    setEditBranchCode(s.branch_code || 1);
+    setEditEmail(s.email || '');
+    setEditPhone(s.phone || '');
+  };
+
+  const handleSaveEditStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+    setSavingEdit(true);
+    try {
+      const selectedSchoolOpt =
+        SCHOOL_OPTIONS.find((o) => o.code === editSchoolCode) || SCHOOL_OPTIONS[7];
+      const finalSchoolName = selectedSchoolOpt.isOther
+        ? editCustomSchool.trim() || editingStudent.school
+        : selectedSchoolOpt.name_ro;
+
+      const res = await fetch('/api/admin/students', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentCode: editingStudent.student_code,
+          firstName: editFirstName,
+          lastName: editLastName,
+          grade: editGrade,
+          schoolCode: editSchoolCode,
+          school: finalSchoolName,
+          teacherName: editTeacherName,
+          examLanguage: editExamLanguage,
+          branchCode: editBranchCode,
+          email: editEmail,
+          phone: editPhone,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Eroare la actualizarea datelor elevului');
+      } else {
+        setEditingStudent(null);
+        fetchAdminData();
+      }
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -730,6 +828,9 @@ export default function AdminPage() {
             <span>
               {currentAdmin?.name} ({currentAdmin?.email})
             </span>
+            <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-extrabold uppercase">
+              {isSuperAdmin ? 'Super Admin' : 'Coordinator'}
+            </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
             {t.admin.headerTitle}
@@ -740,35 +841,37 @@ export default function AdminPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            disabled={savingCal}
-            onClick={handleQuickToggleRegistration}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 text-xs font-extrabold transition-all shadow-sm ${
-              isRegistrationOpen
-                ? 'border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900'
-                : 'border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-900'
-            }`}
-          >
-            <span
-              className={`w-2.5 h-2.5 rounded-full ${
-                isRegistrationOpen ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
+          {isSuperAdmin && (
+            <button
+              type="button"
+              disabled={savingCal}
+              onClick={handleQuickToggleRegistration}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 text-xs font-extrabold transition-all shadow-sm ${
+                isRegistrationOpen
+                  ? 'border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900'
+                  : 'border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-900'
               }`}
-            />
-            <span>
-              {isRegistrationOpen
-                ? locale === 'RU'
-                  ? 'Регистрация ОТКРЫТА (Нажмите, чтобы закрыть)'
+            >
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${
+                  isRegistrationOpen ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
+                }`}
+              />
+              <span>
+                {isRegistrationOpen
+                  ? locale === 'RU'
+                    ? 'Регистрация ОТКРЫТА (Нажмите, чтобы закрыть)'
+                    : locale === 'EN'
+                    ? 'Registration OPEN (Click to Close)'
+                    : 'Înregistrare DESCHISĂ (Apasă pt. a Închide)'
+                  : locale === 'RU'
+                  ? 'Регистрация ЗАКРЫТА (Нажмите, чтобы открыть)'
                   : locale === 'EN'
-                  ? 'Registration OPEN (Click to Close)'
-                  : 'Înregistrare DESCHISĂ (Apasă pt. a Închide)'
-                : locale === 'RU'
-                ? 'Регистрация ЗАКРЫТА (Нажмите, чтобы открыть)'
-                : locale === 'EN'
-                ? 'Registration CLOSED (Click to Open)'
-                : 'Înregistrare ÎNCHISĂ (Apasă pt. a Deschide)'}
-            </span>
-          </button>
+                  ? 'Registration CLOSED (Click to Open)'
+                  : 'Înregistrare ÎNCHISĂ (Apasă pt. a Deschide)'}
+              </span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -780,7 +883,7 @@ export default function AdminPage() {
           </button>
 
           <a
-            href="/api/admin/students?format=csv"
+            href={`/api/admin/students?format=csv&branchCode=${encodeURIComponent(filterBranch)}&schoolCode=${encodeURIComponent(filterSchool)}&grade=${encodeURIComponent(filterGrade)}&language=${encodeURIComponent(filterLang)}`}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-extrabold shadow-sm transition-all"
           >
             <Download className="w-4 h-4" />
@@ -802,6 +905,25 @@ export default function AdminPage() {
       <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 bg-slate-200/70 p-1.5 rounded-2xl w-full sm:w-fit">
         <button
           type="button"
+          onClick={() => setActiveTab('stats')}
+          className={`flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
+            activeTab === 'stats'
+              ? 'bg-white text-indigo-700 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <BarChart3 className="w-4 h-4 shrink-0" />
+          <span>
+            {locale === 'RU'
+              ? '📊 Статистика (Филиалы & Школы)'
+              : locale === 'EN'
+              ? '📊 Statistics (Branches & Schools)'
+              : '📊 Statistici (Filiale & Școli)'}
+          </span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab('overview')}
           className={`flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
             activeTab === 'overview'
@@ -810,53 +932,422 @@ export default function AdminPage() {
           }`}
         >
           <Users className="w-4 h-4 shrink-0" />
-          <span>{t.admin.tabOverview}</span>
+          <span>{t.admin.tabOverview} ({allStudents.length})</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('calendar')}
-          className={`flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
-            activeTab === 'calendar'
-              ? 'bg-white text-indigo-700 shadow-sm'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Calendar className="w-4 h-4 shrink-0" />
-          <span>{t.admin.tabCalendar}</span>
-        </button>
+        {isSuperAdmin && (
+          <>
+            <button
+              type="button"
+              onClick={() => setActiveTab('calendar')}
+              className={`flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
+                activeTab === 'calendar'
+                  ? 'bg-white text-indigo-700 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Calendar className="w-4 h-4 shrink-0" />
+              <span>{t.admin.tabCalendar}</span>
+            </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('branches')}
-          className={`flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
-            activeTab === 'branches'
-              ? 'bg-white text-indigo-700 shadow-sm'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Building2 className="w-4 h-4 shrink-0" />
-          <span>{t.admin.tabBranches}</span>
-        </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('branches')}
+              className={`flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
+                activeTab === 'branches'
+                  ? 'bg-white text-indigo-700 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Building2 className="w-4 h-4 shrink-0" />
+              <span>{t.admin.tabBranches}</span>
+            </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('admins')}
-          className={`flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
-            activeTab === 'admins'
-              ? 'bg-white text-indigo-700 shadow-sm'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <ShieldCheck className="w-4 h-4 shrink-0" />
-          <span>
-            {t.admin.tabAdmins} ({adminEmails.length})
-          </span>
-        </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('admins')}
+              className={`flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
+                activeTab === 'admins'
+                  ? 'bg-white text-indigo-700 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4 shrink-0" />
+              <span>
+                {t.admin.tabAdmins} ({adminEmails.length})
+              </span>
+            </button>
+          </>
+        )}
       </div>
 
+      {/* TAB 0: REGISTRATION STATISTICS MATRIX (BRANCHES × GRADES × LANGUAGES + SCHOOLS) */}
+      {activeTab === 'stats' && (
+        <div className="space-y-8">
+          {/* 1. EXAM BRANCHES SUMMARY CARDS + SELECTOR */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                  <BarChart3 className="w-6 h-6 text-indigo-600" />
+                  {locale === 'RU'
+                    ? '1. Экзаменационные Центры (Матрица: Класс × Язык для печати буклетов)'
+                    : locale === 'EN'
+                    ? '1. Exam Branches Matrix (Grade × Language for Booklet Printing)'
+                    : '1. Centre de Examen (Matrice: Clasă × Limbă pentru tipărirea subiectelor)'}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                  {locale === 'RU'
+                    ? 'Выберите филиал проведения экзамена, чтобы увидеть точное количество учеников по каждому классу (3–8) и языку теста (RO / RU / EN).'
+                    : locale === 'EN'
+                    ? 'Select an exam branch to view the exact number of registered students per grade (3–8) and exam language (RO / RU / EN).'
+                    : 'Selectați filiala de examen pentru a vedea numărul exact de elevi înscriși pe fiecare clasă (3–8) și limbă de examen (RO / RU / EN).'}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href={`/api/admin/students?format=csv${statsBranchFilter !== 'ALL' ? `&branchCode=${statsBranchFilter}` : ''}`}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow-sm transition-all"
+                >
+                  <Download className="w-4 h-4" />
+                  {statsBranchFilter === 'ALL'
+                    ? locale === 'RU'
+                      ? 'Скачать CSV (Все филиалы)'
+                      : locale === 'EN'
+                      ? 'Export CSV (All Branches)'
+                      : 'Descarcă CSV (Toate Filialele)'
+                    : locale === 'RU'
+                    ? `Скачать CSV (Филиал [${statsBranchFilter}])`
+                    : locale === 'EN'
+                    ? `Export CSV (Branch [${statsBranchFilter}])`
+                    : `Descarcă CSV (Filiala [${statsBranchFilter}])`}
+                </a>
+              </div>
+            </div>
+
+            {/* Branch Selector Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+              {/* ALL BRANCHES CARD */}
+              {(() => {
+                const totalAll = allStudents.length;
+                const roAll = allStudents.filter((s) => s.exam_language === 'RO').length;
+                const ruAll = allStudents.filter((s) => s.exam_language === 'RU').length;
+                const enAll = allStudents.filter((s) => s.exam_language === 'EN').length;
+                const isSelected = statsBranchFilter === 'ALL';
+                return (
+                  <button
+                    type="button"
+                    onClick={() => setStatsBranchFilter('ALL')}
+                    className={`text-left p-4 rounded-2xl border-2 transition-all ${
+                      isSelected
+                        ? 'border-indigo-600 bg-indigo-50/70 shadow-sm'
+                        : 'border-slate-200 bg-slate-50/60 hover:border-indigo-300 hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-indigo-700">
+                        {locale === 'RU' ? 'ВСЕ ФИЛИАЛЫ' : locale === 'EN' ? 'ALL BRANCHES' : 'TOATE FILIALELE'}
+                      </span>
+                      <span className="text-2xl font-black text-slate-900">{totalAll}</span>
+                    </div>
+                    <div className="text-xs font-bold text-slate-700 truncate mb-2.5">
+                      LuminaMath Moldova (1–4)
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[11px] font-extrabold">
+                      <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800">RO: {roAll}</span>
+                      <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800">RU: {ruAll}</span>
+                      <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800">EN: {enAll}</span>
+                    </div>
+                  </button>
+                );
+              })()}
+
+              {branches.map((b) => {
+                const bStudents = allStudents.filter((s) => String(s.branch_code) === String(b.code));
+                const roCount = bStudents.filter((s) => s.exam_language === 'RO').length;
+                const ruCount = bStudents.filter((s) => s.exam_language === 'RU').length;
+                const enCount = bStudents.filter((s) => s.exam_language === 'EN').length;
+                const isSelected = statsBranchFilter === String(b.code);
+
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => setStatsBranchFilter(String(b.code))}
+                    className={`text-left p-4 rounded-2xl border-2 transition-all ${
+                      isSelected
+                        ? 'border-indigo-600 bg-indigo-50/70 shadow-sm'
+                        : 'border-slate-200 bg-white hover:border-indigo-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-[11px] font-black uppercase px-2 py-0.5 rounded bg-slate-900 text-white">
+                        #{b.code}
+                      </span>
+                      <span className="text-2xl font-black text-indigo-700">{bStudents.length}</span>
+                    </div>
+                    <div className="text-xs font-extrabold text-slate-900 truncate mb-2.5" title={getBranchName(b)}>
+                      {getBranchName(b)}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[11px] font-extrabold">
+                      <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800">RO: {roCount}</span>
+                      <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800">RU: {ruCount}</span>
+                      <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800">EN: {enCount}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* MATRIX TABLE: GRADE (3..8) × LANGUAGE (RO, RU, EN) FOR SELECTED BRANCH */}
+            {(() => {
+              const subset =
+                statsBranchFilter === 'ALL'
+                  ? allStudents
+                  : allStudents.filter((s) => String(s.branch_code) === statsBranchFilter);
+              const selectedBranchObj = branches.find((b) => String(b.code) === statsBranchFilter);
+
+              const totalRO = subset.filter((s) => s.exam_language === 'RO').length;
+              const totalRU = subset.filter((s) => s.exam_language === 'RU').length;
+              const totalEN = subset.filter((s) => s.exam_language === 'EN').length;
+
+              return (
+                <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                  <div className="bg-slate-900 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-extrabold text-sm sm:text-base flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-amber-400" />
+                      <span>
+                        {statsBranchFilter === 'ALL'
+                          ? locale === 'RU'
+                            ? 'Все экзаменационные центры (Сводная таблица буклетов)'
+                            : locale === 'EN'
+                            ? 'All Exam Branches (Combined Booklet Matrix)'
+                            : 'Toate Centrele de Examen (Tabel Centralizator Subiecte)'
+                          : `[#${selectedBranchObj?.code}] ${
+                              selectedBranchObj ? getBranchName(selectedBranchObj) : ''
+                            } — ${selectedBranchObj?.city || ''}`}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilterBranch(statsBranchFilter === 'ALL' ? '' : statsBranchFilter);
+                        setFilterSchool('');
+                        setActiveTab('overview');
+                      }}
+                      className="text-xs font-extrabold px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors"
+                    >
+                      {locale === 'RU'
+                        ? 'Показать список этих учеников →'
+                        : locale === 'EN'
+                        ? 'View these students →'
+                        : 'Vezi lista acestor elevi →'}
+                    </button>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                      <thead>
+                        <tr className="bg-slate-100 border-b border-slate-200 text-[11px] font-extrabold uppercase text-slate-600">
+                          <th className="py-3.5 px-5">
+                            {locale === 'RU' ? 'Класс (Grade)' : locale === 'EN' ? 'Grade' : 'Clasa'}
+                          </th>
+                          <th className="py-3.5 px-5 text-center bg-blue-50/60 text-blue-900">
+                            🇷🇴 RO (Română)
+                          </th>
+                          <th className="py-3.5 px-5 text-center bg-rose-50/60 text-rose-900">
+                            🇷🇺 RU (Русский)
+                          </th>
+                          <th className="py-3.5 px-5 text-center bg-amber-50/60 text-amber-900">
+                            🇬🇧 EN (English)
+                          </th>
+                          <th className="py-3.5 px-5 text-center bg-indigo-50/80 text-indigo-950">
+                            {locale === 'RU' ? 'ВСЕГО БУКЛЕТОВ' : locale === 'EN' ? 'TOTAL BOOKLETS' : 'TOTAL SUBIECTE'}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {GRADES.map((g) => {
+                          const gStudents = subset.filter((s) => Number(s.grade) === g);
+                          const ro = gStudents.filter((s) => s.exam_language === 'RO').length;
+                          const ru = gStudents.filter((s) => s.exam_language === 'RU').length;
+                          const en = gStudents.filter((s) => s.exam_language === 'EN').length;
+                          const total = gStudents.length;
+
+                          return (
+                            <tr key={g} className="hover:bg-slate-50/80">
+                              <td className="py-3.5 px-5 font-extrabold text-slate-900">
+                                {t.register.gradeLabel} {g}
+                              </td>
+                              <td className="py-3.5 px-5 text-center font-bold text-blue-800 bg-blue-50/20">
+                                {ro > 0 ? (
+                                  <span className="inline-block px-2.5 py-0.5 rounded-lg bg-blue-100 text-blue-900 font-extrabold">
+                                    {ro}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-300">0</span>
+                                )}
+                              </td>
+                              <td className="py-3.5 px-5 text-center font-bold text-rose-800 bg-rose-50/20">
+                                {ru > 0 ? (
+                                  <span className="inline-block px-2.5 py-0.5 rounded-lg bg-rose-100 text-rose-900 font-extrabold">
+                                    {ru}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-300">0</span>
+                                )}
+                              </td>
+                              <td className="py-3.5 px-5 text-center font-bold text-amber-800 bg-amber-50/20">
+                                {en > 0 ? (
+                                  <span className="inline-block px-2.5 py-0.5 rounded-lg bg-amber-100 text-amber-900 font-extrabold">
+                                    {en}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-300">0</span>
+                                )}
+                              </td>
+                              <td className="py-3.5 px-5 text-center font-black text-base text-indigo-900 bg-indigo-50/40">
+                                {total}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-slate-900 text-white font-black text-sm">
+                          <td className="py-4 px-5 uppercase">
+                            {locale === 'RU' ? 'ИТОГО ПО ФИЛИАЛУ' : locale === 'EN' ? 'TOTAL FOR BRANCH' : 'TOTAL PE FILIALĂ'}
+                          </td>
+                          <td className="py-4 px-5 text-center text-blue-300">RO: {totalRO}</td>
+                          <td className="py-4 px-5 text-center text-rose-300">RU: {totalRU}</td>
+                          <td className="py-4 px-5 text-center text-amber-300">EN: {totalEN}</td>
+                          <td className="py-4 px-5 text-center text-lg text-amber-400">
+                            {subset.length}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* 2. SCHOOLS BREAKDOWN TABLE (01–07 ORIZONT + 08 OTHER SCHOOLS) */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+            <div>
+              <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                <School className="w-6 h-6 text-indigo-600" />
+                {locale === 'RU'
+                  ? '2. Статистика по Школам (01–07 Филиалы Orizont и 08 Другие школы Молдовы)'
+                  : locale === 'EN'
+                  ? '2. Registration Statistics by School (01–07 Orizont & 08 Other Schools)'
+                  : '2. Statistici pe Școli (01–07 Filialele Orizont & 08 Alte Școli din Moldova)'}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                {locale === 'RU'
+                  ? 'Ответственные от каждой школы видят, сколько их учеников зарегистрировалось по каждому классу (3–8) и языку, и могут открыть список своей школы одним кликом.'
+                  : locale === 'EN'
+                  ? 'School coordinators can check how many of their students are registered per grade (3–8) and language, and open their school list with 1 click.'
+                  : 'Responsabilii din fiecare școală pot verifica câți elevi proprii s-au înscris pe fiecare clasă (3–8) și limbă, și pot deschide lista școlii lor cu un singur click.'}
+              </p>
+            </div>
+
+            <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+              <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                <thead>
+                  <tr className="bg-slate-100 border-b border-slate-200 text-[11px] font-extrabold uppercase text-slate-600">
+                    <th className="py-3.5 px-4">
+                      {locale === 'RU' ? 'Код & Школа' : locale === 'EN' ? 'Code & School' : 'Cod & Școală'}
+                    </th>
+                    {GRADES.map((g) => (
+                      <th key={g} className="py-3.5 px-3 text-center">
+                        Cl. {g}
+                      </th>
+                    ))}
+                    <th className="py-3.5 px-3 text-center bg-blue-50/70 text-blue-900">RO</th>
+                    <th className="py-3.5 px-3 text-center bg-rose-50/70 text-rose-900">RU</th>
+                    <th className="py-3.5 px-3 text-center bg-amber-50/70 text-amber-900">EN</th>
+                    <th className="py-3.5 px-4 text-center bg-indigo-50 text-indigo-950">TOTAL</th>
+                    <th className="py-3.5 px-4 text-right">
+                      {locale === 'RU' ? 'Список / CSV' : locale === 'EN' ? 'List / CSV' : 'Listă / CSV'}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {SCHOOL_OPTIONS.map((sch) => {
+                    const sList = allStudents.filter((st) => Number(st.school_code) === sch.code);
+                    const ro = sList.filter((st) => st.exam_language === 'RO').length;
+                    const ru = sList.filter((st) => st.exam_language === 'RU').length;
+                    const en = sList.filter((st) => st.exam_language === 'EN').length;
+                    const schoolLabel =
+                      locale === 'RU' ? sch.name_ru : locale === 'EN' ? sch.name_en : sch.name_ro;
+
+                    return (
+                      <tr key={sch.code} className="hover:bg-slate-50/90">
+                        <td className="py-3.5 px-4 font-bold text-slate-900">
+                          <span className="inline-block font-mono text-xs px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 mr-2">
+                            {sch.codeStr}
+                          </span>
+                          {schoolLabel}
+                        </td>
+                        {GRADES.map((g) => {
+                          const cnt = sList.filter((st) => Number(st.grade) === g).length;
+                          return (
+                            <td key={g} className="py-3.5 px-3 text-center font-bold">
+                              {cnt > 0 ? (
+                                <span className="text-slate-900">{cnt}</span>
+                              ) : (
+                                <span className="text-slate-300">0</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                        <td className="py-3.5 px-3 text-center font-bold text-blue-800 bg-blue-50/20">
+                          {ro}
+                        </td>
+                        <td className="py-3.5 px-3 text-center font-bold text-rose-800 bg-rose-50/20">
+                          {ru}
+                        </td>
+                        <td className="py-3.5 px-3 text-center font-bold text-amber-800 bg-amber-50/20">
+                          {en}
+                        </td>
+                        <td className="py-3.5 px-4 text-center font-black text-base text-indigo-900 bg-indigo-50/40">
+                          {sList.length}
+                        </td>
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap space-x-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFilterSchool(String(sch.code));
+                              setFilterBranch('');
+                              setActiveTab('overview');
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold text-xs transition-colors"
+                          >
+                            {locale === 'RU' ? 'Ученики' : locale === 'EN' ? 'Students' : 'Elevi'}
+                          </button>
+                          <a
+                            href={`/api/admin/students?format=csv&schoolCode=${sch.code}`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold text-xs transition-colors"
+                          >
+                            <Download className="w-3 h-3" />
+                            CSV
+                          </a>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* TAB 4: AUTHORIZED ADMIN EMAILS (GOOGLE / ORIZONT.MD WHITELIST) */}
-      {activeTab === 'admins' && (
+      {isSuperAdmin && activeTab === 'admins' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
             <div>
@@ -942,7 +1433,9 @@ export default function AdminPage() {
                     onChange={(e) => setNewAdminRole(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-semibold"
                   >
-                    <option value="Admin">Admin</option>
+                    <option value="Admin">
+                      Coordinator (Școală / Filială)
+                    </option>
                     <option value="Super Admin">Super Admin</option>
                   </select>
                 </div>
@@ -1135,7 +1628,7 @@ export default function AdminPage() {
       )}
 
       {/* TAB 2: CALENDAR & DATES EDITOR */}
-      {activeTab === 'calendar' && (
+      {isSuperAdmin && activeTab === 'calendar' && (
         <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
           <div className="max-w-4xl">
             <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
@@ -1452,7 +1945,7 @@ export default function AdminPage() {
       )}
 
       {/* TAB 3: BRANCHES MANAGER */}
-      {activeTab === 'branches' && (
+      {isSuperAdmin && activeTab === 'branches' && (
         <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm max-w-3xl space-y-6">
           <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
             <Building2 className="w-6 h-6 text-indigo-600" />
@@ -1609,169 +2102,171 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* BULK PDF / ZIP UPLOAD SECTION (Method 1) */}
-          <div className="bg-white rounded-3xl border-2 border-indigo-200 p-6 sm:p-8 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-                <FileUp className="w-5 h-5 text-indigo-600" />
-                {t.admin.uploadTitle}
-              </h2>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                {t.admin.uploadBadge}
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-600 mb-5 leading-relaxed">
-              {t.admin.uploadDesc}
-            </p>
-
-            <form onSubmit={handleUploadPdfs} className="space-y-4">
-              <label className="block border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-2xl p-6 text-center cursor-pointer bg-slate-50/60 transition-colors">
-                <FileArchive className="w-8 h-8 text-indigo-600 mx-auto mb-2" />
-                <span className="block text-sm font-bold text-slate-800">
-                  {t.admin.dropzoneTitle}
+          {/* BULK PDF / ZIP UPLOAD SECTION (Method 1 — Super Admin Only) */}
+          {isSuperAdmin && (
+            <div className="bg-white rounded-3xl border-2 border-indigo-200 p-6 sm:p-8 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                  <FileUp className="w-5 h-5 text-indigo-600" />
+                  {t.admin.uploadTitle}
+                </h2>
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  {t.admin.uploadBadge}
                 </span>
-                <span className="block text-xs text-slate-500 mt-1">
-                  {t.admin.dropzoneSub}
-                </span>
-                <input
-                  type="file"
-                  multiple
-                  accept=".pdf,.zip,application/pdf,application/zip"
-                  onChange={(e) => {
-                    if (e.target.files) {
-                      setSelectedFiles(Array.from(e.target.files));
-                    }
-                  }}
-                  className="hidden"
-                />
-              </label>
-
-              {selectedFiles.length > 0 && (
-                <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-900 font-medium">
-                  {t.admin.selectedFilesLabel} ({selectedFiles.length}):{' '}
-                  {selectedFiles.map((f) => f.name).join(', ')}
-                </div>
-              )}
-
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="submit"
-                  disabled={uploading || selectedFiles.length === 0}
-                  className="px-6 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 disabled:opacity-50 text-white font-bold text-xs sm:text-sm shadow-sm transition-all"
-                >
-                  {uploading ? t.admin.uploadingBtn : t.admin.uploadBtn}
-                </button>
-
-                <button
-                  type="button"
-                  disabled={uploading}
-                  onClick={handleDemoGenerateAllPdfs}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-xs transition-all"
-                >
-                  <Sparkles className="w-4 h-4 text-amber-700" />
-                  {t.admin.demoGenerateBtn}
-                </button>
               </div>
-            </form>
+              <p className="text-xs sm:text-sm text-slate-600 mb-5 leading-relaxed">
+                {t.admin.uploadDesc}
+              </p>
 
-            {uploadReport && (
-              <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
-                <div className="flex items-center gap-4 font-bold">
-                  <span className="text-emerald-700 flex items-center gap-1">
-                    <CheckCircle2 className="w-4 h-4" />
-                    {t.admin.matchedLabel} {uploadReport.matchedCount}
+              <form onSubmit={handleUploadPdfs} className="space-y-4">
+                <label className="block border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-2xl p-6 text-center cursor-pointer bg-slate-50/60 transition-colors">
+                  <FileArchive className="w-8 h-8 text-indigo-600 mx-auto mb-2" />
+                  <span className="block text-sm font-bold text-slate-800">
+                    {t.admin.dropzoneTitle}
                   </span>
-                  {uploadReport.unmatchedCount > 0 && (
-                    <span className="text-rose-600 flex items-center gap-1">
-                      <XCircle className="w-4 h-4" />
-                      {t.admin.unmatchedLabel} {uploadReport.unmatchedCount}
-                    </span>
-                  )}
-                </div>
-                {uploadReport.matchedIds.length > 0 && (
-                  <div className="text-slate-600">
-                    <strong>{t.admin.updatedIdsLabel}</strong>{' '}
-                    {uploadReport.matchedIds.join(', ')}
+                  <span className="block text-xs text-slate-500 mt-1">
+                    {t.admin.dropzoneSub}
+                  </span>
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.zip,application/pdf,application/zip"
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        setSelectedFiles(Array.from(e.target.files));
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+
+                {selectedFiles.length > 0 && (
+                  <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-900 font-medium">
+                    {t.admin.selectedFilesLabel} ({selectedFiles.length}):{' '}
+                    {selectedFiles.map((f) => f.name).join(', ')}
                   </div>
                 )}
-                {uploadReport.unmatchedFiles.length > 0 && (
-                  <div className="text-rose-600">
-                    <strong>{t.admin.unmatchedFilesLabel}</strong>{' '}
-                    {uploadReport.unmatchedFiles.join('; ')}
-                  </div>
-                )}
-              </div>
-            )}
 
-            {/* SEND RESULTS BY EMAIL TO ALL STUDENTS WITH PDF */}
-            <div className="mt-6 pt-6 border-t border-slate-200">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
-                    <Send className="w-4 h-4 text-emerald-600" />
-                    {t.admin.bulkEmailSectionTitle}
-                  </h3>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    {t.admin.bulkEmailSectionDesc}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex flex-wrap items-center gap-3">
                   <button
-                    type="button"
-                    disabled={sendingBulkEmails || stats.withPdf === 0}
-                    onClick={() => handleSendBulkResultEmails(true)}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold text-xs sm:text-sm shadow-sm transition-all"
+                    type="submit"
+                    disabled={uploading || selectedFiles.length === 0}
+                    className="px-6 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 disabled:opacity-50 text-white font-bold text-xs sm:text-sm shadow-sm transition-all"
                   >
-                    <Send className="w-4 h-4" />
-                    {sendingBulkEmails
-                      ? t.admin.bulkEmailSendingBtn
-                      : t.admin.bulkEmailSendUnsentBtn}
+                    {uploading ? t.admin.uploadingBtn : t.admin.uploadBtn}
                   </button>
 
                   <button
                     type="button"
-                    disabled={sendingBulkEmails || stats.withPdf === 0}
-                    onClick={() => handleSendBulkResultEmails(false)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-50 text-slate-700 font-bold text-xs transition-all"
+                    disabled={uploading}
+                    onClick={handleDemoGenerateAllPdfs}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-xs transition-all"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    {t.admin.bulkEmailResendAllBtn} ({stats.withPdf})
+                    <Sparkles className="w-4 h-4 text-amber-700" />
+                    {t.admin.demoGenerateBtn}
                   </button>
                 </div>
-              </div>
+              </form>
 
-              {bulkEmailReport && (
-                <div className="mt-4 p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-1.5">
-                  <div className="font-extrabold text-emerald-950 flex flex-wrap gap-4">
-                    <span>
-                      {t.admin.bulkEmailTotalProcessed} {bulkEmailReport.totalTargeted}
+              {uploadReport && (
+                <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                  <div className="flex items-center gap-4 font-bold">
+                    <span className="text-emerald-700 flex items-center gap-1">
+                      <CheckCircle2 className="w-4 h-4" />
+                      {t.admin.matchedLabel} {uploadReport.matchedCount}
                     </span>
-                    <span className="text-emerald-700">
-                      {t.admin.bulkEmailSentSuccess} {bulkEmailReport.sentCount}
-                    </span>
-                    {bulkEmailReport.failedCount > 0 && (
-                      <span className="text-rose-600">
-                        {t.admin.bulkEmailFailed} {bulkEmailReport.failedCount}
+                    {uploadReport.unmatchedCount > 0 && (
+                      <span className="text-rose-600 flex items-center gap-1">
+                        <XCircle className="w-4 h-4" />
+                        {t.admin.unmatchedLabel} {uploadReport.unmatchedCount}
                       </span>
                     )}
                   </div>
-                  {bulkEmailReport.sentCodes.length > 0 && (
-                    <div className="text-slate-700">
-                      <strong>{t.admin.bulkEmailSentToLabel}</strong>{' '}
-                      {bulkEmailReport.sentCodes.join(', ')}
+                  {uploadReport.matchedIds.length > 0 && (
+                    <div className="text-slate-600">
+                      <strong>{t.admin.updatedIdsLabel}</strong>{' '}
+                      {uploadReport.matchedIds.join(', ')}
                     </div>
                   )}
-                  {bulkEmailReport.errors.length > 0 && (
-                    <div className="text-rose-700 font-semibold">
-                      <strong>{t.admin.bulkEmailErrorsLabel}</strong>{' '}
-                      {bulkEmailReport.errors.join(' | ')}
+                  {uploadReport.unmatchedFiles.length > 0 && (
+                    <div className="text-rose-600">
+                      <strong>{t.admin.unmatchedFilesLabel}</strong>{' '}
+                      {uploadReport.unmatchedFiles.join('; ')}
                     </div>
                   )}
                 </div>
               )}
+
+              {/* SEND RESULTS BY EMAIL TO ALL STUDENTS WITH PDF */}
+              <div className="mt-6 pt-6 border-t border-slate-200">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+                      <Send className="w-4 h-4 text-emerald-600" />
+                      {t.admin.bulkEmailSectionTitle}
+                    </h3>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      {t.admin.bulkEmailSectionDesc}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <button
+                      type="button"
+                      disabled={sendingBulkEmails || stats.withPdf === 0}
+                      onClick={() => handleSendBulkResultEmails(true)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold text-xs sm:text-sm shadow-sm transition-all"
+                    >
+                      <Send className="w-4 h-4" />
+                      {sendingBulkEmails
+                        ? t.admin.bulkEmailSendingBtn
+                        : t.admin.bulkEmailSendUnsentBtn}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={sendingBulkEmails || stats.withPdf === 0}
+                      onClick={() => handleSendBulkResultEmails(false)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-50 text-slate-700 font-bold text-xs transition-all"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      {t.admin.bulkEmailResendAllBtn} ({stats.withPdf})
+                    </button>
+                  </div>
+                </div>
+
+                {bulkEmailReport && (
+                  <div className="mt-4 p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-1.5">
+                    <div className="font-extrabold text-emerald-950 flex flex-wrap gap-4">
+                      <span>
+                        {t.admin.bulkEmailTotalProcessed} {bulkEmailReport.totalTargeted}
+                      </span>
+                      <span className="text-emerald-700">
+                        {t.admin.bulkEmailSentSuccess} {bulkEmailReport.sentCount}
+                      </span>
+                      {bulkEmailReport.failedCount > 0 && (
+                        <span className="text-rose-600">
+                          {t.admin.bulkEmailFailed} {bulkEmailReport.failedCount}
+                        </span>
+                      )}
+                    </div>
+                    {bulkEmailReport.sentCodes.length > 0 && (
+                      <div className="text-slate-700">
+                        <strong>{t.admin.bulkEmailSentToLabel}</strong>{' '}
+                        {bulkEmailReport.sentCodes.join(', ')}
+                      </div>
+                    )}
+                    {bulkEmailReport.errors.length > 0 && (
+                      <div className="text-rose-700 font-semibold">
+                        <strong>{t.admin.bulkEmailErrorsLabel}</strong>{' '}
+                        {bulkEmailReport.errors.join(' | ')}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* STUDENTS TABLE & FILTERS */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
@@ -1802,6 +2297,30 @@ export default function AdminPage() {
                   {branches.map((b) => (
                     <option key={b.id} value={b.code}>
                       [{b.code}] {getBranchName(b)}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={filterSchool}
+                  onChange={(e) => setFilterSchool(e.target.value)}
+                  className="px-3 py-1.5 rounded-xl border border-slate-300 text-xs bg-white font-semibold max-w-[230px]"
+                >
+                  <option value="">
+                    {locale === 'RU'
+                      ? 'Все школы (01–08)'
+                      : locale === 'EN'
+                      ? 'All Schools (01–08)'
+                      : 'Toate Școlile (01–08)'}
+                  </option>
+                  {SCHOOL_OPTIONS.map((sch) => (
+                    <option key={sch.code} value={sch.code}>
+                      [{sch.codeStr}]{' '}
+                      {locale === 'RU'
+                        ? sch.name_ru
+                        : locale === 'EN'
+                        ? sch.name_en
+                        : sch.name_ro}
                     </option>
                   ))}
                 </select>
@@ -1863,7 +2382,21 @@ export default function AdminPage() {
                         )}
                       </td>
                       <td className="py-3.5 px-4 font-bold text-slate-900">
-                        {s.first_name} {s.last_name}
+                        <div>
+                          {s.first_name} {s.last_name}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(s)}
+                          className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-extrabold border border-indigo-200 transition-colors"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          {locale === 'RU'
+                            ? 'Изменить'
+                            : locale === 'EN'
+                            ? 'Edit'
+                            : 'Editează'}
+                        </button>
                       </td>
                       <td className="py-3.5 px-4 font-semibold text-slate-700">
                         {t.register.gradeLabel} {s.grade}
@@ -1882,7 +2415,14 @@ export default function AdminPage() {
                           : s.branch_name_ro}
                       </td>
                       <td className="py-3.5 px-4 text-xs text-slate-600">
-                        <div className="font-semibold text-slate-800">{s.school}</div>
+                        <div className="font-semibold text-slate-800">
+                          {s.school_code ? (
+                            <span className="inline-block font-mono text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 mr-1">
+                              [{String(s.school_code).padStart(2, '0')}]
+                            </span>
+                          ) : null}
+                          {s.school}
+                        </div>
                         <div>{s.teacher_name}</div>
                       </td>
                       <td className="py-3.5 px-4 text-xs text-slate-600">
@@ -1922,27 +2462,29 @@ export default function AdminPage() {
                               <ExternalLink className="w-3 h-3 ml-0.5" />
                             </a>
 
-                            <button
-                              type="button"
-                              disabled={
-                                sendingStudentEmail === `${s.student_code}:send_result`
-                              }
-                              onClick={() =>
-                                handleSendSingleStudentEmail(s.student_code, 'send_result')
-                              }
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-colors ${
-                                s.result_email_sent
-                                  ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300'
-                                  : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
-                              }`}
-                            >
-                              <Send className="w-3 h-3" />
-                              {sendingStudentEmail === `${s.student_code}:send_result`
-                                ? '...'
-                                : s.result_email_sent
-                                ? t.admin.resultEmailSentBadge
-                                : t.admin.sendResultEmailBtn}
-                            </button>
+                            {isSuperAdmin && (
+                              <button
+                                type="button"
+                                disabled={
+                                  sendingStudentEmail === `${s.student_code}:send_result`
+                                }
+                                onClick={() =>
+                                  handleSendSingleStudentEmail(s.student_code, 'send_result')
+                                }
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-colors ${
+                                  s.result_email_sent
+                                    ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300'
+                                    : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
+                                }`}
+                              >
+                                <Send className="w-3 h-3" />
+                                {sendingStudentEmail === `${s.student_code}:send_result`
+                                  ? '...'
+                                  : s.result_email_sent
+                                  ? t.admin.resultEmailSentBadge
+                                  : t.admin.sendResultEmailBtn}
+                              </button>
+                            )}
                           </div>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-semibold text-xs">
@@ -1964,6 +2506,223 @@ export default function AdminPage() {
             </div>
           </div>
         </>
+      )}
+
+      {/* EDIT STUDENT DETAILS MODAL */}
+      {editingStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full p-6 sm:p-8 space-y-5 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-4">
+              <div>
+                <div className="text-xs font-extrabold uppercase text-indigo-700">
+                  ID: {editingStudent.student_code} • PIN: {editingStudent.access_pin}
+                </div>
+                <h3 className="text-xl font-extrabold text-slate-900">
+                  {locale === 'RU'
+                    ? 'Редактирование данных ученика'
+                    : locale === 'EN'
+                    ? 'Edit Student Details'
+                    : 'Editare Date Elev'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingStudent(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditStudent} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">
+                    {t.register.firstName}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editFirstName}
+                    onChange={(e) => setEditFirstName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">
+                    {t.register.lastName}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editLastName}
+                    onChange={(e) => setEditLastName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">
+                    {t.admin.colGrade}
+                  </label>
+                  <select
+                    value={editGrade}
+                    onChange={(e) => setEditGrade(Number(e.target.value))}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-bold"
+                  >
+                    {GRADES.map((g) => (
+                      <option key={g} value={g}>
+                        {t.register.gradeLabel} {g}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">
+                    {t.admin.colLang}
+                  </label>
+                  <select
+                    value={editExamLanguage}
+                    onChange={(e) =>
+                      setEditExamLanguage(e.target.value as 'RO' | 'RU' | 'EN')
+                    }
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-bold"
+                  >
+                    <option value="RO">RO (Română)</option>
+                    <option value="RU">RU (Русский)</option>
+                    <option value="EN">EN (English)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">
+                    {t.admin.colBranch}
+                  </label>
+                  <select
+                    value={editBranchCode}
+                    onChange={(e) => setEditBranchCode(Number(e.target.value))}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-bold"
+                  >
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.code}>
+                        [{b.code}] {getBranchName(b)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">
+                    {locale === 'RU'
+                      ? 'Код школы (01–08)'
+                      : locale === 'EN'
+                      ? 'School Code (01–08)'
+                      : 'Cod Școală (01–08)'}
+                  </label>
+                  <select
+                    value={editSchoolCode}
+                    onChange={(e) => {
+                      const code = Number(e.target.value);
+                      setEditSchoolCode(code);
+                      const found = SCHOOL_OPTIONS.find((s) => s.code === code);
+                      if (found && code !== 8) {
+                        setEditCustomSchool(found.name_ro);
+                      }
+                    }}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-semibold"
+                  >
+                    {SCHOOL_OPTIONS.map((sch) => (
+                      <option key={sch.code} value={sch.code}>
+                        [{sch.codeStr}] {sch.name_ro}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">
+                    {t.admin.colSchool}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editCustomSchool}
+                    onChange={(e) => setEditCustomSchool(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">
+                    {t.register.teacherName}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editTeacherName}
+                    onChange={(e) => setEditTeacherName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">
+                    {t.register.email}
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">
+                    {t.register.phone}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setEditingStudent(null)}
+                  className="px-5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm"
+                >
+                  {locale === 'RU' ? 'Отмена' : locale === 'EN' ? 'Cancel' : 'Anulează'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEdit}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 disabled:opacity-50 text-white font-extrabold text-xs sm:text-sm shadow-sm transition-all"
+                >
+                  <Save className="w-4 h-4" />
+                  {savingEdit
+                    ? '...'
+                    : locale === 'RU'
+                    ? 'Сохранить изменения'
+                    : locale === 'EN'
+                    ? 'Save Changes'
+                    : 'Salvează Modificările'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
