@@ -102,9 +102,9 @@ export interface EmailConfigRecord {
 export const DEFAULT_EMAIL_CONFIG: EmailConfigRecord = {
   smtp_host: process.env.SMTP_HOST || 'smtp.gmail.com',
   smtp_port: Number(process.env.SMTP_PORT || 465),
-  smtp_user: process.env.SMTP_USER || 'azamatjauysh@orizont.md',
+  smtp_user: process.env.SMTP_USER || 'luminamath@orizont.md',
   smtp_pass: process.env.SMTP_PASS || '',
-  smtp_from: process.env.SMTP_FROM || 'LuminaMath Moldova <azamatjauysh@orizont.md>',
+  smtp_from: process.env.SMTP_FROM || 'LuminaMath Moldova <luminamath@orizont.md>',
 };
 
 export interface StudentRecord {

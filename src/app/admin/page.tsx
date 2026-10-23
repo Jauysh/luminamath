@@ -201,9 +201,9 @@ export default function AdminPage() {
   // SMTP / Email Configuration state
   const [smtpHost, setSmtpHost] = useState('smtp.gmail.com');
   const [smtpPort, setSmtpPort] = useState(465);
-  const [smtpUser, setSmtpUser] = useState('azamatjauysh@orizont.md');
+  const [smtpUser, setSmtpUser] = useState('luminamath@orizont.md');
   const [smtpPass, setSmtpPass] = useState('');
-  const [smtpFrom, setSmtpFrom] = useState('LuminaMath Moldova <azamatjauysh@orizont.md>');
+  const [smtpFrom, setSmtpFrom] = useState('LuminaMath Moldova <luminamath@orizont.md>');
   const [smtpHasPassword, setSmtpHasPassword] = useState(false);
   const [testEmailRecipient, setTestEmailRecipient] = useState('a.jauysh@gmail.com');
   const [savingSmtp, setSavingSmtp] = useState(false);
@@ -1534,7 +1534,7 @@ export default function AdminPage() {
                   <input
                     type="email"
                     required
-                    placeholder="azamatjauysh@orizont.md"
+                    placeholder="luminamath@orizont.md"
                     value={smtpUser}
                     onChange={(e) => {
                       setSmtpUser(e.target.value);
