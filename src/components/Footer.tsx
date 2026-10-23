@@ -76,7 +76,7 @@ export function Footer() {
 
         <div className="mt-10 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
           <p>
-            © {settings.edition} LuminaMath Moldova (luminamath.md). {t.footer.rights}
+            © {settings.edition} LuminaMath Moldova (luminamath.orizont.md). {t.footer.rights}
           </p>
           <p>{t.footer.omrTagline}</p>
         </div>

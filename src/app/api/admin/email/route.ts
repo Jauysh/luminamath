@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
     const origin =
       req.headers.get('origin') ||
       process.env.NEXT_PUBLIC_SITE_URL ||
-      'https://luminamath-md-592645627631.europe-west1.run.app';
+      'https://luminamath.orizont.md';
 
     // 1. Send / Resend Registration Confirmation Email (with 6-digit ID) to 1 student
     if (action === 'send_registration') {

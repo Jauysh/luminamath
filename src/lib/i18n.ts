@@ -123,7 +123,7 @@ export const translations = {
       activeBadge: 'Înscriere Deschisă',
       upcomingBadge: 'Urmează',
       examDurationBadge: 'Durata: 2 ore',
-      stage1Title: 'Înregistrarea pe platforma www.luminamath.md',
+      stage1Title: 'Înregistrarea online pe luminamath.orizont.md',
       stage1Desc:
         'Completarea formularului de înscriere online și primirea codului unic de participant (ID și PIN) pe e-mail.',
       stage2Title: 'Etapa scrisă – proba de concurs',
@@ -195,7 +195,7 @@ export const translations = {
         },
         {
           q: 'Cum mă înscriu la concurs?',
-          a: 'Pentru a vă înscrie, completați formularul de înregistrare pe site-ul www.luminamath.md. Imediat după trimitere veți primi pe ecran și pe adresa de e-mail permisul de participare cu ID-ul unic din 6 cifre și parola PIN.',
+          a: 'Pentru a vă înscrie, completați formularul de înregistrare pe site-ul luminamath.orizont.md. Imediat după trimitere veți primi pe ecran și pe adresa de e-mail permisul de participare cu ID-ul unic din 6 cifre și parola PIN.',
         },
         {
           q: 'Ce trebuie să am la mine în ziua examenului?',
@@ -459,7 +459,7 @@ export const translations = {
       activeBadge: 'Открыта регистрация',
       upcomingBadge: 'Предстоит',
       examDurationBadge: 'Длительность: 2 часа',
-      stage1Title: 'Регистрация на платформе www.luminamath.md',
+      stage1Title: 'Онлайн-регистрация на luminamath.orizont.md',
       stage1Desc:
         'Заполнение онлайн-анкеты участника и получение персонального ID-номера и PIN-кода на электронную почту.',
       stage2Title: 'Письменный этап – проведение экзамена',
@@ -531,7 +531,7 @@ export const translations = {
         },
         {
           q: 'Как зарегистрироваться на конкурс?',
-          a: 'Заполните регистрационную анкету на сайте www.luminamath.md. Сразу после отправки формы вы получите на экране и на указанный email талон участника с вашим 6-значным ID-номером и PIN-паролем.',
+          a: 'Заполните регистрационную анкету на сайте luminamath.orizont.md. Сразу после отправки формы вы получите на экране и на указанный email талон участника с вашим 6-значным ID-номером и PIN-паролем.',
         },
         {
           q: 'Что нужно принести с собой на экзамен?',
@@ -796,7 +796,7 @@ export const translations = {
       activeBadge: 'Registration Open',
       upcomingBadge: 'Upcoming',
       examDurationBadge: 'Duration: 2 hours',
-      stage1Title: 'Signing in on the www.luminamath.md platform',
+      stage1Title: 'Online Registration on luminamath.orizont.md',
       stage1Desc:
         'Complete the online registration form and receive your unique Participant ID and Access PIN via email.',
       stage2Title: 'The written stage – examination session',
@@ -868,7 +868,7 @@ export const translations = {
         },
         {
           q: 'How do I enroll in the contest?',
-          a: 'To enroll in the contest, complete the online registration form on www.luminamath.md. Immediately after submitting, you will receive your official admission slip with your 6-digit Participant ID and personal PIN code on screen and via email.',
+          a: 'To enroll in the contest, complete the online registration form on luminamath.orizont.md. Immediately after submitting, you will receive your official admission slip with your 6-digit Participant ID and personal PIN code on screen and via email.',
         },
         {
           q: 'What do I have to bring to the exam?',

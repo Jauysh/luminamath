@@ -193,7 +193,11 @@ export default function RegisterPage() {
           <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between gap-4">
             <LuminaLogo className="h-9 sm:h-10 w-auto" />
             <span className="text-xs font-extrabold uppercase tracking-wider text-[#2C3987] bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full">
-              Clasele III – VIII • {settings.edition}
+              {locale === 'RU'
+                ? `3 – 8 Классы • ${settings.edition}`
+                : locale === 'EN'
+                ? `Grades III – VIII • ${settings.edition}`
+                : `Clasele III – VIII • ${settings.edition}`}
             </span>
           </div>
 

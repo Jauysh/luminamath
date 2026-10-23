@@ -87,7 +87,7 @@ export function generateSampleOmrPdf(params: {
     '(Official Evaluation Status: VERIFIED - LUMINAMATH MOLDOVA) Tj',
     '0 -35 Td',
     '/F1 9 Tf',
-    '(Verified by LuminaMath Optical Scanner System - www.luminamath.md) Tj',
+    '(Verified by LuminaMath Optical Scanner System - luminamath.orizont.md) Tj',
     'ET',
   ].join('\n');
 

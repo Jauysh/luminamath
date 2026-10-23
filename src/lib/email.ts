@@ -125,7 +125,7 @@ export async function sendRegistrationEmail(
 
   const linkUrl =
     resultsUrl ||
-    `https://luminamath.md/results?id=${encodeURIComponent(
+    `https://luminamath.orizont.md/results?id=${encodeURIComponent(
       studentCode
     )}&pin=${encodeURIComponent(accessPin)}`;
 
@@ -149,7 +149,7 @@ export async function sendRegistrationEmail(
             Lumina<span style="color: #F8A71A;">Math</span> Moldova
           </h1>
           <p style="margin: 6px 0 0; font-size: 13px; color: #cbd5e1;">
-            www.luminamath.md • Clasele III–VIII / 3–8 Классы / Grades 3–8
+            luminamath.orizont.md • Clasele III–VIII / 3–8 Классы / Grades 3–8
           </p>
         </td>
       </tr>
@@ -314,7 +314,7 @@ export async function sendRegistrationEmail(
       <tr>
         <td style="background-color: #0f172a; color: #94a3b8; padding: 18px 24px; text-align: center; font-size: 12px; line-height: 1.6;">
           <strong style="color: #ffffff;">© LuminaMath Moldova • IPLT „Orizont”</strong><br/>
-          Web: <a href="https://luminamath.md" style="color: #F8A71A; text-decoration: none;">www.luminamath.md</a> &nbsp;|&nbsp;
+          Web: <a href="https://luminamath.orizont.md" style="color: #F8A71A; text-decoration: none;">luminamath.orizont.md</a> &nbsp;|&nbsp;
           Email: <a href="mailto:luminamath@orizont.md" style="color: #F8A71A; text-decoration: none;">luminamath@orizont.md</a> &nbsp;|&nbsp;
           Tel: +373 (79) 000 073
         </td>
@@ -548,7 +548,7 @@ export async function sendResultPdfEmail(
       <tr>
         <td style="background-color: #0f172a; color: #94a3b8; padding: 18px 24px; text-align: center; font-size: 12px; line-height: 1.6;">
           <strong style="color: #ffffff;">© LuminaMath Moldova • IPLT „Orizont”</strong><br/>
-          Web: <a href="https://luminamath.md" style="color: #F8A71A; text-decoration: none;">www.luminamath.md</a> &nbsp;|&nbsp;
+          Web: <a href="https://luminamath.orizont.md" style="color: #F8A71A; text-decoration: none;">luminamath.orizont.md</a> &nbsp;|&nbsp;
           Email: <a href="mailto:luminamath@orizont.md" style="color: #F8A71A; text-decoration: none;">luminamath@orizont.md</a> &nbsp;|&nbsp;
           Document PDF: <span style="color: #e2e8f0;">${pdfFilename}</span>
         </td>

@@ -113,6 +113,11 @@ export async function POST(req: NextRequest) {
         ? student.branch_name_en || student.branch_name_ro
         : student.branch_name_ro;
 
+    const origin =
+      req.headers.get('origin') ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      'https://luminamath.orizont.md';
+
     const emailResult = await sendRegistrationEmail({
       to: student.email,
       studentCode: student.student_code,
@@ -126,6 +131,7 @@ export async function POST(req: NextRequest) {
       branchName: branchNameForLang || `Branch #${student.branch_code}`,
       branchAddress: student.branch_address || 'Chișinău',
       examDateText: `${dateForLang}, ${settings.exam_time}`,
+      resultsUrl: `${origin}/results?id=${student.student_code}&pin=${student.access_pin}`,
     });
 
     if (emailResult.sent && emailResult.mode === 'smtp') {

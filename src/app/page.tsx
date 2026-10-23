@@ -578,7 +578,13 @@ export default function HomePage() {
               <div>
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-white/10 border border-white/15 text-amber-300 text-xs font-extrabold mb-3">
                   <FileCheck2 className="w-4 h-4 text-[#F8A71A]" />
-                  <span>Etapa Scrisă • 10:00 – 12:00</span>
+                  <span>
+                    {locale === 'RU'
+                      ? `Письменный этап • ${settings.exam_time}`
+                      : locale === 'EN'
+                      ? `Written Stage • ${settings.exam_time}`
+                      : `Etapa Scrisă • ${settings.exam_time}`}
+                  </span>
                 </div>
                 <h3 className="text-lg sm:text-xl font-black text-white mb-3">
                   {t.rules.answerSheetRulesTitle}
@@ -588,8 +594,20 @@ export default function HomePage() {
                 </p>
               </div>
               <div className="mt-5 pt-4 border-t border-white/15 flex items-center justify-between text-xs font-bold text-amber-300">
-                <span>A • B • C • D • E (1 răspuns corect)</span>
-                <span>Clasele III – VIII</span>
+                <span>
+                  {locale === 'RU'
+                    ? 'A • B • C • D • E (1 правильный ответ)'
+                    : locale === 'EN'
+                    ? 'A • B • C • D • E (1 correct answer)'
+                    : 'A • B • C • D • E (1 răspuns corect)'}
+                </span>
+                <span>
+                  {locale === 'RU'
+                    ? '3 – 8 классы'
+                    : locale === 'EN'
+                    ? 'Grades III – VIII'
+                    : 'Clasele III – VIII'}
+                </span>
               </div>
             </div>
           </div>
