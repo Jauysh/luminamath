@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import { GRADES, SCHOOL_OPTIONS, SchoolOption } from '@/lib/i18n';
-import { LuminaMathLogo } from '@/components/LuminaBrand';
 import {
   Award,
   Building2,
@@ -180,24 +179,16 @@ export default function RegisterPage() {
   if (registered) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-[#FFFDF9] rounded-3xl border-2 border-[#EB5A24] shadow-xl overflow-hidden">
-          {/* Official Brand Header on Admission Slip */}
-          <div className="bg-[#FAF6F0] border-b-2 border-orange-200 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <LuminaMathLogo className="h-10 sm:h-11 w-auto" />
-            <span className="px-3.5 py-1 rounded-full bg-[#EB5A24] text-white text-xs font-black uppercase tracking-wider">
-              Liceul Teoretic „Orizont” Moldova • Cl. II–VIII
-            </span>
-          </div>
-
+        <div className="bg-white rounded-3xl border-2 border-emerald-500 shadow-xl overflow-hidden">
           {/* Top Banner */}
-          <div className="bg-gradient-to-r from-[#1B56A5] to-[#13407d] text-white p-6 sm:p-8 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-[#F5B316] flex items-center justify-center mx-auto mb-3 shadow-md">
-              <CheckCircle2 className="w-8 h-8 text-slate-950" />
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-6 sm:p-8 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-3">
+              <CheckCircle2 className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold">
               {t.register.successTitle}
             </h1>
-            <p className="mt-2 text-blue-100 text-sm sm:text-base max-w-2xl mx-auto">
+            <p className="mt-2 text-emerald-50 text-sm sm:text-base max-w-2xl mx-auto">
               {t.register.successSubtitle}
             </p>
           </div>
@@ -357,24 +348,24 @@ export default function RegisterPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="bg-white rounded-3xl border-2 border-orange-200 shadow-lg overflow-hidden">
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-lg overflow-hidden">
         {/* Form Header */}
-        <div className="bg-gradient-to-r from-[#1B56A5] via-[#174b91] to-[#EB5A24] text-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-indigo-900 text-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#F5B316] mb-1">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-300 mb-1">
               <UserPlus className="w-4 h-4" />
-              LuminaMath Moldova • {settings.edition} • Clasele II–VIII
+              LuminaMath Moldova • {settings.edition}
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold">
               {t.register.title}
             </h1>
-            <p className="text-blue-100 text-sm mt-1">
+            <p className="text-slate-300 text-sm mt-1">
               {t.register.subtitle}
             </p>
           </div>
 
-          <div className="bg-white/15 border border-white/25 rounded-2xl px-4 py-2.5 text-center shrink-0">
-            <div className="text-[10px] uppercase tracking-wider text-[#F5B316] font-black flex items-center justify-center gap-1">
+          <div className="bg-white/10 border border-white/20 rounded-2xl px-4 py-2.5 text-center shrink-0">
+            <div className="text-[10px] uppercase tracking-wider text-amber-300 font-bold flex items-center justify-center gap-1">
               <Calendar className="w-3 h-3" />
               {t.register.examDateLabel}
             </div>
@@ -603,7 +594,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-[#EB5A24] to-[#F58220] hover:from-[#d94e1b] hover:to-[#e07114] disabled:opacity-60 text-white font-black text-base shadow-lg shadow-orange-500/25 transition-all flex items-center justify-center gap-2"
+              className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-lumina-600 hover:from-indigo-700 hover:to-lumina-700 disabled:opacity-60 text-white font-extrabold text-base shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2"
             >
               <UserPlus className="w-5 h-5" />
               {submitting ? t.register.submitting : t.register.submitBtn}
