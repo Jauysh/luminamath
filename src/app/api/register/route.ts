@@ -10,7 +10,8 @@ import { sendRegistrationEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
-  const limit = checkRateLimit(`register:${ip}`, 15, 10 * 60); // max 15 registrations per 10 min per IP
+  // Allow up to 300 registrations per 10 minutes per IP so entire school computer labs / teachers on shared NAT Wi-Fi are never blocked
+  const limit = checkRateLimit(`register:${ip}`, 300, 10 * 60);
   if (!limit.allowed) {
     return NextResponse.json(
       { error: 'Too many registration requests from this IP. Please try again in a few minutes.' },

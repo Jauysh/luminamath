@@ -149,6 +149,22 @@ export interface CreateStudentInput {
   phone: string;
 }
 
+const OTHER_SCHOOLS_OVERFLOW_PREFIXES: number[] = (() => {
+  const reserved = new Set<number>([1, 2, 3, 4, 5, 6, 7, 8]);
+  for (let s = 1; s <= 7; s++) {
+    for (let b = 1; b <= 4; b++) {
+      reserved.add(s * 10 + b); // 11..14, 21..24, ..., 71..74
+    }
+  }
+  const list: number[] = [];
+  for (let p = 9; p <= 99; p++) {
+    if (!reserved.has(p)) {
+      list.push(p);
+    }
+  }
+  return list;
+})();
+
 export function formatStudentId(schoolCode: number, grade: number, seq: number): string {
   const cleanSchool = Math.max(1, Math.min(99, Number(schoolCode) || 8));
   const g = String(grade).padStart(2, '0').slice(-2);
@@ -157,25 +173,40 @@ export function formatStudentId(schoolCode: number, grade: number, seq: number):
     const sSeq = String(seq).padStart(2, '0').slice(-2);
     return `${sPrefix}${g}${sSeq}`;
   }
-  const overflowBlock = Math.floor((seq - 1) / 99);
+  const overflowBlock = Math.floor((seq - 1) / 99); // 1, 2, 3, ...
   const remSeq = ((seq - 1) % 99) + 1;
-  const nextPrefix =
-    cleanSchool === 8
-      ? Math.min(99, 8 + overflowBlock)
-      : Math.min(99, cleanSchool * 10 + overflowBlock);
+  let nextPrefix: number;
+  if (cleanSchool >= 1 && cleanSchool <= 7 && overflowBlock <= 4) {
+    nextPrefix = cleanSchool * 10 + overflowBlock;
+  } else {
+    const idx =
+      cleanSchool === 8
+        ? overflowBlock - 1
+        : 4 + (cleanSchool - 1) * 4 + (overflowBlock - 5);
+    nextPrefix =
+      OTHER_SCHOOLS_OVERFLOW_PREFIXES[
+        Math.min(Math.max(0, idx), OTHER_SCHOOLS_OVERFLOW_PREFIXES.length - 1)
+      ] || 99;
+  }
   const sPrefix = String(nextPrefix).padStart(2, '0').slice(-2);
   const sSeq = String(remSeq).padStart(2, '0').slice(-2);
   return `${sPrefix}${g}${sSeq}`;
 }
 
 // ============================================================================
-// PostgreSQL Connection Pool (High Concurrency: 700+ simultaneous users)
+// PostgreSQL Connection Pool (High Concurrency: 1,200+ simultaneous users)
 // ============================================================================
 declare global {
   // eslint-disable-next-line no-var
   var __luminaPgPool: Pool | undefined;
   // eslint-disable-next-line no-var
   var __luminaPgInitialized: boolean | undefined;
+  // eslint-disable-next-line no-var
+  var __luminaPgInitPromise: Promise<boolean> | undefined;
+  // eslint-disable-next-line no-var
+  var __luminaSettingsCache: { data: SiteSettingsRecord; expiresAt: number } | undefined;
+  // eslint-disable-next-line no-var
+  var __luminaBranchesCache: { data: BranchRecord[]; expiresAt: number } | undefined;
 }
 
 function getPgPool(): Pool | null {
@@ -197,8 +228,11 @@ function getPgPool(): Pool | null {
 
 async function ensurePgInitialized(pool: Pool): Promise<boolean> {
   if (global.__luminaPgInitialized) return true;
-  try {
-    await pool.query(`
+  if (global.__luminaPgInitPromise) return global.__luminaPgInitPromise;
+
+  global.__luminaPgInitPromise = (async () => {
+    try {
+      await pool.query(`
       CREATE TABLE IF NOT EXISTS branches (
         id SERIAL PRIMARY KEY,
         code INT UNIQUE NOT NULL CHECK (code >= 1 AND code <= 9),
@@ -280,6 +314,8 @@ async function ensurePgInitialized(pool: Pool): Promise<boolean> {
 
       CREATE UNIQUE INDEX IF NOT EXISTS idx_students_student_code ON students(student_code);
       CREATE INDEX IF NOT EXISTS idx_students_branch_grade ON students(branch_code, grade);
+      CREATE INDEX IF NOT EXISTS idx_students_school_grade ON students(school_code, grade);
+      CREATE INDEX IF NOT EXISTS idx_students_created_at ON students(created_at DESC);
 
       CREATE TABLE IF NOT EXISTS student_results (
         student_code VARCHAR(6) PRIMARY KEY REFERENCES students(student_code) ON DELETE CASCADE,
@@ -312,19 +348,26 @@ async function ensurePgInitialized(pool: Pool): Promise<boolean> {
       ON CONFLICT (email) DO NOTHING;
     `);
 
-    await pool.query(
-      `INSERT INTO site_settings (id, settings_json)
-       VALUES (1, $1::jsonb)
-       ON CONFLICT (id) DO NOTHING`,
-      [JSON.stringify(DEFAULT_SITE_SETTINGS)]
-    );
+      await pool.query(
+        `INSERT INTO site_settings (id, settings_json)
+         VALUES (1, $1::jsonb)
+         ON CONFLICT (id) DO NOTHING`,
+        [JSON.stringify(DEFAULT_SITE_SETTINGS)]
+      );
 
-    global.__luminaPgInitialized = true;
-    return true;
-  } catch (err) {
-    console.warn('[DB] PostgreSQL connection failed, using local JSON fallback store:', (err as Error).message);
-    return false;
-  }
+      global.__luminaPgInitialized = true;
+      return true;
+    } catch (err) {
+      global.__luminaPgInitPromise = undefined;
+      console.warn(
+        '[DB] PostgreSQL connection failed, using local JSON fallback store:',
+        (err as Error).message
+      );
+      return false;
+    }
+  })();
+
+  return global.__luminaPgInitPromise;
 }
 
 // ============================================================================
@@ -658,6 +701,11 @@ export async function removeAdminEmail(emailToRemove: string): Promise<AdminEmai
 // ============================================================================
 
 export async function getSiteSettings(): Promise<SiteSettingsRecord> {
+  const now = Date.now();
+  if (global.__luminaSettingsCache && global.__luminaSettingsCache.expiresAt > now) {
+    return global.__luminaSettingsCache.data;
+  }
+
   const normalizeContact = (s: SiteSettingsRecord): SiteSettingsRecord => ({
     ...s,
     contact_email:
@@ -678,7 +726,7 @@ export async function getSiteSettings(): Promise<SiteSettingsRecord> {
   if (pool && (await ensurePgInitialized(pool))) {
     const res = await pool.query('SELECT settings_json FROM site_settings WHERE id = 1 LIMIT 1');
     if (res.rows[0]?.settings_json) {
-      return normalizeContact({
+      const data = normalizeContact({
         ...DEFAULT_SITE_SETTINGS,
         ...res.rows[0].settings_json,
         google_client_id:
@@ -686,7 +734,10 @@ export async function getSiteSettings(): Promise<SiteSettingsRecord> {
           process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
           '',
       });
+      global.__luminaSettingsCache = { data, expiresAt: now + 15000 };
+      return data;
     }
+    global.__luminaSettingsCache = { data: DEFAULT_SITE_SETTINGS, expiresAt: now + 15000 };
     return DEFAULT_SITE_SETTINGS;
   }
 
@@ -702,6 +753,7 @@ export async function getSiteSettings(): Promise<SiteSettingsRecord> {
 export async function updateSiteSettings(
   partial: Partial<SiteSettingsRecord>
 ): Promise<SiteSettingsRecord> {
+  global.__luminaSettingsCache = undefined;
   const current = await getSiteSettings();
   const merged: SiteSettingsRecord = {
     ...current,
@@ -718,6 +770,7 @@ export async function updateSiteSettings(
          updated_at = now()`,
       [JSON.stringify(merged)]
     );
+    global.__luminaSettingsCache = { data: merged, expiresAt: Date.now() + 15000 };
     return merged;
   }
 
@@ -843,12 +896,20 @@ export async function markStudentEmailStatus(
 // ============================================================================
 
 export async function getBranches(includeInactive = false): Promise<BranchRecord[]> {
+  const now = Date.now();
+  if (!includeInactive && global.__luminaBranchesCache && global.__luminaBranchesCache.expiresAt > now) {
+    return global.__luminaBranchesCache.data;
+  }
+
   const pool = getPgPool();
   if (pool && (await ensurePgInitialized(pool))) {
     const query = includeInactive
       ? 'SELECT * FROM branches ORDER BY code ASC'
       : 'SELECT * FROM branches WHERE is_active = true ORDER BY code ASC';
     const res = await pool.query(query);
+    if (!includeInactive) {
+      global.__luminaBranchesCache = { data: res.rows, expiresAt: now + 15000 };
+    }
     return res.rows;
   }
 
@@ -867,6 +928,7 @@ export async function createOrUpdateBranch(input: {
   address: string;
   is_active?: boolean;
 }): Promise<BranchRecord> {
+  global.__luminaBranchesCache = undefined;
   const pool = getPgPool();
   if (pool && (await ensurePgInitialized(pool))) {
     const res = await pool.query(
@@ -955,7 +1017,8 @@ export async function registerStudent(input: CreateStudentInput): Promise<Studen
       let seq: number = counterRes.rows[0].last_seq;
       let studentCode = formatStudentId(schoolCode, input.grade, seq);
 
-      while (true) {
+      let attempts = 0;
+      while (attempts < 9500) {
         const exists = await client.query(
           'SELECT 1 FROM students WHERE student_code = $1',
           [studentCode]
@@ -968,6 +1031,7 @@ export async function registerStudent(input: CreateStudentInput): Promise<Studen
         );
         seq = nextRes.rows[0].last_seq;
         studentCode = formatStudentId(schoolCode, input.grade, seq);
+        attempts += 1;
       }
 
       const id = crypto.randomUUID();

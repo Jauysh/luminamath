@@ -32,6 +32,18 @@ export interface ResultPdfEmailPayload {
   pdfBuffer: Buffer;
 }
 
+declare global {
+  // eslint-disable-next-line no-var
+  var __luminaSmtpPool:
+    | {
+        key: string;
+        transporter: nodemailer.Transporter;
+        from: string;
+        user: string;
+      }
+    | undefined;
+}
+
 async function createConfiguredTransporter() {
   const cfg = await getEmailConfig();
   const host = cfg.smtp_host?.trim();
@@ -45,7 +57,15 @@ async function createConfiguredTransporter() {
     return null;
   }
 
+  const key = `${host}:${port}:${user}:${pass}:${from}`;
+  if (global.__luminaSmtpPool && global.__luminaSmtpPool.key === key) {
+    return global.__luminaSmtpPool;
+  }
+
   const transporter = nodemailer.createTransport({
+    pool: true,
+    maxConnections: 3,
+    maxMessages: 100,
     host,
     port,
     secure: port === 465,
@@ -55,7 +75,8 @@ async function createConfiguredTransporter() {
     },
   });
 
-  return { transporter, from, user };
+  global.__luminaSmtpPool = { key, transporter, from, user };
+  return global.__luminaSmtpPool;
 }
 
 const LANG_DISPLAY: Record<'RO' | 'RU' | 'EN', string> = {

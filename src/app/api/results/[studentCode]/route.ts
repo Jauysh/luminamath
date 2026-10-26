@@ -9,8 +9,11 @@ export async function GET(
   { params }: { params: { studentCode: string } }
 ) {
   const ip = getClientIp(req);
-  const limit = checkRateLimit(`results:${ip}`, 25, 10 * 60); // Brute-force protection
-  if (!limit.allowed) {
+  const code = (params.studentCode || '').trim();
+  // High school-wide NAT allowance (600 checks / 10 min per IP) + strict per-student PIN brute-force protection (15 attempts / 10 min per ID)
+  const ipLimit = checkRateLimit(`results_ip:${ip}`, 600, 10 * 60);
+  const pinLimit = checkRateLimit(`results_pin:${ip}:${code}`, 15, 10 * 60);
+  if (!ipLimit.allowed || !pinLimit.allowed) {
     return NextResponse.json(
       {
         error:
@@ -21,7 +24,6 @@ export async function GET(
   }
 
   try {
-    const code = (params.studentCode || '').trim();
     const pin = (req.nextUrl.searchParams.get('pin') || '').trim();
 
     if (!/^\d{6}$/.test(code)) {
