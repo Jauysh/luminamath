@@ -5,12 +5,15 @@ import { useSearchParams } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import {
   Award,
+  CheckCircle2,
   Clock,
   Download,
   ExternalLink,
   FileCheck2,
   FileSearch,
+  KeyRound,
   Lock,
+  Mail,
   Search,
   User,
 } from 'lucide-react';
@@ -44,6 +47,42 @@ function ResultsContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [student, setStudent] = useState<StudentLookupResult | null>(null);
+
+  // Self-service ID / PIN email recovery state
+  const [showRecover, setShowRecover] = useState(false);
+  const [recoverEmail, setRecoverEmail] = useState('');
+  const [recoverLoading, setRecoverLoading] = useState(false);
+  const [recoverMsg, setRecoverMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+
+  const handleRecoverSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!recoverEmail.trim()) return;
+    setRecoverLoading(true);
+    setRecoverMsg(null);
+    try {
+      const res = await fetch('/api/results/recover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: recoverEmail.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setRecoverMsg({ type: 'err', text: data.error || 'Error' });
+      } else {
+        const okText =
+          locale === 'RU'
+            ? `ID и PIN-код успешно отправлены на ${recoverEmail.trim()}! Проверьте папку «Входящие» или «Спам».`
+            : locale === 'EN'
+            ? `Your 6-digit ID and PIN have been sent to ${recoverEmail.trim()}! Please check your Inbox or Spam folder.`
+            : `ID-ul și Codul PIN au fost trimise pe ${recoverEmail.trim()}! Verificați căsuța Inbox sau Spam.`;
+        setRecoverMsg({ type: 'ok', text: okText });
+      }
+    } catch {
+      setRecoverMsg({ type: 'err', text: 'Network error' });
+    } finally {
+      setRecoverLoading(false);
+    }
+  };
 
   const performLookup = async (codeToSearch: string, pinToSearch: string) => {
     const cleanCode = codeToSearch.trim();
@@ -186,6 +225,79 @@ function ResultsContent() {
               {error}
             </div>
           )}
+
+          {/* Self-Service Forgot ID / PIN Recovery Toggle */}
+          <div className="mt-6 max-w-2xl mx-auto border-t border-slate-100 pt-4 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setShowRecover(!showRecover);
+                setRecoverMsg(null);
+              }}
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-indigo-700 hover:text-indigo-900 underline"
+            >
+              <KeyRound className="w-4 h-4" />
+              {locale === 'RU'
+                ? 'Забыли ID или PIN-код? Восстановить по Email'
+                : locale === 'EN'
+                ? 'Forgot your ID or PIN? Recover via Email'
+                : 'Ați uitat ID-ul sau Codul PIN? Recuperați pe Email'}
+            </button>
+
+            {showRecover && (
+              <div className="mt-4 p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 text-left">
+                <p className="text-xs sm:text-sm text-slate-600 mb-3">
+                  {locale === 'RU'
+                    ? 'Введите адрес электронной почты, указанный при регистрации. Мы повторно отправим вам письмо с 6-значным ID и PIN-кодом.'
+                    : locale === 'EN'
+                    ? 'Enter the email address used during registration. We will resend your official registration pass with your 6-digit ID and PIN.'
+                    : 'Introduceți adresa de email folosită la înregistrare. Vă vom retrimite pe email ID-ul din 6 cifre și Codul PIN.'}
+                </p>
+                <form
+                  onSubmit={handleRecoverSubmit}
+                  className="flex flex-col sm:flex-row gap-2.5"
+                >
+                  <div className="relative flex-1">
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                    <input
+                      type="email"
+                      required
+                      value={recoverEmail}
+                      onChange={(e) => setRecoverEmail(e.target.value)}
+                      placeholder="parent@gmail.com"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 outline-none text-sm text-slate-900"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={recoverLoading || !recoverEmail.trim()}
+                    className="px-5 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 disabled:opacity-50 text-white font-bold text-xs sm:text-sm shrink-0 transition-all"
+                  >
+                    {recoverLoading
+                      ? '...'
+                      : locale === 'RU'
+                      ? 'Отправить ID и PIN на Email'
+                      : locale === 'EN'
+                      ? 'Send ID & PIN to Email'
+                      : 'Trimite ID & PIN pe Email'}
+                  </button>
+                </form>
+
+                {recoverMsg && (
+                  <div
+                    className={`mt-3 p-3 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 ${
+                      recoverMsg.type === 'ok'
+                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                        : 'bg-rose-50 border border-rose-200 text-rose-800'
+                    }`}
+                  >
+                    {recoverMsg.type === 'ok' && <CheckCircle2 className="w-4 h-4 shrink-0" />}
+                    <span>{recoverMsg.text}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -231,7 +343,7 @@ function ResultsContent() {
                 </div>
               </div>
 
-              <div className="shrink-0 w-full md:w-auto">
+              <div className="shrink-0 w-full md:w-auto flex flex-col gap-2.5">
                 <div className="rounded-2xl bg-slate-950 text-white px-6 py-5 border border-indigo-500/30 shadow-md text-center">
                   <div className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-amber-300 mb-1">
                     <Award className="w-3.5 h-3.5" />
@@ -243,6 +355,37 @@ function ResultsContent() {
                   <div className="text-xs font-bold text-indigo-200 mt-1">
                     {t.results.gradeLabel} {student.grade} • {student.exam_language}
                   </div>
+                </div>
+
+                {/* Official PDF Pass & Certificate Download Buttons */}
+                <div className="flex flex-col gap-2">
+                  <a
+                    href={`/api/results/${student.student_code}/ticket?pin=${encodeURIComponent(
+                      student.access_pin || accessPin
+                    )}`}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs shadow-sm transition-all"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    {locale === 'RU'
+                      ? '🎫 Билет участника (PDF + QR)'
+                      : locale === 'EN'
+                      ? '🎫 Exam Pass (PDF + QR)'
+                      : '🎫 Permis de Acces (PDF + QR)'}
+                  </a>
+
+                  <a
+                    href={`/api/results/${student.student_code}/certificate?pin=${encodeURIComponent(
+                      student.access_pin || accessPin
+                    )}`}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs shadow-sm transition-all"
+                  >
+                    <Award className="w-3.5 h-3.5" />
+                    {locale === 'RU'
+                      ? '🏅 Сертификат участника (PDF)'
+                      : locale === 'EN'
+                      ? '🏅 Certificate of Participation (PDF)'
+                      : '🏅 Certificat de Participare (PDF)'}
+                  </a>
                 </div>
               </div>
             </div>

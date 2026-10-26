@@ -10,6 +10,7 @@ import {
   Building2,
   Calendar,
   CheckCircle2,
+  Download,
   FileSearch,
   GraduationCap,
   Lock,
@@ -334,7 +335,21 @@ export default function RegisterPage() {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="flex flex-wrap items-stretch sm:items-center gap-3">
+                <a
+                  href={`/api/results/${registered.student_code}/ticket?pin=${encodeURIComponent(
+                    registered.access_pin
+                  )}`}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm transition-all"
+                >
+                  <Download className="w-4 h-4" />
+                  {locale === 'RU'
+                    ? '🎫 Скачать билет участника (PDF + QR)'
+                    : locale === 'EN'
+                    ? '🎫 Download Exam Pass (PDF + QR)'
+                    : '🎫 Descarcă Permisul de Acces (PDF + QR)'}
+                </a>
+
                 <button
                   type="button"
                   onClick={() => window.print()}

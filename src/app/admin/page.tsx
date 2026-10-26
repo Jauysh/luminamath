@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { GRADES, SCHOOL_OPTIONS, SchoolOption } from '@/lib/i18n';
 import { useLanguage, SiteSettingsClient } from '@/context/LanguageContext';
 import {
+  Award,
   BarChart3,
   Building2,
   Calendar,
@@ -19,6 +20,7 @@ import {
   LogOut,
   Mail,
   PlusCircle,
+  Printer,
   RefreshCw,
   Save,
   School,
@@ -222,6 +224,180 @@ export default function AdminPage() {
   const [bulkEmailReport, setBulkEmailReport] = useState<BulkEmailReport | null>(null);
   const [deletingStudentCode, setDeletingStudentCode] = useState<string | null>(null);
   const [clearingAllStudents, setClearingAllStudents] = useState(false);
+
+  // Bulk Class CSV / Excel Import state
+  const [showCsvImport, setShowCsvImport] = useState(false);
+  const [csvText, setCsvText] = useState('');
+  const [importingCsv, setImportingCsv] = useState(false);
+  const [csvImportReport, setCsvImportReport] = useState<{
+    importedCount: number;
+    errors: string[];
+  } | null>(null);
+
+  const handleDownloadCsvTemplate = () => {
+    const bom = '\uFEFF';
+    const sample = [
+      'FirstName,LastName,Grade,SchoolCode,SchoolName,TeacherName,Language,BranchCode,Email,Phone',
+      'Ion,Popescu,5,2,IPLT Orizont Durlesti,Maria Ionescu,RO,3,parent@gmail.com,+373 69 123 456',
+      'Anna,Smirnova,6,8,Liceul Mihai Eminescu,Elena Rusu,RU,2,anna@gmail.com,+373 79 222 333',
+    ].join('\r\n');
+    const blob = new Blob([bom + sample], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'LuminaMath_Class_Import_Template.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCsvFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    setCsvText(text);
+  };
+
+  const handleBulkCsvImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!csvText.trim()) return;
+    setImportingCsv(true);
+    setCsvImportReport(null);
+
+    try {
+      const lines = csvText
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0);
+
+      const parsedRows = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        // Skip header row
+        if (
+          i === 0 &&
+          (line.toLowerCase().includes('firstname') ||
+            line.toLowerCase().includes('prenume') ||
+            line.toLowerCase().includes('grade'))
+        ) {
+          continue;
+        }
+        const sep = line.includes('\t') ? '\t' : line.includes(';') ? ';' : ',';
+        const cols = line
+          .split(sep)
+          .map((c) => c.trim().replace(/^"|"$/g, ''));
+        if (cols.length < 3) continue;
+
+        parsedRows.push({
+          firstName: cols[0] || '',
+          lastName: cols[1] || '',
+          grade: Number(cols[2]) || 5,
+          schoolCode: Number(cols[3]) || 8,
+          school: cols[4] || '',
+          teacherName: cols[5] || '-',
+          examLanguage: cols[6] || 'RO',
+          branchCode: Number(cols[7]) || 3,
+          email: cols[8] || 'luminamath@orizont.md',
+          phone: cols[9] || '-',
+        });
+      }
+
+      const res = await fetch('/api/admin/students', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows: parsedRows }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Import error');
+      } else {
+        setCsvImportReport({
+          importedCount: data.importedCount || 0,
+          errors: data.errors || [],
+        });
+        setCsvText('');
+        fetchAdminData();
+      }
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setImportingCsv(false);
+    }
+  };
+
+  const handlePrintAttendanceSheet = () => {
+    const win = window.open('', '_blank');
+    if (!win) return;
+    const sorted = [...students].sort((a, b) =>
+      a.student_code.localeCompare(b.student_code)
+    );
+    const branchTitle = filterBranch
+      ? branches.find((b) => String(b.code) === filterBranch)?.name_ro ||
+        `Filiala #${filterBranch}`
+      : 'Toate Filialele / Все филиалы';
+    const gradeTitle = filterGrade ? `Clasa ${filterGrade}` : 'Clasele III – VIII';
+
+    const rowsHtml = sorted
+      .map(
+        (s, idx) => `
+      <tr>
+        <td style="text-align:center;font-weight:bold;">${idx + 1}</td>
+        <td style="font-family:monospace;font-size:14px;font-weight:900;text-align:center;">${
+          s.student_code
+        }</td>
+        <td style="font-weight:bold;">${s.last_name} ${s.first_name}</td>
+        <td style="text-align:center;font-weight:bold;">${s.grade}</td>
+        <td style="text-align:center;font-weight:bold;">${s.exam_language}</td>
+        <td style="font-size:11px;">[${String(s.school_code || 8).padStart(2, '0')}] ${
+          s.school
+        }</td>
+        <td style="width:120px;"></td>
+      </tr>`
+      )
+      .join('');
+
+    win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>LuminaMath Moldova — Listă de Prezență (${branchTitle} • ${gradeTitle})</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #0f172a; }
+    h1 { margin: 0 0 4px 0; font-size: 18px; color: #2C3987; }
+    p { margin: 0 0 14px 0; font-size: 12px; color: #475569; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { border: 1px solid #94a3b8; padding: 7px 8px; }
+    th { background: #f1f5f9; text-transform: uppercase; font-size: 10px; }
+    @media print { button { display: none; } }
+  </style>
+</head>
+<body>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div>
+      <h1>LUMINAMATH MOLDOVA — LISTĂ DE PREZENȚĂ LA EXAMEN / ВЕДОМОСТЬ ЯВКИ</h1>
+      <p>Centrul: ${branchTitle} &nbsp;|&nbsp; ${gradeTitle} &nbsp;|&nbsp; Total elevi: ${sorted.length}</p>
+    </div>
+    <button onclick="window.print()" style="padding:8px 16px;background:#2C3987;color:#fff;border:0;border-radius:8px;font-weight:bold;cursor:pointer;">🖨️ Print / Tipărește</button>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:34px;">#</th>
+        <th style="width:85px;">ID (6 cifre)</th>
+        <th>Nume, Prenume / ФИО</th>
+        <th style="width:45px;">Clasa</th>
+        <th style="width:48px;">Limba</th>
+        <th>Școala / Школа</th>
+        <th style="width:125px;">Semnătura / Подпись</th>
+      </tr>
+    </thead>
+    <tbody>${rowsHtml}</tbody>
+  </table>
+</body>
+</html>`);
+    win.document.close();
+  };
 
   // Calendar & Site Settings form state
   const [calForm, setCalForm] = useState<SiteSettingsClient & { google_client_id?: string }>(
@@ -2437,10 +2613,40 @@ export default function AdminPage() {
           {/* STUDENTS TABLE & FILTERS */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <h2 className="text-lg font-extrabold text-slate-900">
                   {t.admin.studentsListTitle} ({students.length})
                 </h2>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCsvImport(!showCsvImport);
+                    setCsvImportReport(null);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-extrabold transition-colors"
+                >
+                  <FileUp className="w-3.5 h-3.5" />
+                  {locale === 'RU'
+                    ? '📥 Импорт класса (CSV / Excel)'
+                    : locale === 'EN'
+                    ? '📥 Bulk Import (CSV / Excel)'
+                    : '📥 Import Clasă (CSV / Excel)'}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={students.length === 0}
+                  onClick={handlePrintAttendanceSheet}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-extrabold transition-colors disabled:opacity-50"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  {locale === 'RU'
+                    ? '🖨️ Ведомость явки (Печать)'
+                    : locale === 'EN'
+                    ? '🖨️ Attendance Sheet (Print)'
+                    : '🖨️ Listă Prezență (Print)'}
+                </button>
 
                 {isSuperAdmin && allStudents.length > 0 && (
                   <button
@@ -2537,6 +2743,101 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {/* BULK CSV / EXCEL CLASS IMPORT PANEL */}
+            {showCsvImport && (
+              <div className="p-6 bg-indigo-50/50 border-b border-indigo-200 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-900">
+                      {locale === 'RU'
+                        ? '📥 Массовый импорт учеников класса (CSV или копирование из Excel)'
+                        : locale === 'EN'
+                        ? '📥 Bulk Class Student Import (CSV or Paste from Excel)'
+                        : '📥 Import în Masă al Elevilor (Fișier CSV sau Copy-Paste din Excel)'}
+                    </h3>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      {locale === 'RU'
+                        ? 'Формат колонок: FirstName, LastName, Grade (3..8), SchoolCode (1..8), SchoolName, TeacherName, Language (RO/RU/EN), BranchCode (1..4), Email, Phone'
+                        : locale === 'EN'
+                        ? 'Columns: FirstName, LastName, Grade (3..8), SchoolCode (1..8), SchoolName, TeacherName, Language (RO/RU/EN), BranchCode (1..4), Email, Phone'
+                        : 'Coloane: FirstName, LastName, Grade (3..8), SchoolCode (1..8), SchoolName, TeacherName, Language (RO/RU/EN), BranchCode (1..4), Email, Phone'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDownloadCsvTemplate}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 text-indigo-700 border border-indigo-200 text-xs font-extrabold shadow-sm"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      {locale === 'RU'
+                        ? 'Скачать шаблон CSV'
+                        : locale === 'EN'
+                        ? 'Download CSV Template'
+                        : 'Descarcă Șablon CSV'}
+                    </button>
+
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-extrabold shadow-sm">
+                      <FileUp className="w-3.5 h-3.5" />
+                      <span>CSV File</span>
+                      <input
+                        type="file"
+                        accept=".csv,.txt"
+                        onChange={handleCsvFileSelect}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <form onSubmit={handleBulkCsvImport} className="space-y-3">
+                  <textarea
+                    rows={4}
+                    value={csvText}
+                    onChange={(e) => setCsvText(e.target.value)}
+                    placeholder="Ion,Popescu,5,2,IPLT Orizont Durlesti,Maria Ionescu,RO,3,parent@gmail.com,+373 69 123 456"
+                    className="w-full p-3 rounded-xl border border-slate-300 font-mono text-xs bg-white focus:border-indigo-600 outline-none"
+                  />
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowCsvImport(false)}
+                      className="px-4 py-2 rounded-xl border border-slate-300 bg-white text-slate-700 font-bold text-xs"
+                    >
+                      {locale === 'RU' ? 'Закрыть' : locale === 'EN' ? 'Close' : 'Închide'}
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={importingCsv || !csvText.trim()}
+                      className="px-5 py-2 rounded-xl bg-indigo-700 hover:bg-indigo-800 disabled:opacity-50 text-white font-extrabold text-xs shadow-sm"
+                    >
+                      {importingCsv
+                        ? '...'
+                        : locale === 'RU'
+                        ? 'Зарегистрировать список и выдать 6-значные ID'
+                        : locale === 'EN'
+                        ? 'Import Students & Generate 6-Digit IDs'
+                        : 'Importă Elevii & Generează ID-uri din 6 cifre'}
+                    </button>
+                  </div>
+                </form>
+
+                {csvImportReport && (
+                  <div className="p-3 rounded-xl bg-white border border-indigo-200 text-xs space-y-1">
+                    <div className="font-extrabold text-emerald-700">
+                      ✅ Импортировано / Importați cu succes: {csvImportReport.importedCount}
+                    </div>
+                    {csvImportReport.errors.length > 0 && (
+                      <div className="text-rose-600 font-semibold">
+                        ⚠️ {csvImportReport.errors.join(' | ')}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
@@ -2584,6 +2885,24 @@ export default function AdminPage() {
                               ? 'Edit'
                               : 'Editează'}
                           </button>
+
+                          <a
+                            href={`/api/results/${s.student_code}/ticket`}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-extrabold border border-emerald-200 transition-colors"
+                            title="Permis de Acces PDF (QR)"
+                          >
+                            <Download className="w-3 h-3" />
+                            {locale === 'RU' ? 'Билет' : locale === 'EN' ? 'Pass' : 'Permis'}
+                          </a>
+
+                          <a
+                            href={`/api/results/${s.student_code}/certificate`}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-900 text-[11px] font-extrabold border border-amber-200 transition-colors"
+                            title="Certificat de Participare PDF"
+                          >
+                            <Award className="w-3 h-3" />
+                            {locale === 'RU' ? 'Серт.' : locale === 'EN' ? 'Cert.' : 'Certificat'}
+                          </a>
 
                           <button
                             type="button"

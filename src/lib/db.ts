@@ -1004,6 +1004,52 @@ export async function registerStudent(input: CreateStudentInput): Promise<Studen
         Number(input.schoolCode) >= 1 && Number(input.schoolCode) <= 8
           ? Number(input.schoolCode)
           : 8;
+
+      // Duplicate Registration Guard: check if the exact same student (First Name + Last Name + Grade + School Code) is already registered
+      const dupRes = await client.query(
+        `SELECT * FROM students
+         WHERE LOWER(TRIM(first_name)) = LOWER(TRIM($1))
+           AND LOWER(TRIM(last_name)) = LOWER(TRIM($2))
+           AND grade = $3
+           AND school_code = $4
+         LIMIT 1`,
+        [input.firstName, input.lastName, Number(input.grade), schoolCode]
+      );
+
+      if ((dupRes.rowCount || 0) > 0) {
+        const existingStudent = dupRes.rows[0];
+        const updRes = await client.query(
+          `UPDATE students
+           SET school = $1,
+               teacher_name = $2,
+               exam_language = $3,
+               branch_id = $4,
+               branch_code = $5,
+               email = $6,
+               phone = $7
+           WHERE id = $8
+           RETURNING *`,
+          [
+            input.school.trim(),
+            input.teacherName.trim(),
+            input.examLanguage,
+            branch.id,
+            branch.code,
+            input.email.trim(),
+            input.phone.trim(),
+            existingStudent.id,
+          ]
+        );
+        await client.query('COMMIT');
+        return {
+          ...updRes.rows[0],
+          branch_name_ro: branch.name_ro,
+          branch_name_ru: branch.name_ru,
+          branch_name_en: branch.name_en,
+          branch_address: branch.address,
+        };
+      }
+
       const counterGroup = 100 + schoolCode;
 
       const counterRes = await client.query(
@@ -1087,6 +1133,34 @@ export async function registerStudent(input: CreateStudentInput): Promise<Studen
     Number(input.schoolCode) >= 1 && Number(input.schoolCode) <= 8
       ? Number(input.schoolCode)
       : 8;
+
+  // Duplicate Registration Guard in local fallback store
+  const existingLocalIdx = store.students.findIndex(
+    (s) =>
+      s.first_name.trim().toLowerCase() === input.firstName.trim().toLowerCase() &&
+      s.last_name.trim().toLowerCase() === input.lastName.trim().toLowerCase() &&
+      Number(s.grade) === Number(input.grade) &&
+      (s.school_code || 8) === schoolCode
+  );
+  if (existingLocalIdx >= 0) {
+    store.students[existingLocalIdx] = {
+      ...store.students[existingLocalIdx],
+      school: input.school.trim(),
+      teacher_name: input.teacherName.trim(),
+      exam_language: input.examLanguage,
+      branch_id: branch.id,
+      branch_code: branch.code,
+      branch_name_ro: branch.name_ro,
+      branch_name_ru: branch.name_ru,
+      branch_name_en: branch.name_en,
+      branch_address: branch.address,
+      email: input.email.trim(),
+      phone: input.phone.trim(),
+    };
+    saveLocalStore(store);
+    return store.students[existingLocalIdx];
+  }
+
   const counterKey = `s${schoolCode}_${input.grade}`;
   let seq = (store.counters[counterKey] || 0) + 1;
   let studentCode = formatStudentId(schoolCode, input.grade, seq);
@@ -1158,6 +1232,39 @@ export async function getStudentByCode(studentCode: string): Promise<StudentReco
     branch_name_en: branch?.name_en,
     branch_address: branch?.address,
   };
+}
+
+export async function getStudentsByEmail(email: string): Promise<StudentRecord[]> {
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail) return [];
+
+  const pool = getPgPool();
+  if (pool && (await ensurePgInitialized(pool))) {
+    const res = await pool.query(
+      `SELECT s.*, b.name_ro AS branch_name_ro, b.name_ru AS branch_name_ru,
+              b.name_en AS branch_name_en, b.address AS branch_address
+       FROM students s
+       LEFT JOIN branches b ON s.branch_id = b.id
+       WHERE LOWER(TRIM(s.email)) = $1
+       ORDER BY s.created_at DESC`,
+      [cleanEmail]
+    );
+    return res.rows;
+  }
+
+  const store = ensureLocalStore();
+  return store.students
+    .filter((s) => s.email.trim().toLowerCase() === cleanEmail)
+    .map((s) => {
+      const branch = store.branches.find((b) => b.id === s.branch_id);
+      return {
+        ...s,
+        branch_name_ro: branch?.name_ro,
+        branch_name_ru: branch?.name_ru,
+        branch_name_en: branch?.name_en,
+        branch_address: branch?.address,
+      };
+    });
 }
 
 export async function getAllStudents(filters?: {

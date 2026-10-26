@@ -7,8 +7,11 @@ import {
   getBranches,
   isEmailAuthorizedAdmin,
   isSuperAdminRecord,
+  registerStudent,
+  StudentRecord,
   updateStudentDetails,
 } from '@/lib/db';
+import { SCHOOL_OPTIONS } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
@@ -232,6 +235,94 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: true, studentCode });
   } catch (error) {
     console.error('[DELETE /api/admin/students] Error:', error);
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  if (!(await isAuthorized(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const body = await req.json();
+    const rows = Array.isArray(body.rows) ? body.rows : [];
+    if (rows.length === 0) {
+      return NextResponse.json(
+        { error: 'Nu au fost găsite rânduri valide pentru import.' },
+        { status: 400 }
+      );
+    }
+
+    const branches = await getBranches(true);
+    const defaultBranch = branches[0];
+    if (!defaultBranch) {
+      return NextResponse.json({ error: 'No branches configured' }, { status: 400 });
+    }
+
+    const imported: StudentRecord[] = [];
+    const errors: string[] = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const firstName = String(r.firstName || '').trim();
+      const lastName = String(r.lastName || '').trim();
+      const grade = Number(r.grade);
+      const schoolCodeNum = Number(r.schoolCode);
+      const validSchoolCode =
+        schoolCodeNum >= 1 && schoolCodeNum <= 8 ? schoolCodeNum : 8;
+      const schoolOpt = SCHOOL_OPTIONS.find((s) => s.code === validSchoolCode);
+      const school =
+        String(r.school || '').trim() ||
+        (schoolOpt && !schoolOpt.isOther ? schoolOpt.name_ro : 'Altă școală');
+      const teacherName = String(r.teacherName || '-').trim() || '-';
+      const langRaw = String(r.examLanguage || 'RO')
+        .trim()
+        .toUpperCase();
+      const examLanguage = (['RO', 'RU', 'EN'].includes(langRaw) ? langRaw : 'RO') as
+        | 'RO'
+        | 'RU'
+        | 'EN';
+      const branchCodeNum = Number(r.branchCode);
+      const matchedBranch =
+        branches.find((b) => b.code === branchCodeNum) || defaultBranch;
+      const email = String(r.email || 'luminamath@orizont.md').trim();
+      const phone = String(r.phone || '-').trim();
+
+      if (!firstName || !lastName || isNaN(grade) || grade < 3 || grade > 8) {
+        errors.push(
+          `Rândul #${i + 1}: Nume, Prenume sau Clasă (3–8) invalidă (${firstName} ${lastName}, cl. ${r.grade})`
+        );
+        continue;
+      }
+
+      try {
+        const student = await registerStudent({
+          firstName,
+          lastName,
+          grade,
+          school,
+          schoolCode: validSchoolCode,
+          teacherName,
+          examLanguage,
+          branchId: matchedBranch.id,
+          email,
+          phone,
+        });
+        imported.push(student);
+      } catch (e) {
+        errors.push(`Rândul #${i + 1} (${firstName} ${lastName}): ${(e as Error).message}`);
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      importedCount: imported.length,
+      students: imported,
+      errors,
+    });
+  } catch (error) {
+    console.error('[POST /api/admin/students] Bulk import error:', error);
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }
