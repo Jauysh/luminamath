@@ -109,27 +109,64 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const allRegisteredStudents = await getAllStudents();
+    const normalizeNameKey = (str: string) =>
+      str
+        .toUpperCase()
+        .replace(/[ĂÂ]/g, 'A')
+        .replace(/Î/g, 'I')
+        .replace(/[ȘŞ]/g, 'S')
+        .replace(/[ȚŢ]/g, 'T')
+        .replace(/Ğ/g, 'G')
+        .replace(/Ü/g, 'U')
+        .replace(/İ/g, 'I')
+        .replace(/Ö/g, 'O')
+        .replace(/Ç/g, 'C')
+        .replace(/[^A-ZА-ЯЁ0-9]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
     // Match each extracted karne against registered students in DB
     for (const karne of allExtractedKarnes) {
       let matchedCode: string | null = null;
+      const candidates =
+        karne.candidateIds && karne.candidateIds.length > 0
+          ? karne.candidateIds
+          : [karne.normalizedId, karne.rawId];
 
-      // 1) Try exact rawId (e.g. 608001 or 040701)
-      const resRaw = await saveStudentResultPdf(
-        karne.rawId,
-        `${karne.rawId}.pdf`,
-        karne.pdfBuffer
-      );
-      if (resRaw.matched) {
-        matchedCode = karne.rawId;
-      } else if (karne.normalizedId !== karne.rawId) {
-        // 2) Try 6-digit zero-padded ID (e.g. 40701 -> 040701)
-        const resNorm = await saveStudentResultPdf(
-          karne.normalizedId,
-          `${karne.normalizedId}.pdf`,
-          karne.pdfBuffer
-        );
-        if (resNorm.matched) {
-          matchedCode = karne.normalizedId;
+      // 1) Try all candidate IDs extracted from filename / PDF (e.g. "010301", "10301" -> "010301", last 6 digits)
+      const tried = new Set<string>();
+      for (const cand of candidates) {
+        if (!cand || tried.has(cand)) continue;
+        tried.add(cand);
+        const resCand = await saveStudentResultPdf(cand, `${cand}.pdf`, karne.pdfBuffer);
+        if (resCand.matched) {
+          matchedCode = cand;
+          break;
+        }
+      }
+
+      // 2) Fallback: if numeric ID did not match (e.g. student mis-bubbled 1 digit on OMR sheet),
+      // check if the "_NAME_SURNAME_Sonuc_Belgesi.pdf" suffix uniquely matches a registered student
+      if (!matchedCode && karne.studentName) {
+        const targetKey = normalizeNameKey(karne.studentName);
+        if (targetKey.length >= 4) {
+          const nameMatches = allRegisteredStudents.filter((st) => {
+            const k1 = normalizeNameKey(`${st.first_name} ${st.last_name}`);
+            const k2 = normalizeNameKey(`${st.last_name} ${st.first_name}`);
+            return k1 === targetKey || k2 === targetKey;
+          });
+          if (nameMatches.length === 1) {
+            const matchedStudent = nameMatches[0];
+            const resName = await saveStudentResultPdf(
+              matchedStudent.student_code,
+              `${matchedStudent.student_code}.pdf`,
+              karne.pdfBuffer
+            );
+            if (resName.matched) {
+              matchedCode = matchedStudent.student_code;
+            }
+          }
         }
       }
 

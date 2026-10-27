@@ -55,18 +55,18 @@ export interface SiteSettingsRecord {
 export const DEFAULT_SITE_SETTINGS: SiteSettingsRecord = {
   edition: '2026–2027',
   exam_time: '10:00 – 12:00',
-  stage1_date_ro: '08 Septembrie – 31 Octombrie 2026',
-  stage1_date_ru: '08 Сентября – 31 Октября 2026',
-  stage1_date_en: '08 September – 31 October 2026',
-  stage2_date_ro: '05 Decembrie 2026',
-  stage2_date_ru: '05 Декабря 2026',
-  stage2_date_en: '05 December 2026',
-  stage3_date_ro: '18 Decembrie 2026',
-  stage3_date_ru: '18 Декабря 2026',
-  stage3_date_en: '18 December 2026',
-  stage4_date_ro: '15 Ianuarie 2027',
-  stage4_date_ru: '15 Января 2027',
-  stage4_date_en: '15 January 2027',
+  stage1_date_ro: '05 – 25 Noiembrie 2026',
+  stage1_date_ru: '05 – 25 Ноября 2026',
+  stage1_date_en: '05 – 25 November 2026',
+  stage2_date_ro: '28 Noiembrie 2026',
+  stage2_date_ru: '28 Ноября 2026',
+  stage2_date_en: '28 November 2026',
+  stage3_date_ro: 'Până pe 08 Decembrie 2026 (în 10 zile)',
+  stage3_date_ru: 'До 08 Декабря 2026 (в течение 10 дней)',
+  stage3_date_en: 'By 08 December 2026 (within 10 days)',
+  stage4_date_ro: 'Decembrie 2026',
+  stage4_date_ru: 'Декабрь 2026',
+  stage4_date_en: 'December 2026',
   contact_email: 'luminamath@orizont.md',
   contact_phone: '+373 (79) 000 073',
   google_client_id:
@@ -706,21 +706,44 @@ export async function getSiteSettings(): Promise<SiteSettingsRecord> {
     return global.__luminaSettingsCache.data;
   }
 
-  const normalizeContact = (s: SiteSettingsRecord): SiteSettingsRecord => ({
-    ...s,
-    contact_email:
-      !s.contact_email || s.contact_email === 'info@luminamath.md'
-        ? 'luminamath@orizont.md'
-        : s.contact_email,
+  const normalizeContact = (s: SiteSettingsRecord): SiteSettingsRecord => {
+    const isOldDefaultDates =
+      s.stage2_date_ro === '05 Decembrie 2026' ||
+      s.stage1_date_ro === '08 Septembrie – 31 Octombrie 2026' ||
+      s.stage1_date_ro === '15 Octombrie – 30 Noiembrie 2026';
+
+    return {
+      ...s,
+      ...(isOldDefaultDates
+        ? {
+            stage1_date_ro: DEFAULT_SITE_SETTINGS.stage1_date_ro,
+            stage1_date_ru: DEFAULT_SITE_SETTINGS.stage1_date_ru,
+            stage1_date_en: DEFAULT_SITE_SETTINGS.stage1_date_en,
+            stage2_date_ro: DEFAULT_SITE_SETTINGS.stage2_date_ro,
+            stage2_date_ru: DEFAULT_SITE_SETTINGS.stage2_date_ru,
+            stage2_date_en: DEFAULT_SITE_SETTINGS.stage2_date_en,
+            stage3_date_ro: DEFAULT_SITE_SETTINGS.stage3_date_ro,
+            stage3_date_ru: DEFAULT_SITE_SETTINGS.stage3_date_ru,
+            stage3_date_en: DEFAULT_SITE_SETTINGS.stage3_date_en,
+            stage4_date_ro: DEFAULT_SITE_SETTINGS.stage4_date_ro,
+            stage4_date_ru: DEFAULT_SITE_SETTINGS.stage4_date_ru,
+            stage4_date_en: DEFAULT_SITE_SETTINGS.stage4_date_en,
+          }
+        : {}),
+      contact_email:
+        !s.contact_email || s.contact_email === 'info@luminamath.md'
+          ? 'luminamath@orizont.md'
+          : s.contact_email,
       contact_phone:
-      !s.contact_phone || s.contact_phone === '+373 22 000 000'
-        ? '+373 (79) 000 073'
-        : s.contact_phone,
-    google_client_id:
-      s.google_client_id ||
-      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-      '592645627631-jvrb0v4vq581avfjf1o53a5rkhfvjapm.apps.googleusercontent.com',
-  });
+        !s.contact_phone || s.contact_phone === '+373 22 000 000'
+          ? '+373 (79) 000 073'
+          : s.contact_phone,
+      google_client_id:
+        s.google_client_id ||
+        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+        '592645627631-jvrb0v4vq581avfjf1o53a5rkhfvjapm.apps.googleusercontent.com',
+    };
+  };
 
   const pool = getPgPool();
   if (pool && (await ensurePgInitialized(pool))) {

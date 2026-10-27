@@ -106,7 +106,7 @@ export async function sendRegistrationEmail(
     examLanguage,
     branchName,
     branchAddress,
-    examDateText = '05 December 2026, 10:00 – 12:00',
+    examDateText = '28 November 2026, 10:00 – 12:00',
     resultsUrl,
   } = payload;
 
