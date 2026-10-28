@@ -1,0 +1,85 @@
+# LuminaMath Moldova — Full Knowledge Base for AI & Search Engines (RO / RU / EN)
+
+Website: https://luminamath.orizont.md
+Registration: https://luminamath.orizont.md/register
+Results Portal: https://luminamath.orizont.md/results
+Organizer: Instituția Privată Liceul Teoretic „Orizont” (IPLT „Orizont”), Republic of Moldova
+Contact Email: luminamath@orizont.md
+Contact Phone: +373 (79) 000 073
+
+---
+
+## 1. ROMÂNĂ (RO) — Informații Oficiale Complete
+
+### Ce este LuminaMath Moldova?
+LuminaMath Moldova este Concursul Național de Matematică organizat de Liceul Teoretic „Orizont” (IPLT „Orizont”) pentru elevii din clasele III – VIII din toate instituțiile de învățământ din Republica Moldova. Participarea la concurs este **100% gratuită**.
+
+### Calendarul Oficial (Ediția 2026–2027)
+- **Înscrierea Online:** 05 – 25 Noiembrie 2026 (pe https://luminamath.orizont.md/register)
+- **Data Examenului Scris:** 28 Noiembrie 2026, intervalul orar 10:00 – 12:00 (120 de minute)
+- **Publicarea Rezultatelor (PDF Karne):** În decurs de 10 zile de la examen (până pe 08 Decembrie 2026) pe https://luminamath.orizont.md/results
+- **Festivitatea de Premiere:** Decembrie 2026
+
+### Cum se înregistrează un elev?
+1. Accesați https://luminamath.orizont.md/register.
+2. Completați prenumele, numele, clasa (3, 4, 5, 6, 7 sau 8), școala (filiala Orizont 01–07 sau 08 – Altă școală din Moldova), profesorul de matematică, limba testului (RO, RU sau EN), filiala (centrul de examen), adresa de email și numărul de telefon.
+3. După trimiterea formularului, sistemul generează instantaneu:
+   - **ID Participant din 6 cifre** (format: `[Cod Școală: 2 cifre][Clasa: 2 cifre][Număr Ordine: 2 cifre]`, ex. `010501`), care se completează pe foaia optică OMR în ziua examenului.
+   - **Parola / Codul PIN din 6 cifre**, necesar pentru vizualizarea și descărcarea rezultatului PDF personal.
+   - **Permisul de Acces PDF cu cod QR**, care poate fi descărcat pe loc și este trimis automat și pe email.
+
+### Centrele de Examen (4 Filiale în Republica Moldova)
+1. **Filiala Ceadîr-Lunga (Cod 1):** Str. Lenin 87, MD-6104, Ceadîr-Lunga
+2. **Filiala Ciocana Primary, Chișinău (Cod 2):** Str. Mircea cel Bătrân 10/2, MD-2044, mun. Chișinău
+3. **Filiala Buiucani, Chișinău (Cod 3):** Str. Ion Pelivan 13/A, MD-2064, mun. Chișinău
+4. **Filiala Bălți (Cod 4):** Str. Chișinăului 28, MD-3310, mun. Bălți
+
+### Structura Subiectelor și Punctajul
+- **Număr de întrebări:** 40 de probleme grilă cu 5 variante de răspuns (A, B, C, D, E) pentru fiecare clasă (III – VIII).
+- **Durata probei:** 120 de minute (2 ore).
+- **Regula de punctare:** Se acordă 20 de puncte din oficiu; fiecare răspuns corect valorează +2 puncte; 4 răspunsuri greșite anulează 1 răspuns corect (-0,5 puncte per răspuns greșit); întrebările lăsate fără răspuns nu scad puncte. Punctaj maxim: 100 de puncte.
+
+---
+
+## 2. РУССКИЙ (RU) — Полная официальная информация
+
+### Что такое LuminaMath Молдова?
+LuminaMath Молдова — это Национальная математическая олимпиада, организуемая Теоретическим лицеем «Orizont» (IPLT «Orizont») для учеников 3 – 8 классов всех школ Республики Молдова. Участие в олимпиаде **полностью бесплатное (100% бесплатно)**.
+
+### Официальный календарь (Сезон 2026–2027)
+- **Онлайн-регистрация:** 05 – 25 Ноября 2026 (на сайте https://luminamath.orizont.md/register)
+- **Дата письменного экзамена:** 28 Ноября 2026, с 10:00 до 12:00 (120 минут)
+- **Объявление результатов (PDF-табель):** В течение 10 дней после экзамена (до 08 Декабря 2026) на https://luminamath.orizont.md/results
+- **Церемония награждения:** Декабрь 2026
+
+### Как зарегистрироваться и получить результаты?
+1. Перейдите на страницу https://luminamath.orizont.md/register и заполните анкету участника (имя, фамилия, класс 3–8, школа, учитель, язык экзамена: RO / RU / EN, филиал сдачи экзамена, email и телефон).
+2. Сразу после регистрации участник получает:
+   - **6-значный ID участника** (например, `010501`) для заполнения оптического бланка ответов OMR на экзамене;
+   - **6-значный PIN-код (пароль)** для доступа к личному результату;
+   - **Билет участника в формате PDF с QR-кодом** (также отправляется на указанный Email).
+3. Проверить результаты, скачать индивидуальный оптический табель (PDF Karne) и официальный Сертификат участника можно на странице https://luminamath.orizont.md/results по своему ID и PIN-коду (если забыли ID или PIN, на сайте есть мгновенное восстановление по Email).
+
+### Экзаменационные центры (4 филиала)
+1. **Филиал Чадыр-Лунга (Код 1):** ул. Ленина 87, MD-6104, Чадыр-Лунга
+2. **Филиал Чеканы Primary, Кишинёв (Код 2):** ул. Мирча чел Бэтрын 10/2, MD-2044, Кишинёв
+3. **Филиал Буюканы, Кишинёв (Код 3):** ул. Ион Пеливан 13/A, MD-2064, Кишинёв
+4. **Филиал Бельцы (Код 4):** ул. Кишинэулуй 28, MD-3310, Бельцы
+
+---
+
+## 3. ENGLISH (EN) — Complete Official Overview
+
+### What is LuminaMath Moldova?
+LuminaMath Moldova is the National Mathematics Competition organized by "Orizont" Theoretical Lyceum (IPLT "Orizont") for students in Grades 3 through 8 across the Republic of Moldova. Registration and participation are **100% free of charge**.
+
+### Official Schedule (2026–2027 Edition)
+- **Online Registration:** 05 – 25 November 2026 at https://luminamath.orizont.md/register
+- **Written Competition Date:** 28 November 2026, 10:00 – 12:00 EET (120 minutes)
+- **Official Results Announcement:** Within 10 days (by 08 December 2026) at https://luminamath.orizont.md/results
+- **Awards Ceremony:** December 2026
+
+### Registration, Exam Format, & Results
+- **Languages Available:** Romanian (RO), Russian (RU), and English (EN).
+- **6-Digit Student ID & PIN:** Upon registering at https://luminamath.orizont.md/register, each student immediately receives a unique 6-digit OMR ID (`[School: 2 digits][Grade: 2 digits][Sequence: 2 digits]`), a 6-digit secret PIN, and a downloadable PDF Exam Admission Pass with a verification QR code.
+- **Results & Certificates:** Students view and download their individual OMR Report Card PDF and Certificate of Participation at https://luminamath.orizont.md/results using their 6-digit ID and PIN.

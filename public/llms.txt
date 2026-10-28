@@ -1,0 +1,36 @@
+# LuminaMath Moldova — Concursul Național de Matematică (Clasele III – VIII)
+
+> Platforma oficială a Concursului Național de Matematică LuminaMath Moldova (Ediția 2026–2027), organizat de Instituția Privată Liceul Teoretic „Orizont” (IPLT „Orizont”) pentru elevii claselor III – VIII din Republica Moldova. Înregistrare online 100% gratuită și rezultate oficiale PDF (OMR).
+
+## Core Links / Ссылки / Linkuri Oficiale
+- [Pagina Principală / Главная / Home](https://luminamath.orizont.md/): Informații despre concurs, regulament, premii, calendar și centre de examen.
+- [Înregistrare Online / Онлайн-регистрация / Online Registration](https://luminamath.orizont.md/register): Formularul oficial de înscriere gratuită (generează instant ID-ul din 6 cifre și Codul PIN).
+- [Verificare Rezultate / Проверка результатов / Check Results](https://luminamath.orizont.md/results): Portalul de vizualizare și descărcare a fișei personale de evaluare OMR (PDF), permisului de acces și certificatului de participare.
+- [Documentație Completă AI / Full Knowledge Base](https://luminamath.orizont.md/llms-full.txt): Ghid complet în limbile Română (RO), Rusă (RU) și Engleză (EN).
+
+## Key Facts (2026–2027 Edition)
+- **Denumire Oficială (RO):** Concursul Național de Matematică „LuminaMath Moldova”
+- **Официальное название (RU):** Национальная математическая олимпиада «LuminaMath Молдова»
+- **Official Name (EN):** LuminaMath Moldova National Mathematics Competition
+- **Organizator / Организатор / Organizer:** IPLT „Orizont” (Liceul Teoretic „Orizont”, Republica Moldova)
+- **Eligibilitate / Участники / Eligibility:** Elevii claselor a III-a, a IV-a, a V-a, a VI-a, a VII-a și a VIII-a (Grades 3–8 / 3–8 классы) din toate școlile publice și private din Republica Moldova.
+- **Taxă de participare / Стоимость участия / Fee:** 100% GRATUIT (Бесплатно / Free of charge).
+- **Limbile de susținere a testului / Языки экзамена / Exam Languages:** Română (RO), Rusă (RU), Engleză (EN).
+- **Formatul probei / Формат экзамена:** Test scris fizic (cu prezență în sală), 40 de probleme grilă (A, B, C, D, E), durată 120 minute (10:00 – 12:00), evaluare automată prin scanare optică OMR.
+
+## Official Calendar (2026–2027)
+1. **Etapa 1 — Înscrierea Online (Регистрация / Registration):** 05 – 25 Noiembrie 2026 (05 – 25 Ноября 2026 / 05 – 25 November 2026) pe https://luminamath.orizont.md/register
+2. **Etapa 2 — Proba Scrisă în Centrele de Examen (Экзамен / Written Exam):** 28 Noiembrie 2026, ora 10:00 – 12:00 (28 Ноября 2026 / 28 November 2026)
+3. **Etapa 3 — Afișarea Rezultatelor PDF (Результаты / Results):** În decurs de 10 zile — până pe 08 Decembrie 2026 pe https://luminamath.orizont.md/results
+4. **Etapa 4 — Festivitatea de Premiere (Награждение / Awards Ceremony):** Decembrie 2026
+
+## Exam Centers (4 Official Branches in Moldova)
+1. **[1] Filiala Ceadîr-Lunga:** Str. Lenin 87, MD-6104, Ceadîr-Lunga, Moldova
+2. **[2] Filiala Ciocana Primary (Chișinău):** Str. Mircea cel Bătrân 10/2, MD-2044, Chișinău, Moldova
+3. **[3] Filiala Buiucani (Chișinău):** Str. Ion Pelivan 13/A, MD-2064, Chișinău, Moldova
+4. **[4] Filiala Bălți:** Str. Chișinăului 28, MD-3310, Bălți, Moldova
+
+## Official Contact
+- **Website:** https://luminamath.orizont.md
+- **Email:** luminamath@orizont.md
+- **Telefon / Телефон / Phone:** +373 (79) 000 073
