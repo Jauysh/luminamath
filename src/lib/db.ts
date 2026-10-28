@@ -207,6 +207,8 @@ declare global {
   var __luminaSettingsCache: { data: SiteSettingsRecord; expiresAt: number } | undefined;
   // eslint-disable-next-line no-var
   var __luminaBranchesCache: { data: BranchRecord[]; expiresAt: number } | undefined;
+  // eslint-disable-next-line no-var
+  var __luminaAdminEmailsCache: { data: AdminEmailRecord[]; expiresAt: number } | undefined;
 }
 
 function getPgPool(): Pool | null {
@@ -232,6 +234,18 @@ async function ensurePgInitialized(pool: Pool): Promise<boolean> {
 
   global.__luminaPgInitPromise = (async () => {
     try {
+      // Fast-path check: if schema is already provisioned, skip heavy DDL/DML migrations on cold start
+      const fastCheck = await pool.query(`
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'student_results'
+        ) AS schema_ready
+      `);
+      if (fastCheck.rows[0]?.schema_ready === true) {
+        global.__luminaPgInitialized = true;
+        return true;
+      }
+
       await pool.query(`
       CREATE TABLE IF NOT EXISTS branches (
         id SERIAL PRIMARY KEY,
@@ -598,9 +612,15 @@ function saveLocalStore(data: LocalStoreSchema) {
 // ============================================================================
 
 export async function getAdminEmails(): Promise<AdminEmailRecord[]> {
+  const now = Date.now();
+  if (global.__luminaAdminEmailsCache && global.__luminaAdminEmailsCache.expiresAt > now) {
+    return global.__luminaAdminEmailsCache.data;
+  }
+
   const pool = getPgPool();
   if (pool && (await ensurePgInitialized(pool))) {
     const res = await pool.query('SELECT * FROM admin_emails ORDER BY id ASC');
+    global.__luminaAdminEmailsCache = { data: res.rows, expiresAt: now + 60000 };
     return res.rows;
   }
 
@@ -612,17 +632,8 @@ export async function isEmailAuthorizedAdmin(email: string): Promise<AdminEmailR
   const clean = email.toLowerCase().trim();
   if (!clean) return null;
 
-  const pool = getPgPool();
-  if (pool && (await ensurePgInitialized(pool))) {
-    const res = await pool.query(
-      'SELECT * FROM admin_emails WHERE LOWER(email) = $1 LIMIT 1',
-      [clean]
-    );
-    return res.rows[0] || null;
-  }
-
-  const store = ensureLocalStore();
-  return (store.adminEmails || []).find((a) => a.email.toLowerCase() === clean) || null;
+  const list = await getAdminEmails();
+  return list.find((a) => a.email.toLowerCase() === clean) || null;
 }
 
 export function isSuperAdminRecord(admin: AdminEmailRecord | null | undefined): boolean {
@@ -643,6 +654,7 @@ export async function addAdminEmail(input: {
   name?: string;
   role?: string;
 }): Promise<AdminEmailRecord[]> {
+  global.__luminaAdminEmailsCache = undefined;
   const cleanEmail = input.email.toLowerCase().trim();
   const cleanName = (input.name || cleanEmail.split('@')[0]).trim();
   const cleanRole = (input.role || 'Admin').trim();
@@ -681,6 +693,7 @@ export async function addAdminEmail(input: {
 }
 
 export async function removeAdminEmail(emailToRemove: string): Promise<AdminEmailRecord[]> {
+  global.__luminaAdminEmailsCache = undefined;
   const clean = emailToRemove.toLowerCase().trim();
   const pool = getPgPool();
   if (pool && (await ensurePgInitialized(pool))) {
@@ -757,10 +770,10 @@ export async function getSiteSettings(): Promise<SiteSettingsRecord> {
           process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
           '',
       });
-      global.__luminaSettingsCache = { data, expiresAt: now + 15000 };
+      global.__luminaSettingsCache = { data, expiresAt: now + 120000 };
       return data;
     }
-    global.__luminaSettingsCache = { data: DEFAULT_SITE_SETTINGS, expiresAt: now + 15000 };
+    global.__luminaSettingsCache = { data: DEFAULT_SITE_SETTINGS, expiresAt: now + 120000 };
     return DEFAULT_SITE_SETTINGS;
   }
 
@@ -793,7 +806,7 @@ export async function updateSiteSettings(
          updated_at = now()`,
       [JSON.stringify(merged)]
     );
-    global.__luminaSettingsCache = { data: merged, expiresAt: Date.now() + 15000 };
+    global.__luminaSettingsCache = { data: merged, expiresAt: Date.now() + 120000 };
     return merged;
   }
 
@@ -931,7 +944,7 @@ export async function getBranches(includeInactive = false): Promise<BranchRecord
       : 'SELECT * FROM branches WHERE is_active = true ORDER BY code ASC';
     const res = await pool.query(query);
     if (!includeInactive) {
-      global.__luminaBranchesCache = { data: res.rows, expiresAt: now + 15000 };
+      global.__luminaBranchesCache = { data: res.rows, expiresAt: now + 120000 };
     }
     return res.rows;
   }

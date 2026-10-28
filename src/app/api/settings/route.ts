@@ -12,7 +12,14 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const settings = await getSiteSettings();
-    return NextResponse.json({ settings });
+    return NextResponse.json(
+      { settings },
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=15, s-maxage=60, stale-while-revalidate=300',
+        },
+      }
+    );
   } catch (error) {
     console.error('[GET /api/settings] Error:', error);
     return NextResponse.json({ error: 'Failed to load site settings' }, { status: 500 });

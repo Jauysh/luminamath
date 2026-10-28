@@ -52,8 +52,7 @@ interface RegisteredStudent {
 }
 
 export default function RegisterPage() {
-  const { locale, t, settings, isRegistrationOpen } = useLanguage();
-  const [branches, setBranches] = useState<BranchItem[]>([]);
+  const { locale, t, settings, branches, isRegistrationOpen } = useLanguage();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -62,7 +61,7 @@ export default function RegisterPage() {
   const [customSchool, setCustomSchool] = useState('');
   const [teacherName, setTeacherName] = useState('');
   const [examLanguage, setExamLanguage] = useState<'RO' | 'RU' | 'EN'>('RO');
-  const [branchId, setBranchId] = useState<number>(0);
+  const [branchId, setBranchId] = useState<number>(() => branches[0]?.id || 1);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
 
@@ -78,16 +77,13 @@ export default function RegisterPage() {
         setGrade(gParam);
       }
     }
-    fetch('/api/branches')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.branches && data.branches.length > 0) {
-          setBranches(data.branches);
-          setBranchId(data.branches[0].id);
-        }
-      })
-      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (branches.length > 0 && !branches.some((b) => b.id === branchId)) {
+      setBranchId(branches[0].id);
+    }
+  }, [branches, branchId]);
 
   const getBranchName = (b: BranchItem) => {
     if (locale === 'RU') return b.name_ru;

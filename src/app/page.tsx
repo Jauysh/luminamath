@@ -45,24 +45,14 @@ interface CountdownState {
 }
 
 export default function HomePage() {
-  const { locale, t, settings, isRegistrationOpen } = useLanguage();
-  const [branches, setBranches] = useState<BranchItem[]>([]);
+  const { locale, t, settings, branches, isRegistrationOpen } = useLanguage();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [countdown, setCountdown] = useState<CountdownState>({
-    days: 43,
+    days: 31,
     hours: 10,
     minutes: 0,
     seconds: 0,
   });
-
-  useEffect(() => {
-    fetch('/api/branches')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.branches) setBranches(data.branches);
-      })
-      .catch(() => {});
-  }, []);
 
   // Live Countdown Timer to Exam Day (default target: Dec 5, 2026 10:00)
   useEffect(() => {
