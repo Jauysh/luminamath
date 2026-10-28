@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminSessionFromRequest } from '@/lib/auth';
+import { getAdminSessionFromRequest, sanitizePlainText } from '@/lib/auth';
 import {
   deleteAllStudents,
   deleteStudentByCode,
@@ -79,7 +79,11 @@ export async function GET(req: NextRequest) {
       ].join(',');
 
       const escapeCsv = (val: unknown) => {
-        const str = String(val ?? '').replace(/"/g, '""');
+        let str = String(val ?? '').replace(/"/g, '""');
+        // Prevent CSV / Excel Formula Injection (DDE) while keeping valid phone numbers like +373...
+        if (/^[=@\t\r]/.test(str) || (/^[+\-]/.test(str) && !/^[+\-][\d\s()\-]+$/.test(str))) {
+          str = `'${str}`;
+        }
         return `"${str}"`;
       };
 
@@ -175,19 +179,19 @@ export async function PUT(req: NextRequest) {
     }
 
     const updated = await updateStudentDetails(String(studentCode), {
-      firstName: String(firstName),
-      lastName: String(lastName),
+      firstName: sanitizePlainText(firstName, 80),
+      lastName: sanitizePlainText(lastName, 80),
       grade: numGrade,
-      school: String(school),
+      school: sanitizePlainText(school, 160),
       schoolCode: Number(schoolCode) || 8,
-      teacherName: String(teacherName),
+      teacherName: sanitizePlainText(teacherName, 120),
       examLanguage: (['RO', 'RU', 'EN'].includes(examLanguage) ? examLanguage : 'RO') as
         | 'RO'
         | 'RU'
         | 'EN',
       branchCode: Number(branchCode),
-      email: String(email || ''),
-      phone: String(phone || ''),
+      email: sanitizePlainText(email, 140),
+      phone: sanitizePlainText(phone, 45),
     });
 
     if (!updated) {
@@ -265,17 +269,17 @@ export async function POST(req: NextRequest) {
 
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
-      const firstName = String(r.firstName || '').trim();
-      const lastName = String(r.lastName || '').trim();
+      const firstName = sanitizePlainText(r.firstName, 80);
+      const lastName = sanitizePlainText(r.lastName, 80);
       const grade = Number(r.grade);
       const schoolCodeNum = Number(r.schoolCode);
       const validSchoolCode =
         schoolCodeNum >= 1 && schoolCodeNum <= 8 ? schoolCodeNum : 8;
       const schoolOpt = SCHOOL_OPTIONS.find((s) => s.code === validSchoolCode);
       const school =
-        String(r.school || '').trim() ||
+        sanitizePlainText(r.school, 160) ||
         (schoolOpt && !schoolOpt.isOther ? schoolOpt.name_ro : 'Altă școală');
-      const teacherName = String(r.teacherName || '-').trim() || '-';
+      const teacherName = sanitizePlainText(r.teacherName || '-', 120) || '-';
       const langRaw = String(r.examLanguage || 'RO')
         .trim()
         .toUpperCase();
@@ -286,8 +290,8 @@ export async function POST(req: NextRequest) {
       const branchCodeNum = Number(r.branchCode);
       const matchedBranch =
         branches.find((b) => b.code === branchCodeNum) || defaultBranch;
-      const email = String(r.email || 'luminamath@orizont.md').trim();
-      const phone = String(r.phone || '-').trim();
+      const email = sanitizePlainText(r.email || 'luminamath@orizont.md', 140);
+      const phone = sanitizePlainText(r.phone || '-', 45);
 
       if (!firstName || !lastName || isNaN(grade) || grade < 3 || grade > 8) {
         errors.push(

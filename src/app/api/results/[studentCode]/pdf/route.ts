@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminSessionFromRequest } from '@/lib/auth';
+import {
+  checkRateLimit,
+  getAdminSessionFromRequest,
+  getClientIp,
+  isRateLimitExceeded,
+  timingSafePinMatch,
+} from '@/lib/auth';
 import {
   getStudentByCode,
   getStudentResultPdf,
@@ -13,16 +19,28 @@ export async function GET(
   { params }: { params: { studentCode: string } }
 ) {
   try {
+    const ip = getClientIp(req);
     const code = (params.studentCode || '').trim();
     const pin = (req.nextUrl.searchParams.get('pin') || '').trim();
 
+    const ipLimit = checkRateLimit(`pdf_ip:${ip}`, 600, 10 * 60);
+    if (!ipLimit.allowed || isRateLimitExceeded(`pin_fail:${code}`, 15)) {
+      return NextResponse.json(
+        { error: 'Prea multe încercări. Vă rugăm să așteptați câteva minute.' },
+        { status: 429 }
+      );
+    }
+
     const student = await getStudentByCode(code);
     if (!student) {
+      checkRateLimit(`pin_fail:${code}`, 15, 15 * 60);
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
 
-    // Verify PIN or Admin session before serving private PDF
-    let authorized = Boolean(pin && student.access_pin && pin === student.access_pin);
+    // Verify PIN (constant-time) or Admin session before serving private PDF
+    let authorized = Boolean(
+      pin && student.access_pin && timingSafePinMatch(pin, student.access_pin)
+    );
     if (!authorized) {
       const adminSession = getAdminSessionFromRequest(req);
       if (adminSession && (await isEmailAuthorizedAdmin(adminSession.email))) {
@@ -31,6 +49,7 @@ export async function GET(
     }
 
     if (!authorized) {
+      checkRateLimit(`pin_fail:${code}`, 15, 15 * 60);
       return NextResponse.json(
         { error: 'Acces neautorizat: Parola (PIN) este necesară pentru a vizualiza PDF-ul.' },
         { status: 401 }

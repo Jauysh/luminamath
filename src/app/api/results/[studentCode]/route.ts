@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkRateLimit, getAdminSessionFromRequest, getClientIp } from '@/lib/auth';
+import {
+  checkRateLimit,
+  getAdminSessionFromRequest,
+  getClientIp,
+  isRateLimitExceeded,
+  timingSafePinMatch,
+} from '@/lib/auth';
 import { getStudentByCode, isEmailAuthorizedAdmin } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -10,10 +16,10 @@ export async function GET(
 ) {
   const ip = getClientIp(req);
   const code = (params.studentCode || '').trim();
-  // High school-wide NAT allowance (600 checks / 10 min per IP) + strict per-student PIN brute-force protection (15 attempts / 10 min per ID)
+
+  // School-wide NAT allowance (600 checks / 10 min per IP) + strict per-student failed PIN lockout (max 15 wrong PINs / 15 min)
   const ipLimit = checkRateLimit(`results_ip:${ip}`, 600, 10 * 60);
-  const pinLimit = checkRateLimit(`results_pin:${ip}:${code}`, 15, 10 * 60);
-  if (!ipLimit.allowed || !pinLimit.allowed) {
+  if (!ipLimit.allowed || isRateLimitExceeded(`pin_fail:${code}`, 15)) {
     return NextResponse.json(
       {
         error:
@@ -35,6 +41,7 @@ export async function GET(
 
     const student = await getStudentByCode(code);
     if (!student) {
+      checkRateLimit(`pin_fail:${code}`, 15, 15 * 60);
       return NextResponse.json(
         {
           error:
@@ -44,8 +51,10 @@ export async function GET(
       );
     }
 
-    // Check if caller has valid PIN OR is an authenticated Admin
-    let authorized = Boolean(pin && student.access_pin && pin === student.access_pin);
+    // Check if caller has valid PIN (constant-time) OR is an authenticated Admin
+    let authorized = Boolean(
+      pin && student.access_pin && timingSafePinMatch(pin, student.access_pin)
+    );
     if (!authorized) {
       const adminSession = getAdminSessionFromRequest(req);
       if (adminSession && (await isEmailAuthorizedAdmin(adminSession.email))) {
@@ -54,6 +63,7 @@ export async function GET(
     }
 
     if (!authorized) {
+      checkRateLimit(`pin_fail:${code}`, 15, 15 * 60);
       return NextResponse.json(
         {
           error:

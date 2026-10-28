@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkRateLimit, getClientIp } from '@/lib/auth';
+import { checkRateLimit, getClientIp, sanitizePlainText } from '@/lib/auth';
 import {
   getSiteSettings,
   isRegistrationCurrentlyOpen,
@@ -40,16 +40,24 @@ export async function POST(req: NextRequest) {
       phone,
     } = body;
 
+    const cleanFirstName = sanitizePlainText(firstName, 80);
+    const cleanLastName = sanitizePlainText(lastName, 80);
+    const cleanSchool = sanitizePlainText(school, 160);
+    const cleanTeacherName = sanitizePlainText(teacherName, 120);
+    const cleanEmail = sanitizePlainText(email, 140);
+    const cleanPhone = sanitizePlainText(phone, 45);
+
     if (
-      !firstName?.trim() ||
-      !lastName?.trim() ||
+      !cleanFirstName ||
+      !cleanLastName ||
       !grade ||
-      !school?.trim() ||
-      !teacherName?.trim() ||
+      !cleanSchool ||
+      !cleanTeacherName ||
       !examLanguage ||
       !branchId ||
-      !email?.trim() ||
-      !phone?.trim()
+      !cleanEmail ||
+      !cleanEmail.includes('@') ||
+      !cleanPhone
     ) {
       return NextResponse.json(
         { error: 'Toate câmpurile sunt obligatorii / Все поля обязательны / All fields are required' },
@@ -88,16 +96,16 @@ export async function POST(req: NextRequest) {
     }
 
     const student = await registerStudent({
-      firstName: String(firstName).slice(0, 100),
-      lastName: String(lastName).slice(0, 100),
+      firstName: cleanFirstName,
+      lastName: cleanLastName,
       grade: numericGrade,
-      school: String(school).slice(0, 200),
+      school: cleanSchool,
       schoolCode: Number(schoolCode) || 8,
-      teacherName: String(teacherName).slice(0, 150),
+      teacherName: cleanTeacherName,
       examLanguage: lang,
       branchId: Number(branchId),
-      email: String(email).slice(0, 150),
-      phone: String(phone).slice(0, 50),
+      email: cleanEmail,
+      phone: cleanPhone,
     });
 
     const dateForLang =

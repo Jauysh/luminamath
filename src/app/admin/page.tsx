@@ -329,29 +329,39 @@ export default function AdminPage() {
   const handlePrintAttendanceSheet = () => {
     const win = window.open('', '_blank');
     if (!win) return;
+    const esc = (v: unknown) =>
+      String(v ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
     const sorted = [...students].sort((a, b) =>
       a.student_code.localeCompare(b.student_code)
     );
-    const branchTitle = filterBranch
-      ? branches.find((b) => String(b.code) === filterBranch)?.name_ro ||
-        `Filiala #${filterBranch}`
-      : 'Toate Filialele / Все филиалы';
-    const gradeTitle = filterGrade ? `Clasa ${filterGrade}` : 'Clasele III – VIII';
+    const branchTitle = esc(
+      filterBranch
+        ? branches.find((b) => String(b.code) === filterBranch)?.name_ro ||
+            `Filiala #${filterBranch}`
+        : 'Toate Filialele / Все филиалы'
+    );
+    const gradeTitle = esc(filterGrade ? `Clasa ${filterGrade}` : 'Clasele III – VIII');
 
     const rowsHtml = sorted
       .map(
         (s, idx) => `
       <tr>
         <td style="text-align:center;font-weight:bold;">${idx + 1}</td>
-        <td style="font-family:monospace;font-size:14px;font-weight:900;text-align:center;">${
+        <td style="font-family:monospace;font-size:14px;font-weight:900;text-align:center;">${esc(
           s.student_code
-        }</td>
-        <td style="font-weight:bold;">${s.last_name} ${s.first_name}</td>
-        <td style="text-align:center;font-weight:bold;">${s.grade}</td>
-        <td style="text-align:center;font-weight:bold;">${s.exam_language}</td>
-        <td style="font-size:11px;">[${String(s.school_code || 8).padStart(2, '0')}] ${
-          s.school
-        }</td>
+        )}</td>
+        <td style="font-weight:bold;">${esc(s.last_name)} ${esc(s.first_name)}</td>
+        <td style="text-align:center;font-weight:bold;">${esc(s.grade)}</td>
+        <td style="text-align:center;font-weight:bold;">${esc(s.exam_language)}</td>
+        <td style="font-size:11px;">[${esc(
+          String(s.school_code || 8).padStart(2, '0')
+        )}] ${esc(s.school)}</td>
         <td style="width:120px;"></td>
       </tr>`
       )

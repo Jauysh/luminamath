@@ -14,8 +14,8 @@ export interface AdminSessionPayload {
 function getSigningSecret(): string {
   const base =
     process.env.ADMIN_SESSION_SECRET ||
-    process.env.ADMIN_PASSWORD ||
     process.env.DATABASE_URL ||
+    process.env.ADMIN_PASSWORD ||
     'luminamath-md-default-hmac-secret-2026';
   return crypto.createHash('sha256').update(base).digest('hex');
 }
@@ -43,7 +43,9 @@ export function createAdminSessionToken(payload: {
   return `${dataB64}.${sig}`;
 }
 
-export function verifyAdminSessionToken(token: string | undefined | null): AdminSessionPayload | null {
+export function verifyAdminSessionToken(
+  token: string | undefined | null
+): AdminSessionPayload | null {
   if (!token || !token.includes('.')) return null;
   const [dataB64, sig] = token.split('.');
   if (!dataB64 || !sig) return null;
@@ -113,6 +115,38 @@ export async function verifyGoogleIdToken(
 }
 
 // ============================================================================
+// Input Sanitization & XSS / Injection Prevention Helpers
+// ============================================================================
+export function escapeHtml(input: unknown): string {
+  const str = String(input ?? '');
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+export function sanitizePlainText(input: unknown, maxLength = 150): string {
+  return String(input ?? '')
+    .replace(/[<>]/g, '') // Strip HTML angle brackets
+    .replace(/[\u0000-\u001F\u007F]/g, ' ') // Strip control characters
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLength);
+}
+
+export function timingSafePinMatch(providedPin: string, actualPin: string): boolean {
+  const cleanProvided = providedPin.trim();
+  const cleanActual = actualPin.trim();
+  if (!cleanProvided || !cleanActual) return false;
+  const bufA = Buffer.from(cleanProvided, 'utf8');
+  const bufB = Buffer.from(cleanActual, 'utf8');
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+// ============================================================================
 // In-Memory Rate Limiter (Brute-Force & Spam Protection)
 // ============================================================================
 interface RateLimitBucket {
@@ -125,15 +159,28 @@ declare global {
   var __luminaRateLimits: Map<string, RateLimitBucket> | undefined;
 }
 
+function getRateLimitStore(): Map<string, RateLimitBucket> {
+  if (!global.__luminaRateLimits) {
+    global.__luminaRateLimits = new Map();
+  }
+  // Periodic memory cleanup if map grows large
+  if (global.__luminaRateLimits.size > 10000) {
+    const now = Date.now();
+    for (const [k, v] of Array.from(global.__luminaRateLimits.entries())) {
+      if (now > v.resetAt) {
+        global.__luminaRateLimits.delete(k);
+      }
+    }
+  }
+  return global.__luminaRateLimits;
+}
+
 export function checkRateLimit(
   key: string,
   maxRequests: number,
   windowSeconds: number
 ): { allowed: boolean; retryAfterSeconds: number } {
-  if (!global.__luminaRateLimits) {
-    global.__luminaRateLimits = new Map();
-  }
-  const store = global.__luminaRateLimits;
+  const store = getRateLimitStore();
   const now = Date.now();
   const bucket = store.get(key);
 
@@ -153,8 +200,35 @@ export function checkRateLimit(
   return { allowed: true, retryAfterSeconds: 0 };
 }
 
+export function isRateLimitExceeded(key: string, maxRequests: number): boolean {
+  const store = getRateLimitStore();
+  const bucket = store.get(key);
+  if (!bucket) return false;
+  if (Date.now() > bucket.resetAt) {
+    store.delete(key);
+    return false;
+  }
+  return bucket.count >= maxRequests;
+}
+
+/**
+ * Extracts the real client IP on Google Cloud Run / Reverse Proxies.
+ * On Cloud Run, Google Frontend appends `<real-client-ip>, <gfe-ip>` to `x-forwarded-for`.
+ * Taking the second-to-last IP when >=2 entries exist prevents client `X-Forwarded-For` spoofing.
+ */
 export function getClientIp(req: NextRequest): string {
   const xff = req.headers.get('x-forwarded-for');
-  if (xff) return xff.split(',')[0].trim();
+  if (xff) {
+    const parts = xff
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (parts.length >= 2) {
+      return parts[parts.length - 2];
+    }
+    if (parts.length === 1) {
+      return parts[0];
+    }
+  }
   return req.headers.get('x-real-ip') || 'unknown';
 }

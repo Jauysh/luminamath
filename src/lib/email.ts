@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { getEmailConfig } from './db';
+import { escapeHtml } from './auth';
 
 export interface RegistrationEmailPayload {
   to: string;
@@ -114,7 +115,12 @@ export async function sendRegistrationEmail(
     ? examLanguage
     : 'RO';
   const orderedLangs = getOrderedLanguages(lang);
-  const fullName = `${firstName} ${lastName}`;
+  const fullName = escapeHtml(`${firstName} ${lastName}`);
+  const safeSchool = escapeHtml(school);
+  const safeTeacher = escapeHtml(teacherName);
+  const safeBranchName = escapeHtml(branchName);
+  const safeBranchAddress = escapeHtml(branchAddress);
+  const safeExamDateText = escapeHtml(examDateText);
 
   const subjectByLang: Record<'RO' | 'RU' | 'EN', string> = {
     RO: `LuminaMath Moldova — Confirmare Înregistrare / Registration Pass (ID: ${studentCode})`,
@@ -279,7 +285,7 @@ export async function sendRegistrationEmail(
                 Școala / Школа / School:
               </td>
               <td style="padding: 11px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a;">
-                ${school}
+                ${safeSchool}
               </td>
             </tr>
             <tr style="background-color: #f8fafc;">
@@ -287,7 +293,7 @@ export async function sendRegistrationEmail(
                 Profesor / Учитель / Teacher:
               </td>
               <td style="padding: 11px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a;">
-                ${teacherName}
+                ${safeTeacher}
               </td>
             </tr>
             <tr>
@@ -295,9 +301,9 @@ export async function sendRegistrationEmail(
                 Filiala / Филиал / Branch:
               </td>
               <td style="padding: 11px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 800; color: #2C3987;">
-                ${branchName}
+                ${safeBranchName}
                 <div style="font-size: 12px; font-weight: 500; color: #475569; margin-top: 2px;">
-                  ${branchAddress}
+                  ${safeBranchAddress}
                 </div>
               </td>
             </tr>
@@ -306,7 +312,7 @@ export async function sendRegistrationEmail(
                 Data Examenului / Дата экзамена / Exam Date:
               </td>
               <td style="padding: 12px 14px; font-weight: 900; color: #b45309; font-size: 14.5px;">
-                ${examDateText}
+                ${safeExamDateText}
               </td>
             </tr>
           </table>
@@ -387,7 +393,10 @@ export async function sendResultPdfEmail(
     ? examLanguage
     : 'RO';
   const orderedLangs = getOrderedLanguages(lang);
-  const fullName = `${firstName} ${lastName}`;
+  const fullName = escapeHtml(`${firstName} ${lastName}`);
+  const safeSchool = escapeHtml(school);
+  const safeTeacher = escapeHtml(teacherName);
+  const safeBranchName = escapeHtml(branchName);
   const pdfFilename = `LuminaMath_Result_${studentCode}.pdf`;
 
   const subjectByLang: Record<'RO' | 'RU' | 'EN', string> = {
@@ -537,18 +546,18 @@ export async function sendResultPdfEmail(
                 Școala / Школа / School:
               </td>
               <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a;">
-                ${school}
+                ${safeSchool}
               </td>
             </tr>
             ${
-              teacherName
+              safeTeacher
                 ? `
             <tr>
               <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">
                 Profesor / Учитель / Teacher:
               </td>
               <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a;">
-                ${teacherName}
+                ${safeTeacher}
               </td>
             </tr>`
                 : ''
@@ -558,7 +567,7 @@ export async function sendResultPdfEmail(
                 Filiala / Филиал / Branch:
               </td>
               <td style="padding: 10px 14px; font-weight: 800; color: #065f46;">
-                ${branchName}
+                ${safeBranchName}
               </td>
             </tr>
           </table>

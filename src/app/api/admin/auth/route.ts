@@ -135,9 +135,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const expectedPass = process.env.ADMIN_PASSWORD || 'lumina2026admin';
+    const configuredPass = (process.env.ADMIN_PASSWORD || '').trim();
+    if (!configuredPass || configuredPass === 'lumina2026admin') {
+      return NextResponse.json(
+        {
+          error:
+            'Autentificarea cu parolă este dezactivată din motive de securitate. Vă rugăm să vă conectați prin butonul oficial Google (@orizont.md).',
+        },
+        { status: 403 }
+      );
+    }
+
     const passBuf = Buffer.from(password);
-    const expectedBuf = Buffer.from(expectedPass);
+    const expectedBuf = Buffer.from(configuredPass);
 
     if (
       passBuf.length !== expectedBuf.length ||
