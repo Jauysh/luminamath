@@ -62,12 +62,15 @@ export function toPdfSafeText(input: string | undefined | null): string {
  */
 export function generateQrMatrix(text: string): boolean[][] {
   const bytes = Buffer.from(text, 'utf8');
-  // Version parameters for ECC-L (1 single Reed-Solomon block)
-  const ver = bytes.length <= 62 ? 4 : bytes.length <= 84 ? 5 : 6;
+  // Exact ISO/IEC 18004 ECC-L (1 single Reed-Solomon block) parameters:
+  // V3: 55 data + 15 EC = 70 codewords (max 53 bytes)
+  // V4: 80 data + 20 EC = 100 codewords (max 78 bytes)
+  // V5: 108 data + 26 EC = 134 codewords (max 106 bytes)
+  const ver = bytes.length <= 53 ? 3 : bytes.length <= 78 ? 4 : 5;
   const size = 17 + ver * 4;
-  const totalData = ver === 4 ? 64 : ver === 5 ? 86 : 108;
-  const ecLen = ver === 4 ? 16 : ver === 5 ? 22 : 28;
-  const alignCenter = ver === 4 ? 26 : ver === 5 ? 30 : 34;
+  const totalData = ver === 3 ? 55 : ver === 4 ? 80 : 108;
+  const ecLen = ver === 3 ? 15 : ver === 4 ? 20 : 26;
+  const alignCenter = ver === 3 ? 22 : ver === 4 ? 26 : 30;
 
   const bits: number[] = [];
   const pushBits = (val: number, len: number) => {
