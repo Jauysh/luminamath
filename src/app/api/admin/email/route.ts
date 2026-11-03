@@ -235,18 +235,32 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 3. Bulk Send Result PDF Emails to all students with uploaded PDFs
+    // 3. Bulk Send Result PDF Emails to all students with uploaded PDFs (supports batched pagination for 700+ students)
     if (action === 'send_bulk_results') {
       const onlyUnsent = body.onlyUnsent !== false;
-      const allStudents = await getAllStudents();
-      const targets = allStudents.filter(
-        (s) => s.has_result_pdf && (onlyUnsent ? !s.result_email_sent : true)
+      const excludeSet = new Set<string>(
+        Array.isArray(body.excludeCodes) ? body.excludeCodes.map(String) : []
       );
+      const allStudents = await getAllStudents();
+      const allMatching = allStudents.filter(
+        (s) =>
+          s.has_result_pdf &&
+          (onlyUnsent ? !s.result_email_sent : true) &&
+          !excludeSet.has(s.student_code)
+      );
+
+      const batchLimit = body.limit
+        ? Math.max(1, Math.min(Number(body.limit), 100))
+        : 25;
+      const targets = allMatching.slice(0, batchLimit);
 
       if (targets.length === 0) {
         return NextResponse.json({
           success: true,
           totalTargeted: 0,
+          remainingCount: 0,
+          attemptedCodes: [],
+          fatalSmtpError: false,
           sentCount: 0,
           failedCount: 0,
           sentCodes: [],
@@ -256,10 +270,13 @@ export async function POST(req: NextRequest) {
 
       let sentCount = 0;
       let failedCount = 0;
+      let fatalSmtpError = false;
       const sentCodes: string[] = [];
+      const attemptedCodes: string[] = [];
       const errors: string[] = [];
 
       for (const student of targets) {
+        attemptedCodes.push(student.student_code);
         const pdfRecord = await getStudentResultPdf(student.student_code);
         if (!pdfRecord) {
           failedCount += 1;
@@ -296,8 +313,13 @@ export async function POST(req: NextRequest) {
         } else {
           failedCount += 1;
           errors.push(`${student.student_code} (${student.email}): ${res.error}`);
-          // Stop early if SMTP credentials themselves are missing/invalid
-          if (res.mode === 'simulated' || res.error?.includes('Invalid login')) {
+          // Stop early if SMTP credentials themselves are missing/invalid or daily quota is reached
+          if (
+            res.mode === 'simulated' ||
+            res.error?.includes('Invalid login') ||
+            res.error?.includes('Daily user sending limit exceeded')
+          ) {
+            fatalSmtpError = true;
             break;
           }
         }
@@ -309,6 +331,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         totalTargeted: targets.length,
+        remainingCount: fatalSmtpError
+          ? 0
+          : Math.max(0, allMatching.length - targets.length),
+        attemptedCodes,
+        fatalSmtpError,
         sentCount,
         failedCount,
         sentCodes,

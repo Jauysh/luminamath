@@ -219,6 +219,8 @@ export default function AdminPage() {
   // Sending student emails state
   const [sendingStudentEmail, setSendingStudentEmail] = useState<string | null>(null);
   const [sendingBulkEmails, setSendingBulkEmails] = useState(false);
+  const [bulkEmailProgressText, setBulkEmailProgressText] = useState<string | null>(null);
+  const [uploadProgressText, setUploadProgressText] = useState<string | null>(null);
   const [bulkEmailReport, setBulkEmailReport] = useState<BulkEmailReport | null>(null);
   const [deletingStudentCode, setDeletingStudentCode] = useState<string | null>(null);
   const [clearingAllStudents, setClearingAllStudents] = useState(false);
@@ -802,23 +804,75 @@ export default function AdminPage() {
   const handleSendBulkResultEmails = async (onlyUnsent: boolean) => {
     setSendingBulkEmails(true);
     setBulkEmailReport(null);
+    setBulkEmailProgressText('0...');
+
+    const accumulatedSentCodes: string[] = [];
+    const accumulatedErrors: string[] = [];
+    const attemptedSoFar: string[] = [];
+    let totalSent = 0;
+    let totalFailed = 0;
+    let totalTargetedOverall = 0;
+
     try {
-      const res = await fetch('/api/admin/email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'send_bulk_results', onlyUnsent }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || 'Eroare la expedierea în masă');
-      } else {
-        setBulkEmailReport(data);
-        fetchAdminData();
+      while (true) {
+        const res = await fetch('/api/admin/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'send_bulk_results',
+            onlyUnsent,
+            limit: 25,
+            excludeCodes: attemptedSoFar,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Eroare la expedierea în masă');
+          break;
+        }
+
+        const batchAttempted: string[] = Array.isArray(data.attemptedCodes)
+          ? data.attemptedCodes
+          : [];
+        attemptedSoFar.push(...batchAttempted);
+
+        totalSent += Number(data.sentCount || 0);
+        totalFailed += Number(data.failedCount || 0);
+        if (Array.isArray(data.sentCodes)) {
+          accumulatedSentCodes.push(...data.sentCodes);
+        }
+        if (Array.isArray(data.errors)) {
+          accumulatedErrors.push(...data.errors);
+        }
+
+        const remaining = Number(data.remainingCount || 0);
+        totalTargetedOverall = attemptedSoFar.length + remaining;
+
+        setBulkEmailProgressText(
+          `${attemptedSoFar.length} / ${totalTargetedOverall}`
+        );
+        setBulkEmailReport({
+          totalTargeted: attemptedSoFar.length,
+          sentCount: totalSent,
+          failedCount: totalFailed,
+          sentCodes: [...accumulatedSentCodes],
+          errors: [...accumulatedErrors],
+        });
+
+        if (
+          remaining <= 0 ||
+          batchAttempted.length === 0 ||
+          Boolean(data.fatalSmtpError)
+        ) {
+          break;
+        }
       }
+      fetchAdminData();
     } catch (err) {
       alert((err as Error).message);
     } finally {
       setSendingBulkEmails(false);
+      setBulkEmailProgressText(null);
     }
   };
 
@@ -827,28 +881,83 @@ export default function AdminPage() {
     if (selectedFiles.length === 0) return;
     setUploading(true);
     setUploadReport(null);
+    setUploadProgressText(`0 / ${selectedFiles.length}`);
+
+    // Split selectedFiles into safe batches (max 40 files or ~18 MB per request) so 700+ PDFs never hit Cloud Run's 32 MB body limit
+    const MAX_FILES_PER_BATCH = 40;
+    const MAX_BYTES_PER_BATCH = 18 * 1024 * 1024;
+    const batches: File[][] = [];
+    let currentBatch: File[] = [];
+    let currentBytes = 0;
+
+    for (const file of selectedFiles) {
+      if (
+        currentBatch.length > 0 &&
+        (currentBatch.length >= MAX_FILES_PER_BATCH ||
+          currentBytes + file.size > MAX_BYTES_PER_BATCH)
+      ) {
+        batches.push(currentBatch);
+        currentBatch = [];
+        currentBytes = 0;
+      }
+      currentBatch.push(file);
+      currentBytes += file.size;
+    }
+    if (currentBatch.length > 0) {
+      batches.push(currentBatch);
+    }
+
+    let totalExtractedCount = 0;
+    let matchedCount = 0;
+    let unmatchedCount = 0;
+    const matchedIdsSet = new Set<string>();
+    const unmatchedFilesList: string[] = [];
+    let processedFiles = 0;
 
     try {
-      const formData = new FormData();
-      selectedFiles.forEach((file) => formData.append('files', file));
+      for (const batch of batches) {
+        const formData = new FormData();
+        batch.forEach((file) => formData.append('files', file));
 
-      const res = await fetch('/api/admin/upload-pdfs', {
-        method: 'POST',
-        body: formData,
-      });
+        const res = await fetch('/api/admin/upload-pdfs', {
+          method: 'POST',
+          body: formData,
+        });
 
-      const data = await res.json();
-      if (res.ok) {
-        setUploadReport(data);
-        setSelectedFiles([]);
-        fetchAdminData();
-      } else {
-        alert(data.error || 'Upload failed');
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Upload failed');
+          break;
+        }
+
+        totalExtractedCount += Number(data.totalExtractedCount || 0);
+        matchedCount += Number(data.matchedCount || 0);
+        unmatchedCount += Number(data.unmatchedCount || 0);
+        if (Array.isArray(data.matchedIds)) {
+          data.matchedIds.forEach((id: string) => matchedIdsSet.add(id));
+        }
+        if (Array.isArray(data.unmatchedFiles)) {
+          unmatchedFilesList.push(...data.unmatchedFiles);
+        }
+
+        processedFiles += batch.length;
+        setUploadProgressText(`${processedFiles} / ${selectedFiles.length}`);
+        setUploadReport({
+          totalExtractedCount,
+          matchedCount,
+          unmatchedCount,
+          matchedIds: Array.from(matchedIdsSet),
+          unmatchedFiles: [...unmatchedFilesList],
+        });
       }
+
+      setSelectedFiles([]);
+      fetchAdminData();
     } catch (err) {
       alert((err as Error).message);
     } finally {
       setUploading(false);
+      setUploadProgressText(null);
     }
   };
 
@@ -1724,6 +1833,15 @@ export default function AdminPage() {
                 {t.admin.smtpDesc}
               </p>
 
+              <div className="p-3 rounded-xl bg-indigo-50/80 border border-indigo-200 text-[11px] text-indigo-950 leading-relaxed">
+                <strong>💡 Google Workspace (@orizont.md — 2 000 email/zi):</strong>{' '}
+                {locale === 'RU'
+                  ? 'Для рассылки 700+ ученикам обязательно используйте корпоративную почту luminamath@orizont.md и её 16-значный App Password (лимит Google Workspace — 2 000 писем/сутки, тогда как у личного @gmail.com — только 500/сутки).'
+                  : locale === 'EN'
+                  ? 'For 700+ students, always use the corporate Google Workspace account luminamath@orizont.md and its 16-character App Password (2,000 emails/day limit vs. 500/day on personal @gmail.com).'
+                  : 'Pentru 700+ elevi, utilizați obligatoriu contul corporativ Google Workspace luminamath@orizont.md și parola de aplicație (App Password) de 16 caractere (limită de 2 000 email-uri/zi, față de doar 500/zi pe @gmail.com personal).'}
+              </div>
+
               {smtpFeedback && (
                 <div
                   className={`p-3.5 rounded-xl text-xs font-bold ${
@@ -2410,7 +2528,9 @@ export default function AdminPage() {
                     disabled={uploading || splittingZip || selectedFiles.length === 0}
                     className="px-6 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 disabled:opacity-50 text-white font-bold text-xs sm:text-sm shadow-sm transition-all"
                   >
-                    {uploading ? t.admin.uploadingBtn : t.admin.uploadBtn}
+                    {uploading
+                      ? `${t.admin.uploadingBtn} ${uploadProgressText ? `(${uploadProgressText})` : ''}`
+                      : t.admin.uploadBtn}
                   </button>
 
                   <button
@@ -2507,7 +2627,7 @@ export default function AdminPage() {
                     >
                       <Send className="w-4 h-4" />
                       {sendingBulkEmails
-                        ? t.admin.bulkEmailSendingBtn
+                        ? `${t.admin.bulkEmailSendingBtn} ${bulkEmailProgressText ? `(${bulkEmailProgressText})` : ''}`
                         : t.admin.bulkEmailSendUnsentBtn}
                     </button>
 
