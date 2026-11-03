@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   ADMIN_COOKIE_NAME,
@@ -12,13 +11,17 @@ import { getSiteSettings, isEmailAuthorizedAdmin, isSuperAdminRecord } from '@/l
 
 export const dynamic = 'force-dynamic';
 
+const DEFAULT_GOOGLE_CLIENT_ID =
+  '592645627631-jvrb0v4vq581avfjf1o53a5rkhfvjapm.apps.googleusercontent.com';
+
 export async function GET(req: NextRequest) {
   const settings = await getSiteSettings();
+  const clientId = settings.google_client_id || DEFAULT_GOOGLE_CLIENT_ID;
   const session = getAdminSessionFromRequest(req);
   if (!session) {
     return NextResponse.json({
       authenticated: false,
-      googleClientId: settings.google_client_id || '',
+      googleClientId: clientId,
     });
   }
 
@@ -27,7 +30,7 @@ export async function GET(req: NextRequest) {
   if (!adminRecord) {
     const res = NextResponse.json({
       authenticated: false,
-      googleClientId: settings.google_client_id || '',
+      googleClientId: clientId,
     });
     res.cookies.delete(ADMIN_COOKIE_NAME);
     return res;
@@ -41,13 +44,13 @@ export async function GET(req: NextRequest) {
       role: isSuperAdminRecord(adminRecord) ? 'Super Admin' : adminRecord.role,
       picture: session.picture,
     },
-    googleClientId: settings.google_client_id || '',
+    googleClientId: clientId,
   });
 }
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
-  const limit = checkRateLimit(`admin_auth:${ip}`, 8, 15 * 60); // max 8 attempts per 15 min
+  const limit = checkRateLimit(`admin_auth:${ip}`, 12, 15 * 60); // max 12 attempts per 15 min
   if (!limit.allowed) {
     return NextResponse.json(
       {
@@ -62,114 +65,49 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const settings = await getSiteSettings();
+    const expectedClientId = settings.google_client_id || DEFAULT_GOOGLE_CLIENT_ID;
 
-    // Method 1: Google Sign-In (OAuth 2.0 ID Token)
-    if (body.idToken) {
-      const googleUser = await verifyGoogleIdToken(
-        body.idToken,
-        settings.google_client_id || undefined
-      );
-      if (!googleUser) {
-        return NextResponse.json(
-          { error: 'Invalid or expired Google Sign-In token' },
-          { status: 401 }
-        );
-      }
-
-      const adminRecord = await isEmailAuthorizedAdmin(googleUser.email);
-      if (!adminRecord) {
-        return NextResponse.json(
-          {
-            error: `Acces interzis / Доступ запрещен: ${googleUser.email} nu este în lista administratorilor autorizați.`,
-          },
-          { status: 403 }
-        );
-      }
-
-      const token = createAdminSessionToken({
-        email: adminRecord.email,
-        name: googleUser.name || adminRecord.name,
-        picture: googleUser.picture,
-      });
-
-      const res = NextResponse.json({
-        authenticated: true,
-        admin: {
-          email: adminRecord.email,
-          name: googleUser.name || adminRecord.name,
-          role: isSuperAdminRecord(adminRecord) ? 'Super Admin' : adminRecord.role,
-          picture: googleUser.picture,
-        },
-      });
-
-      res.cookies.set(ADMIN_COOKIE_NAME, token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 60 * 12,
-      });
-      return res;
-    }
-
-    // Method 2: Whitelisted Admin Email + Master Key
-    const email = String(body.email || '')
-      .toLowerCase()
-      .trim();
-    const password = String(body.password || '');
-
-    if (!email || !password) {
+    if (!body.idToken || typeof body.idToken !== 'string') {
       return NextResponse.json(
-        { error: 'Introduceți adresa de email autorizată și cheia de acces' },
+        {
+          error:
+            'Autentificarea este permisă exclusiv prin contul oficial Google (@orizont.md / Gmail autorizat).',
+        },
         { status: 400 }
       );
     }
 
-    const adminRecord = await isEmailAuthorizedAdmin(email);
+    const googleUser = await verifyGoogleIdToken(body.idToken, expectedClientId);
+    if (!googleUser) {
+      return NextResponse.json(
+        { error: 'Invalid or expired Google Sign-In token' },
+        { status: 401 }
+      );
+    }
+
+    const adminRecord = await isEmailAuthorizedAdmin(googleUser.email);
     if (!adminRecord) {
       return NextResponse.json(
         {
-          error: `Acces interzis / Доступ запрещен: ${email} nu este în lista administratorilor autorizați.`,
+          error: `Acces interzis / Доступ запрещен: ${googleUser.email} nu este în lista administratorilor autorizați.`,
         },
         { status: 403 }
-      );
-    }
-
-    const configuredPass = (process.env.ADMIN_PASSWORD || '').trim();
-    if (!configuredPass || configuredPass === 'lumina2026admin') {
-      return NextResponse.json(
-        {
-          error:
-            'Autentificarea cu parolă este dezactivată din motive de securitate. Vă rugăm să vă conectați prin butonul oficial Google (@orizont.md).',
-        },
-        { status: 403 }
-      );
-    }
-
-    const passBuf = Buffer.from(password);
-    const expectedBuf = Buffer.from(configuredPass);
-
-    if (
-      passBuf.length !== expectedBuf.length ||
-      !crypto.timingSafeEqual(passBuf, expectedBuf)
-    ) {
-      return NextResponse.json(
-        { error: 'Cheie de acces incorectă / Неверный ключ доступа' },
-        { status: 401 }
       );
     }
 
     const token = createAdminSessionToken({
       email: adminRecord.email,
-      name: adminRecord.name,
+      name: googleUser.name || adminRecord.name,
+      picture: googleUser.picture,
     });
 
     const res = NextResponse.json({
       authenticated: true,
       admin: {
         email: adminRecord.email,
-        name: adminRecord.name,
+        name: googleUser.name || adminRecord.name,
         role: isSuperAdminRecord(adminRecord) ? 'Super Admin' : adminRecord.role,
+        picture: googleUser.picture,
       },
     });
 

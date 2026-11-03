@@ -86,6 +86,10 @@ export async function verifyGoogleIdToken(
   expectedClientId?: string
 ): Promise<{ email: string; name?: string; picture?: string } | null> {
   try {
+    if (!idToken || typeof idToken !== 'string' || idToken.length > 4096) {
+      return null;
+    }
+
     const res = await fetch(
       `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`,
       { cache: 'no-store' }
@@ -97,7 +101,18 @@ export async function verifyGoogleIdToken(
       return null;
     }
 
+    if (
+      data.iss !== 'accounts.google.com' &&
+      data.iss !== 'https://accounts.google.com'
+    ) {
+      return null;
+    }
+
     if (expectedClientId && data.aud !== expectedClientId) {
+      return null;
+    }
+
+    if (data.exp && Number(data.exp) < Math.floor(Date.now() / 1000)) {
       return null;
     }
 

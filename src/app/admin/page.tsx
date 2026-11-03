@@ -141,9 +141,7 @@ export default function AdminPage() {
       currentAdmin?.email?.toLowerCase() || ''
     );
 
-  // Login form state (NO pre-filled password!)
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
+  // Google OAuth 2.0 Sign-In state (Zero-Password Authentication)
   const [authError, setAuthError] = useState<string | null>(null);
   const [signingIn, setSigningIn] = useState(false);
 
@@ -691,34 +689,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSigningIn(true);
-    setAuthError(null);
-    try {
-      const res = await fetch('/api/admin/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: loginEmail,
-          password: loginPassword,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setAuthError(data.error || t.admin.invalidPassword);
-      } else {
-        setAuthenticated(true);
-        setCurrentAdmin(data.admin);
-        setLoginPassword('');
-      }
-    } catch (err) {
-      setAuthError((err as Error).message);
-    } finally {
-      setSigningIn(false);
-    }
-  };
-
   const handleLogout = async () => {
     await fetch('/api/admin/auth', { method: 'DELETE' });
     setAuthenticated(false);
@@ -1058,63 +1028,29 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Official Google Sign-In Button (when Google Client ID is configured) */}
-          {googleClientId && (
-            <div className="mb-6">
-              <div ref={googleBtnRef} className="flex justify-center" />
-              <div className="relative my-5 flex items-center justify-center">
-                <div className="border-t border-slate-200 w-full" />
-                <span className="bg-white px-3 text-[11px] uppercase font-bold text-slate-400">
-                  {t.admin.orDivider}
-                </span>
-                <div className="border-t border-slate-200 w-full" />
-              </div>
-            </div>
-          )}
+          {/* Official Google Sign-In Button (Zero-Password Authentication) */}
+          <div className="py-4 flex flex-col items-center justify-center min-h-[72px]">
+            <div ref={googleBtnRef} className="flex justify-center" />
+            {signingIn && (
+              <p className="text-xs font-bold text-indigo-600 mt-3 animate-pulse">
+                {locale === 'RU'
+                  ? 'Проверка Google-аккаунта...'
+                  : locale === 'EN'
+                  ? 'Verifying Google account...'
+                  : 'Se verifică contul Google...'}
+              </p>
+            )}
+          </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold uppercase text-slate-600 mb-1.5">
-                {t.admin.emailLoginLabel}
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                <input
-                  type="email"
-                  required
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  placeholder="name@orizont.md"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-600 outline-none text-sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase text-slate-600 mb-1.5">
-                {t.admin.passwordLabel}
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                <input
-                  type="password"
-                  required
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-600 outline-none text-sm font-mono"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={signingIn}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-lumina-600 hover:from-indigo-700 hover:to-lumina-700 disabled:opacity-50 text-white font-extrabold text-sm shadow-md transition-all"
-            >
-              {signingIn ? '...' : t.admin.loginBtn}
-            </button>
-          </form>
+          <div className="mt-4 pt-4 border-t border-slate-100 text-center">
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              {locale === 'RU'
+                ? '🔒 Вход возможен исключительно через официальный аккаунт Google (@orizont.md / авторизованный Gmail).'
+                : locale === 'EN'
+                ? '🔒 Sign-in is permitted exclusively via official Google account (@orizont.md / authorized Gmail).'
+                : '🔒 Autentificarea este permisă exclusiv prin contul oficial Google (@orizont.md / Gmail autorizat).'}
+            </p>
+          </div>
         </div>
       </div>
     );
