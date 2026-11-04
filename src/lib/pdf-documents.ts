@@ -6,8 +6,7 @@ import { getStudentAwardTier, SiteSettingsRecord, StudentRecord } from './db';
 
 let cachedRegularFontBytes: Buffer | null = null;
 let cachedBoldFontBytes: Buffer | null = null;
-let cachedLuminaLogoBytes: Buffer | null = null;
-let cachedOrizontSealBytes: Buffer | null = null;
+const cachedDiplomaBgBytes: Record<string, Buffer | null> = {};
 
 function getAssetBuffer(relPath: string): Buffer | null {
   try {
@@ -583,12 +582,6 @@ export async function generateCertificatePdf(
   if (!cachedBoldFontBytes) {
     cachedBoldFontBytes = getAssetBuffer('fonts/Roboto-Bold.ttf');
   }
-  if (!cachedLuminaLogoBytes) {
-    cachedLuminaLogoBytes = getAssetBuffer('logos/luminamath-logo.png');
-  }
-  if (!cachedOrizontSealBytes) {
-    cachedOrizontSealBytes = getAssetBuffer('logos/orizont-seal.png');
-  }
 
   const hasUnicodeFont = Boolean(cachedRegularFontBytes && cachedBoldFontBytes);
   const fontRegular = hasUnicodeFont
@@ -618,25 +611,15 @@ export async function generateCertificatePdf(
   // Palette definitions matching our Luminous Academic Poster & Website
   const navy = rgb(0.11, 0.21, 0.54); // #1C358A
   const navyDeep = rgb(0.06, 0.11, 0.28); // #0F1C47
-  const luminaOrange = rgb(1.0, 0.42, 0.0); // #FF6B00
+  const luminaOrange = rgb(0.93, 0.33, 0.15); // #ED5526
   const slateDark = rgb(0.06, 0.09, 0.16);
-  const slateMuted = rgb(0.35, 0.41, 0.51);
+  const slateMuted = rgb(0.32, 0.38, 0.48);
 
   const tierConfig = {
     '1st': {
-      borderOuter: rgb(0.85, 0.52, 0.04), // Imperial Gold #D9850A
-      borderInner: rgb(0.96, 0.62, 0.04), // Bright Gold #F59E0B
-      bgTint: rgb(1.0, 0.992, 0.965), // Warm Pearl Gold
-      headerAccent: rgb(0.96, 0.62, 0.04),
-      medalOuter: rgb(0.85, 0.52, 0.04),
-      medalInner: rgb(0.99, 0.78, 0.18),
-      medalCore: rgb(1.0, 0.88, 0.42),
-      medalTextColor: rgb(0.45, 0.22, 0.02),
-      medalRankText: '1',
-      titleColor: rgb(0.72, 0.41, 0.02),
-      pillBg: rgb(0.99, 0.94, 0.78),
-      pillBorder: rgb(0.92, 0.62, 0.08),
-      pillText: rgb(0.52, 0.26, 0.02),
+      titleColor: rgb(0.71, 0.33, 0.04), // Rich Imperial Gold #B45309
+      pillText: rgb(0.47, 0.21, 0.02),
+      scoreText: rgb(0.57, 0.25, 0.05),
       titleRo: 'DIPLOMĂ DE PREMIUL I',
       titleRu: 'ДИПЛОМ I СТЕПЕНИ',
       titleEn: 'FIRST PRIZE DIPLOMA',
@@ -645,19 +628,9 @@ export async function generateCertificatePdf(
       badgeEn: '1ST PLACE  |  GOLD MEDAL LAUREATE',
     },
     '2nd': {
-      borderOuter: rgb(0.12, 0.25, 0.68), // Royal Blue
-      borderInner: rgb(0.52, 0.58, 0.67), // Platinum Silver
-      bgTint: rgb(0.985, 0.992, 1.0), // Luminous Ice Silver-Blue
-      headerAccent: rgb(0.58, 0.64, 0.72),
-      medalOuter: rgb(0.42, 0.48, 0.56),
-      medalInner: rgb(0.78, 0.82, 0.88),
-      medalCore: rgb(0.91, 0.94, 0.97),
-      medalTextColor: rgb(0.18, 0.23, 0.32),
-      medalRankText: '2',
-      titleColor: rgb(0.12, 0.25, 0.68),
-      pillBg: rgb(0.92, 0.95, 0.99),
-      pillBorder: rgb(0.55, 0.63, 0.75),
-      pillText: rgb(0.15, 0.24, 0.48),
+      titleColor: rgb(0.12, 0.23, 0.58), // Royal Indigo-Silver
+      pillText: rgb(0.15, 0.23, 0.42),
+      scoreText: rgb(0.18, 0.25, 0.38),
       titleRo: 'DIPLOMĂ DE PREMIUL II',
       titleRu: 'ДИПЛОМ II СТЕПЕНИ',
       titleEn: 'SECOND PRIZE DIPLOMA',
@@ -666,19 +639,9 @@ export async function generateCertificatePdf(
       badgeEn: '2ND PLACE  |  SILVER MEDAL LAUREATE',
     },
     '3rd': {
-      borderOuter: rgb(0.71, 0.33, 0.04), // Noble Bronze #B45309
-      borderInner: rgb(0.92, 0.45, 0.09), // Warm Bronze-Orange
-      bgTint: rgb(1.0, 0.988, 0.972), // Warm Amber Pearl
-      headerAccent: rgb(0.88, 0.44, 0.12),
-      medalOuter: rgb(0.62, 0.28, 0.05),
-      medalInner: rgb(0.85, 0.48, 0.18),
-      medalCore: rgb(0.95, 0.68, 0.42),
-      medalTextColor: rgb(0.38, 0.15, 0.02),
-      medalRankText: '3',
-      titleColor: rgb(0.68, 0.29, 0.04),
-      pillBg: rgb(0.99, 0.92, 0.85),
-      pillBorder: rgb(0.85, 0.48, 0.18),
-      pillText: rgb(0.48, 0.2, 0.03),
+      titleColor: rgb(0.65, 0.24, 0.05), // Noble Bronze #9A3412
+      pillText: rgb(0.48, 0.18, 0.04),
+      scoreText: rgb(0.55, 0.2, 0.05),
       titleRo: 'DIPLOMĂ DE PREMIUL III',
       titleRu: 'ДИПЛОМ III СТЕПЕНИ',
       titleEn: 'THIRD PRIZE DIPLOMA',
@@ -687,19 +650,9 @@ export async function generateCertificatePdf(
       badgeEn: '3RD PLACE  |  BRONZE MEDAL LAUREATE',
     },
     mention: {
-      borderOuter: rgb(0.02, 0.47, 0.34), // Emerald Prestige #047857
-      borderInner: rgb(0.85, 0.55, 0.08), // Gold Accent
-      bgTint: rgb(0.982, 0.998, 0.99), // Luminous Mint-Pearl
-      headerAccent: rgb(0.04, 0.58, 0.42),
-      medalOuter: rgb(0.02, 0.47, 0.34),
-      medalInner: rgb(0.88, 0.65, 0.15),
-      medalCore: rgb(0.98, 0.85, 0.45),
-      medalTextColor: rgb(0.02, 0.35, 0.25),
-      medalRankText: 'M',
-      titleColor: rgb(0.02, 0.45, 0.32),
-      pillBg: rgb(0.88, 0.98, 0.93),
-      pillBorder: rgb(0.1, 0.62, 0.45),
-      pillText: rgb(0.02, 0.38, 0.27),
+      titleColor: rgb(0.02, 0.42, 0.3), // Emerald Prestige #047857
+      pillText: rgb(0.02, 0.35, 0.25),
+      scoreText: rgb(0.02, 0.38, 0.27),
       titleRo: 'DIPLOMĂ DE MENȚIUNE',
       titleRu: 'ПОХВАЛЬНАЯ ГРАМОТА (MENȚIUNE)',
       titleEn: 'HONORABLE MENTION DIPLOMA',
@@ -708,19 +661,9 @@ export async function generateCertificatePdf(
       badgeEn: 'HONORABLE MENTION  |  DIPLOMA & MEDAL',
     },
     participation: {
-      borderOuter: navy,
-      borderInner: luminaOrange,
-      bgTint: rgb(0.992, 0.995, 1.0), // Luminous Bright White-Blue
-      headerAccent: luminaOrange,
-      medalOuter: navy,
-      medalInner: luminaOrange,
-      medalCore: rgb(1.0, 0.92, 0.75),
-      medalTextColor: navyDeep,
-      medalRankText: 'LM',
       titleColor: navy,
-      pillBg: rgb(0.93, 0.96, 1.0),
-      pillBorder: rgb(0.68, 0.78, 0.95),
       pillText: navy,
+      scoreText: rgb(0.76, 0.25, 0.05),
       titleRo: 'CERTIFICAT DE PARTICIPARE',
       titleRu: 'СЕРТИФИКАТ УЧАСТНИКА',
       titleEn: 'CERTIFICATE OF PARTICIPATION',
@@ -729,6 +672,26 @@ export async function generateCertificatePdf(
       badgeEn: 'OFFICIAL PARTICIPANT  |  NATIONAL STAGE',
     },
   }[tier];
+
+  // 1. Embed Vibrant Website-Style Full-Bleed Artwork Canvas (Mesh Gradient, Math Grid,
+  //    Formulas, Corner Ribbons, Logos, 3D Medal + Laurel Wreath, and Shadowed EdTech Cards)
+  if (cachedDiplomaBgBytes[tier] === undefined) {
+    cachedDiplomaBgBytes[tier] = getAssetBuffer(`logos/diploma-bg-${tier}.jpg`);
+  }
+  const bgBuffer = cachedDiplomaBgBytes[tier];
+  if (bgBuffer) {
+    try {
+      const bgImg = await doc.embedJpg(bgBuffer);
+      page.drawImage(bgImg, {
+        x: 0,
+        y: 0,
+        width: 841.89,
+        height: 595.28,
+      });
+    } catch {}
+  }
+
+  const centerX = 841.89 / 2;
 
   const drawCentered = (
     text: string,
@@ -748,101 +711,7 @@ export async function generateCertificatePdf(
     });
   };
 
-  // 1. Luminous Outer Background & Double Ornamental Academic Frame
-  page.drawRectangle({
-    x: 18,
-    y: 18,
-    width: 805.89,
-    height: 559.28,
-    color: tierConfig.bgTint,
-    borderColor: tierConfig.borderOuter,
-    borderWidth: 3.5,
-  });
-
-  page.drawRectangle({
-    x: 26,
-    y: 26,
-    width: 789.89,
-    height: 543.28,
-    borderColor: tierConfig.borderInner,
-    borderWidth: 1.4,
-  });
-
-  // Corner ornamental accents (matching poster geometric style)
-  const corners = [
-    { x: 26, y: 557.28 },
-    { x: 803.89, y: 557.28 },
-    { x: 26, y: 26 },
-    { x: 803.89, y: 26 },
-  ];
-  for (const c of corners) {
-    page.drawRectangle({
-      x: c.x,
-      y: c.y,
-      width: 12,
-      height: 12,
-      color: tierConfig.borderOuter,
-    });
-  }
-
-  // 2. Top Bright Institutional Header Card (matching Official Poster top bar)
-  page.drawRectangle({
-    x: 27,
-    y: 486,
-    width: 787.89,
-    height: 82,
-    color: rgb(1, 1, 1),
-  });
-  page.drawRectangle({
-    x: 27,
-    y: 482,
-    width: 787.89,
-    height: 4,
-    color: tierConfig.headerAccent,
-  });
-  page.drawRectangle({
-    x: 27,
-    y: 479,
-    width: 787.89,
-    height: 3,
-    color: navy,
-  });
-
-  // Left: Official LuminaMath Logo
-  if (cachedLuminaLogoBytes) {
-    try {
-      const lmImg = await doc.embedPng(cachedLuminaLogoBytes);
-      page.drawImage(lmImg, {
-        x: 38,
-        y: 508,
-        width: 138,
-        height: 34.5,
-      });
-    } catch {}
-  } else {
-    page.drawText('LuminaMath', {
-      x: 42,
-      y: 518,
-      size: 20,
-      font: fontBold,
-      color: luminaOrange,
-    });
-  }
-
-  // Right: Official IPLT "Orizont" (1993) Seal
-  if (cachedOrizontSealBytes) {
-    try {
-      const sealImg = await doc.embedPng(cachedOrizontSealBytes);
-      page.drawImage(sealImg, {
-        x: 736,
-        y: 493,
-        width: 66,
-        height: 66,
-      });
-    } catch {}
-  }
-
-  // Center Header Institutional Titles (RO / RU / EN) centered between left logo and right seal
+  // 2. Top Institutional Header Titles (centered between LuminaMath logo and Orizont 1993 seal)
   const drawHeaderCentered = (
     text: string,
     y: number,
@@ -852,7 +721,7 @@ export async function generateCertificatePdf(
   ) => {
     const safe = safeStr(text);
     const width = font.widthOfTextAtSize(safe, size);
-    const headerMidX = 456;
+    const headerMidX = 454;
     page.drawText(safe, {
       x: headerMidX - width / 2,
       y,
@@ -864,89 +733,27 @@ export async function generateCertificatePdf(
 
   drawHeaderCentered(
     'INSTITUȚIA PRIVATĂ DE ÎNVĂȚĂMÂNT LICEUL TEORETIC "ORIZONT"',
-    544,
+    552,
     9.8,
     fontBold,
     navy
   );
   drawHeaderCentered(
     `CONCURSUL NAȚIONAL DE MATEMATICĂ LUMINAMATH MOLDOVA  |  EDIȚIA ${settings.edition}`,
-    525,
+    534,
     10.4,
     fontBold,
     luminaOrange
   );
   drawHeaderCentered(
     'НАЦИОНАЛЬНАЯ МАТЕМАТИЧЕСКАЯ ОЛИМПИАДА  |  NATIONAL MATHEMATICS COMPETITION (CLASELE III - VIII)',
-    507,
-    8.0,
+    517,
+    7.8,
     fontBold,
     slateMuted
   );
 
-  // 3. Center Olympic Ribbon & 3D Vector Medal Emblem
-  const centerX = 841.89 / 2;
-  const medalCenterY = 438;
-
-  // Tri-color ribbon (Blue / White / Red-Gold) hanging from top bar
-  page.drawRectangle({
-    x: centerX - 18,
-    y: medalCenterY + 12,
-    width: 12,
-    height: 28,
-    color: rgb(0.12, 0.25, 0.68),
-  });
-  page.drawRectangle({
-    x: centerX - 6,
-    y: medalCenterY + 12,
-    width: 12,
-    height: 28,
-    color: rgb(0.96, 0.97, 1.0),
-  });
-  page.drawRectangle({
-    x: centerX + 6,
-    y: medalCenterY + 12,
-    width: 12,
-    height: 28,
-    color: rgb(0.86, 0.18, 0.15),
-  });
-
-  // Medal disc (Outer rim -> Inner ring -> Core)
-  page.drawCircle({
-    x: centerX,
-    y: medalCenterY,
-    size: 27,
-    color: tierConfig.medalOuter,
-    borderColor: rgb(1, 1, 1),
-    borderWidth: 2,
-  });
-  page.drawCircle({
-    x: centerX,
-    y: medalCenterY,
-    size: 22,
-    color: tierConfig.medalInner,
-    borderColor: tierConfig.medalOuter,
-    borderWidth: 1,
-  });
-  page.drawCircle({
-    x: centerX,
-    y: medalCenterY,
-    size: 16,
-    color: tierConfig.medalCore,
-  });
-
-  const rankStr = tierConfig.medalRankText;
-  const rankFontSize = rankStr.length > 1 ? 13 : 19;
-  const rankW = fontBold.widthOfTextAtSize(rankStr, rankFontSize);
-  page.drawText(rankStr, {
-    x: centerX - rankW / 2,
-    y: medalCenterY - rankFontSize * 0.35,
-    size: rankFontSize,
-    font: fontBold,
-    color: tierConfig.medalTextColor,
-  });
-
-  // 4. Primary Award Title & Trilingual Subtitle
+  // 3. Primary Award Title & Trilingual Subtitle (below the 3D Laurel Medal)
   const mainTitle =
     lang === 'RU'
       ? tierConfig.titleRu
@@ -961,10 +768,10 @@ export async function generateCertificatePdf(
       ? `${tierConfig.titleRo}  |  ${tierConfig.titleRu}`
       : `${tierConfig.titleEn}  |  ${tierConfig.titleRu}`;
 
-  drawCentered(mainTitle, 376, 27, fontBold, tierConfig.titleColor);
-  drawCentered(secondaryTitles, 357, 9.5, fontBold, slateMuted);
+  drawCentered(mainTitle, 362, 24.5, fontBold, tierConfig.titleColor);
+  drawCentered(secondaryTitles, 346, 8.8, fontBold, slateMuted);
 
-  // Award Pill Badge (e.g. "LOCUL I | MEDALIA DE AUR (GOLD MEDAL)")
+  // Award Pill Badge Text inside the SVG gradient pill (y_svg = 254..276 -> y_pdf = 319..341)
   const badgeText = safeStr(
     lang === 'RU'
       ? tierConfig.badgeRu
@@ -972,48 +779,23 @@ export async function generateCertificatePdf(
       ? tierConfig.badgeEn
       : tierConfig.badgeRo
   );
-  const badgeTextW = fontBold.widthOfTextAtSize(badgeText, 9.5);
-  const pillW = badgeTextW + 36;
-  page.drawRectangle({
-    x: centerX - pillW / 2,
-    y: 330,
-    width: pillW,
-    height: 20,
-    color: tierConfig.pillBg,
-    borderColor: tierConfig.pillBorder,
-    borderWidth: 1.2,
-  });
-  page.drawText(badgeText, {
-    x: centerX - badgeTextW / 2,
-    y: 336.5,
-    size: 9.5,
-    font: fontBold,
-    color: tierConfig.pillText,
-  });
+  drawCentered(badgeText, 326.5, 9.2, fontBold, tierConfig.pillText);
 
-  // 5. Recipient Intro Line (RO / RU / EN)
+  // 4. Recipient Intro Line (RO / RU / EN)
   const introLine =
     lang === 'RU'
       ? 'Награждается ученик / ученица за высокие результаты на Национальной олимпиаде по математике:'
       : lang === 'EN'
       ? 'Proudly awarded in recognition of outstanding performance at the National Mathematics Competition to:'
       : 'Se acordă cu deosebită apreciere pentru rezultatele obținute la etapa națională elevului / elevei:';
-  drawCentered(introLine, 305, 11, fontRegular, slateMuted);
+  drawCentered(introLine, 302, 10.2, fontBold, slateMuted);
 
-  // 6. Student Full Name (Large Prominent Academic Typography)
+  // 5. Student Full Name inside the Elevated Centerpiece Card (y_svg = 304..358 -> y_pdf = 237..291)
   const fullName = `${student.first_name} ${student.last_name}`.toUpperCase();
-  const nameFontSize = fullName.length > 28 ? 22 : 27;
-  drawCentered(fullName, 268, nameFontSize, fontBold, navyDeep);
+  const nameFontSize = fullName.length > 26 ? 20 : 25;
+  drawCentered(fullName, 256, nameFontSize, fontBold, navyDeep);
 
-  // Decorative Gold/Accent Underline below Student Name
-  page.drawLine({
-    start: { x: 160, y: 256 },
-    end: { x: 681.89, y: 256 },
-    thickness: 1.6,
-    color: tierConfig.borderInner,
-  });
-
-  // 7. Student Grade, School, Score & Coordinating Teacher
+  // 6. Three Website-Style EdTech Achievement Pill Cards (y_svg = 370..406 -> y_pdf = 189..225)
   const romanGrades: Record<number, string> = {
     3: 'III-a',
     4: 'IV-a',
@@ -1022,6 +804,8 @@ export async function generateCertificatePdf(
     7: 'VII-a',
     8: 'VIII-a',
   };
+  const gradeLabelTop =
+    lang === 'RU' ? 'КЛАСС' : lang === 'EN' ? 'GRADE LEVEL' : 'CLASA';
   const gradeText =
     lang === 'RU'
       ? `${student.grade} класс`
@@ -1029,6 +813,50 @@ export async function generateCertificatePdf(
       ? `Grade ${student.grade}`
       : `Clasa a ${romanGrades[student.grade] || student.grade}`;
 
+  // Pill 1 Text (x = 98..206)
+  page.drawText(safeStr(gradeLabelTop), {
+    x: 100,
+    y: 211,
+    size: 6.8,
+    font: fontBold,
+    color: slateMuted,
+  });
+  page.drawText(safeStr(gradeText), {
+    x: 100,
+    y: 197,
+    size: 11.2,
+    font: fontBold,
+    color: navy,
+  });
+
+  // Pill 2 Text: School (x = 256..592)
+  const schoolLabelTop =
+    lang === 'RU'
+      ? 'УЧЕБНОЕ ЗАВЕДЕНИЕ / ШКОЛА'
+      : lang === 'EN'
+      ? 'EDUCATIONAL INSTITUTION / SCHOOL'
+      : 'INSTITUȚIA DE ÎNVĂȚĂMÂNT / ȘCOALA';
+  const rawSchool = safeStr(student.school);
+  const schoolDisplay =
+    rawSchool.length > 52 ? rawSchool.slice(0, 50) + '...' : rawSchool;
+  const schoolFontSize = schoolDisplay.length > 40 ? 9.5 : 10.8;
+
+  page.drawText(safeStr(schoolLabelTop), {
+    x: 258,
+    y: 211,
+    size: 6.8,
+    font: fontBold,
+    color: slateMuted,
+  });
+  page.drawText(schoolDisplay, {
+    x: 258,
+    y: 197,
+    size: schoolFontSize,
+    font: fontBold,
+    color: slateDark,
+  });
+
+  // Pill 3 Text: Official Score / Status (x = 642..772)
   const hasNumericScore =
     student.score !== null &&
     student.score !== undefined &&
@@ -1039,22 +867,40 @@ export async function generateCertificatePdf(
       : Number(student.score).toFixed(2)
     : null;
 
-  const scoreLabel = scoreFormatted
-    ? lang === 'RU'
-      ? `   |   Результат: ${scoreFormatted} баллов`
+  const scoreLabelTop =
+    lang === 'RU'
+      ? 'РЕЗУЛЬТАТ (БАЛЛЫ)'
       : lang === 'EN'
-      ? `   |   Official Score: ${scoreFormatted} pts`
-      : `   |   Punctaj obținut: ${scoreFormatted} puncte`
-    : '';
+      ? 'OFFICIAL SCORE'
+      : 'PUNCTAJ OBȚINUT';
+  const scoreValueText = scoreFormatted
+    ? lang === 'RU'
+      ? `${scoreFormatted} баллов`
+      : lang === 'EN'
+      ? `${scoreFormatted} points`
+      : `${scoreFormatted} puncte`
+    : lang === 'RU'
+    ? 'Участник'
+    : lang === 'EN'
+    ? 'Confirmed'
+    : 'Confirmat';
 
-  drawCentered(
-    `${gradeText}   |   ${student.school}${scoreLabel}`,
-    232,
-    13,
-    fontBold,
-    navy
-  );
+  page.drawText(safeStr(scoreLabelTop), {
+    x: 644,
+    y: 211,
+    size: 6.8,
+    font: fontBold,
+    color: slateMuted,
+  });
+  page.drawText(safeStr(scoreValueText), {
+    x: 644,
+    y: 197,
+    size: 11.2,
+    font: fontBold,
+    color: tierConfig.scoreText,
+  });
 
+  // 7. Teacher & Exam Center Citation Line (between pills and bottom cards)
   const branchName =
     lang === 'RU'
       ? student.branch_name_ru || student.branch_name_ro || 'Кишинёв'
@@ -1069,7 +915,7 @@ export async function generateCertificatePdf(
       ? `Coordinating Teacher: ${student.teacher_name}   |   Examination Center: ${branchName}`
       : `Profesor coordonator: ${student.teacher_name}   |   Centrul de examen: ${branchName}`;
 
-  drawCentered(teacherAndCenterLine, 208, 10.5, fontRegular, slateDark);
+  drawCentered(teacherAndCenterLine, 169, 9.8, fontBold, slateDark);
 
   const citationSub =
     lang === 'RU'
@@ -1077,26 +923,16 @@ export async function generateCertificatePdf(
       : lang === 'EN'
       ? `LuminaMath Moldova National Mathematics Competition (${settings.edition})  |  "Orizont" Theoretical Lyceum`
       : `Concursul Național de Matematică LuminaMath Moldova (${settings.edition})  |  IPLT "Orizont" Republica Moldova`;
-  drawCentered(citationSub, 188, 9.5, fontRegular, slateMuted);
+  drawCentered(citationSub, 154, 8.5, fontRegular, slateMuted);
 
-  // 8. Bottom Verification & Signatures Footer (Left: Metadata, Center: QR, Right: Signature)
-  // Left Box: Participant ID, Language, Date, Online Verification URL
-  page.drawRectangle({
-    x: 52,
-    y: 54,
-    width: 265,
-    height: 98,
-    color: rgb(1, 1, 1),
-    borderColor: rgb(0.84, 0.88, 0.94),
-    borderWidth: 1,
-  });
-
+  // 8. Bottom 3 Cards: Left (Participant Verification), Center (QR Code), Right (Jury & Stamp)
+  // Left Card Header Text (in the Royal Blue bar at y_pdf = 123)
   page.drawText(safeStr(`ID PARTICIPANT: ${student.student_code}`), {
     x: 66,
-    y: 130,
-    size: 11.5,
+    y: 123,
+    size: 10.5,
     font: fontBold,
-    color: navy,
+    color: rgb(1, 1, 1),
   });
 
   const awardCodeLabel =
@@ -1112,8 +948,8 @@ export async function generateCertificatePdf(
 
   page.drawText(safeStr(`Statut: ${awardCodeLabel}`), {
     x: 66,
-    y: 111,
-    size: 9,
+    y: 96,
+    size: 8.8,
     font: fontBold,
     color: tierConfig.titleColor,
   });
@@ -1127,43 +963,36 @@ export async function generateCertificatePdf(
 
   page.drawText(safeStr(`Data examenului: ${dateDisplay}`), {
     x: 66,
-    y: 93,
-    size: 9,
+    y: 80,
+    size: 8.5,
     font: fontRegular,
     color: slateDark,
   });
   page.drawText('Verificare: https://luminamath.orizont.md/results', {
     x: 66,
-    y: 75,
-    size: 8.5,
-    font: fontBold,
-    color: slateMuted,
-  });
-  page.drawText(safeStr(`Limba probei: ${student.exam_language}  |  Clasa: ${student.grade}`), {
-    x: 66,
-    y: 60,
+    y: 64,
     size: 8,
-    font: fontRegular,
-    color: slateMuted,
+    font: fontBold,
+    color: navy,
   });
+  page.drawText(
+    safeStr(`Limba probei: ${student.exam_language}  |  Clasa: ${student.grade}`),
+    {
+      x: 66,
+      y: 48,
+      size: 7.8,
+      font: fontRegular,
+      color: slateMuted,
+    }
+  );
 
-  // Center QR Code for Instant Digital Verification
+  // Center QR Code inside the elevated QR card (x = 364.95..476.95, y_pdf = 34.28..150.28)
   const qrMatrix = generateQrMatrix(verifyUrl);
   const qrDim = qrMatrix.length;
-  const qrSize = 82;
+  const qrSize = 84;
   const cell = qrSize / qrDim;
   const qrX = (841.89 - qrSize) / 2;
-  const qrY = 66;
-
-  page.drawRectangle({
-    x: qrX - 8,
-    y: qrY - 18,
-    width: qrSize + 16,
-    height: qrSize + 26,
-    color: rgb(1, 1, 1),
-    borderColor: tierConfig.borderInner,
-    borderWidth: 1.4,
-  });
+  const qrY = 56;
 
   for (let r = 0; r < qrDim; r++) {
     for (let c = 0; c < qrDim; c++) {
@@ -1183,23 +1012,13 @@ export async function generateCertificatePdf(
   const qrCapW = fontBold.widthOfTextAtSize(qrCaption, 6.8);
   page.drawText(qrCaption, {
     x: centerX - qrCapW / 2,
-    y: qrY - 12,
+    y: 42,
     size: 6.8,
     font: fontBold,
     color: navy,
   });
 
-  // Right Box: Official Jury & Organizing Committee Signature Block
-  page.drawRectangle({
-    x: 525,
-    y: 54,
-    width: 265,
-    height: 98,
-    color: rgb(1, 1, 1),
-    borderColor: rgb(0.84, 0.88, 0.94),
-    borderWidth: 1,
-  });
-
+  // Right Card Header Text (in the Royal Blue bar at y_pdf = 123)
   page.drawText(
     safeStr(
       lang === 'RU'
@@ -1209,25 +1028,25 @@ export async function generateCertificatePdf(
         : 'COMISIA NAȚIONALĂ DE ORGANIZARE ȘI JURIUL'
     ),
     {
-      x: 540,
-      y: 130,
-      size: 9,
+      x: 514,
+      y: 123,
+      size: 8.8,
       font: fontBold,
-      color: navy,
+      color: rgb(1, 1, 1),
     }
   );
 
   page.drawText('LuminaMath Moldova  |  IPLT "Orizont"', {
-    x: 540,
-    y: 113,
+    x: 514,
+    y: 96,
     size: 9.5,
     font: fontBold,
     color: luminaOrange,
   });
 
   page.drawLine({
-    start: { x: 540, y: 80 },
-    end: { x: 772, y: 80 },
+    start: { x: 514, y: 66 },
+    end: { x: 768, y: 66 },
     thickness: 1,
     color: slateMuted,
   });
@@ -1241,9 +1060,9 @@ export async function generateCertificatePdf(
         : 'Semnătura Președintelui & Ștampila Oficială (Chișinău)'
     ),
     {
-      x: 540,
-      y: 65,
-      size: 8,
+      x: 514,
+      y: 50,
+      size: 7.8,
       font: fontRegular,
       color: slateMuted,
     }
