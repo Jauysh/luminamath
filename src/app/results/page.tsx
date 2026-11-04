@@ -33,6 +33,7 @@ interface StudentLookupResult {
   branch_name_en?: string;
   branch_address?: string;
   has_result_pdf: boolean;
+  score?: number | null;
   result_uploaded_at: string | null;
 }
 
@@ -340,6 +341,20 @@ function ResultsContent() {
                       {getBranchName(student)} ({student.branch_address})
                     </strong>
                   </div>
+                  {student.has_result_pdf &&
+                    student.score !== null &&
+                    student.score !== undefined && (
+                      <div className="sm:col-span-2 pt-1">
+                        <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 font-extrabold text-xs sm:text-sm">
+                          <Award className="w-4 h-4 text-amber-600" />
+                          {locale === 'RU'
+                            ? `Официальный результат: ${Number(student.score)} баллов`
+                            : locale === 'EN'
+                            ? `Official Score: ${Number(student.score)} points`
+                            : `Punctaj Oficial Obținut: ${Number(student.score)} puncte`}
+                        </span>
+                      </div>
+                    )}
                 </div>
               </div>
 
@@ -357,7 +372,7 @@ function ResultsContent() {
                   </div>
                 </div>
 
-                {/* Official PDF Pass & Certificate Download Buttons */}
+                {/* Official PDF Pass & Post-Exam Diploma/Certificate Download Buttons */}
                 <div className="flex flex-col gap-2">
                   <a
                     href={`/api/results/${student.student_code}/ticket?pin=${encodeURIComponent(
@@ -373,19 +388,90 @@ function ResultsContent() {
                       : '🎫 Permis de Acces (PDF + QR)'}
                   </a>
 
-                  <a
-                    href={`/api/results/${student.student_code}/certificate?pin=${encodeURIComponent(
+                  {student.has_result_pdf && (() => {
+                    const numScore =
+                      student.score !== null && student.score !== undefined
+                        ? Number(student.score)
+                        : null;
+                    const t1 = Number(settings.threshold_1st ?? 95);
+                    const t2 = Number(settings.threshold_2nd ?? 90);
+                    const t3 = Number(settings.threshold_3rd ?? 85);
+                    const tm = Number(settings.threshold_mention ?? 80);
+
+                    const tier =
+                      numScore === null || isNaN(numScore)
+                        ? 'participation'
+                        : numScore >= t1
+                        ? '1st'
+                        : numScore >= t2
+                        ? '2nd'
+                        : numScore >= t3
+                        ? '3rd'
+                        : numScore >= tm
+                        ? 'mention'
+                        : 'participation';
+
+                    const btnLabel =
+                      tier === '1st'
+                        ? locale === 'RU'
+                          ? '🥇 Диплом I Место • Золотая Медаль (PDF)'
+                          : locale === 'EN'
+                          ? '🥇 First Prize Diploma • Gold Medal (PDF)'
+                          : '🥇 Diplomă Premiul I • Medalia de Aur (PDF)'
+                        : tier === '2nd'
+                        ? locale === 'RU'
+                          ? '🥈 Диплом II Место • Серебряная Медаль (PDF)'
+                          : locale === 'EN'
+                          ? '🥈 Second Prize Diploma • Silver Medal (PDF)'
+                          : '🥈 Diplomă Premiul II • Medalia de Argint (PDF)'
+                        : tier === '3rd'
+                        ? locale === 'RU'
+                          ? '🥉 Диплом III Место • Бронзовая Медаль (PDF)'
+                          : locale === 'EN'
+                          ? '🥉 Third Prize Diploma • Bronze Medal (PDF)'
+                          : '🥉 Diplomă Premiul III • Medalia de Bronz (PDF)'
+                        : tier === 'mention'
+                        ? locale === 'RU'
+                          ? '🎖️ Похвальная Грамота и Медаль (PDF)'
+                          : locale === 'EN'
+                          ? '🎖️ Honorable Mention Diploma & Medal (PDF)'
+                          : '🎖️ Diplomă de Mențiune & Medalie (PDF)'
+                        : locale === 'RU'
+                        ? '🏅 Сертификат участника (PDF)'
+                        : locale === 'EN'
+                        ? '🏅 Certificate of Participation (PDF)'
+                        : '🏅 Certificat de Participare (PDF)';
+
+                    const baseCertUrl = `/api/results/${
+                      student.student_code
+                    }/certificate?pin=${encodeURIComponent(
                       student.access_pin || accessPin
-                    )}`}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs shadow-sm transition-all"
-                  >
-                    <Award className="w-3.5 h-3.5" />
-                    {locale === 'RU'
-                      ? '🏅 Сертификат участника (PDF)'
-                      : locale === 'EN'
-                      ? '🏅 Certificate of Participation (PDF)'
-                      : '🏅 Certificat de Participare (PDF)'}
-                  </a>
+                    )}`;
+
+                    return (
+                      <div className="flex flex-col gap-1.5">
+                        <a
+                          href={`${baseCertUrl}&lang=${locale}`}
+                          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs shadow-sm transition-all"
+                        >
+                          <Award className="w-3.5 h-3.5 shrink-0" />
+                          <span>{btnLabel}</span>
+                        </a>
+                        <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold text-slate-500">
+                          <span>PDF (RO / RU / EN):</span>
+                          {(['RO', 'RU', 'EN'] as const).map((lng) => (
+                            <a
+                              key={lng}
+                              href={`${baseCertUrl}&lang=${lng}`}
+                              className="px-2 py-0.5 rounded bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-800 border border-slate-200 transition-colors"
+                            >
+                              {lng}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

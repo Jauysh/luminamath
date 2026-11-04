@@ -71,6 +71,10 @@ export interface SiteSettingsClient {
   contact_phone: string;
   registration_open?: boolean;
   registration_deadline?: string;
+  threshold_1st?: number;
+  threshold_2nd?: number;
+  threshold_3rd?: number;
+  threshold_mention?: number;
 }
 
 const DEFAULT_CLIENT_SETTINGS: SiteSettingsClient = {
@@ -92,6 +96,10 @@ const DEFAULT_CLIENT_SETTINGS: SiteSettingsClient = {
   contact_phone: '+373 (79) 000 073',
   registration_open: true,
   registration_deadline: '',
+  threshold_1st: 95,
+  threshold_2nd: 90,
+  threshold_3rd: 85,
+  threshold_mention: 80,
 };
 
 export function checkClientRegistrationOpen(settings: SiteSettingsClient): boolean {

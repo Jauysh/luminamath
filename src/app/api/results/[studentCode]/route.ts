@@ -6,7 +6,13 @@ import {
   isRateLimitExceeded,
   timingSafePinMatch,
 } from '@/lib/auth';
-import { getStudentByCode, isEmailAuthorizedAdmin } from '@/lib/db';
+import {
+  getStudentByCode,
+  getStudentResultPdf,
+  isEmailAuthorizedAdmin,
+  saveStudentResultPdf,
+} from '@/lib/db';
+import { extractKarnesFromPdfBuffer } from '@/lib/omr-pdf-splitter';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,6 +79,29 @@ export async function GET(
       );
     }
 
+    let currentScore =
+      student.score !== null && student.score !== undefined ? Number(student.score) : null;
+    if (student.has_result_pdf && currentScore === null) {
+      try {
+        const pdfRec = await getStudentResultPdf(student.student_code);
+        if (pdfRec) {
+          const extracted = await extractKarnesFromPdfBuffer(
+            pdfRec.pdfBuffer,
+            pdfRec.fileName || `${student.student_code}.pdf`
+          );
+          if (extracted[0]?.score !== undefined) {
+            currentScore = extracted[0].score;
+            await saveStudentResultPdf(
+              student.student_code,
+              pdfRec.fileName || `${student.student_code}.pdf`,
+              pdfRec.pdfBuffer,
+              currentScore
+            );
+          }
+        }
+      } catch {}
+    }
+
     return NextResponse.json({
       student: {
         student_code: student.student_code,
@@ -89,6 +118,7 @@ export async function GET(
         branch_name_en: student.branch_name_en,
         branch_address: student.branch_address,
         has_result_pdf: student.has_result_pdf,
+        score: currentScore,
         result_uploaded_at: student.result_uploaded_at,
         created_at: student.created_at,
       },

@@ -50,7 +50,13 @@ export interface SiteSettingsRecord {
   google_client_id?: string;
   registration_open?: boolean;
   registration_deadline?: string;
+  threshold_1st?: number;
+  threshold_2nd?: number;
+  threshold_3rd?: number;
+  threshold_mention?: number;
 }
+
+export type AwardTier = '1st' | '2nd' | '3rd' | 'mention' | 'participation';
 
 export const DEFAULT_SITE_SETTINGS: SiteSettingsRecord = {
   edition: '2026–2027',
@@ -74,7 +80,34 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsRecord = {
     '592645627631-jvrb0v4vq581avfjf1o53a5rkhfvjapm.apps.googleusercontent.com',
   registration_open: true,
   registration_deadline: '',
+  threshold_1st: 95,
+  threshold_2nd: 90,
+  threshold_3rd: 85,
+  threshold_mention: 80,
 };
+
+export function getStudentAwardTier(
+  score: number | string | null | undefined,
+  settings?: Partial<SiteSettingsRecord>
+): AwardTier {
+  if (score === null || score === undefined || score === '') {
+    return 'participation';
+  }
+  const num = Number(score);
+  if (isNaN(num)) {
+    return 'participation';
+  }
+  const t1 = Number(settings?.threshold_1st ?? 95);
+  const t2 = Number(settings?.threshold_2nd ?? 90);
+  const t3 = Number(settings?.threshold_3rd ?? 85);
+  const tm = Number(settings?.threshold_mention ?? 80);
+
+  if (num >= t1) return '1st';
+  if (num >= t2) return '2nd';
+  if (num >= t3) return '3rd';
+  if (num >= tm) return 'mention';
+  return 'participation';
+}
 
 export function isRegistrationCurrentlyOpen(settings: {
   registration_open?: boolean;
@@ -133,6 +166,7 @@ export interface StudentRecord {
   result_email_sent?: boolean;
   result_email_sent_at?: string | null;
   school_code?: number;
+  score?: number | null;
   created_at: string;
 }
 
@@ -234,11 +268,11 @@ async function ensurePgInitialized(pool: Pool): Promise<boolean> {
 
   global.__luminaPgInitPromise = (async () => {
     try {
-      // Fast-path check: if schema is already provisioned, skip heavy DDL/DML migrations on cold start
+      // Fast-path check: if schema (including score column) is already provisioned, skip heavy DDL/DML migrations on cold start
       const fastCheck = await pool.query(`
         SELECT EXISTS (
-          SELECT 1 FROM information_schema.tables
-          WHERE table_schema = 'public' AND table_name = 'student_results'
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'students' AND column_name = 'score'
         ) AS schema_ready
       `);
       if (fastCheck.rows[0]?.schema_ready === true) {
@@ -316,6 +350,7 @@ async function ensurePgInitialized(pool: Pool): Promise<boolean> {
       ALTER TABLE students ADD COLUMN IF NOT EXISTS school_code INT NOT NULL DEFAULT 8;
       ALTER TABLE students ADD COLUMN IF NOT EXISTS result_email_sent BOOLEAN NOT NULL DEFAULT false;
       ALTER TABLE students ADD COLUMN IF NOT EXISTS result_email_sent_at TIMESTAMPTZ;
+      ALTER TABLE students ADD COLUMN IF NOT EXISTS score NUMERIC(6,2);
 
       UPDATE students
       SET access_pin = LPAD(FLOOR(100000 + RANDOM() * 899999)::int::text, 6, '0')
@@ -1395,6 +1430,7 @@ export async function updateStudentDetails(
     branchCode: number;
     email: string;
     phone: string;
+    score?: number | string | null;
   }
 ): Promise<StudentRecord | null> {
   const cleanCode = studentCode.trim();
@@ -1402,6 +1438,12 @@ export async function updateStudentDetails(
     Number(input.schoolCode) >= 1 && Number(input.schoolCode) <= 8
       ? Number(input.schoolCode)
       : 8;
+  const parsedScore =
+    input.score === undefined || input.score === null || String(input.score).trim() === ''
+      ? null
+      : isNaN(Number(String(input.score).replace(',', '.')))
+      ? null
+      : Number(String(input.score).replace(',', '.'));
 
   const pool = getPgPool();
   if (pool && (await ensurePgInitialized(pool))) {
@@ -1426,8 +1468,9 @@ export async function updateStudentDetails(
            branch_id = $8,
            branch_code = $9,
            email = $10,
-           phone = $11
-       WHERE student_code = $12
+           phone = $11,
+           score = $12
+       WHERE student_code = $13
        RETURNING *`,
       [
         input.firstName.trim(),
@@ -1441,6 +1484,7 @@ export async function updateStudentDetails(
         branch.code,
         input.email.trim(),
         input.phone.trim(),
+        parsedScore,
         cleanCode,
       ]
     );
@@ -1479,6 +1523,7 @@ export async function updateStudentDetails(
     branch_address: branch.address,
     email: input.email.trim(),
     phone: input.phone.trim(),
+    score: parsedScore,
   };
   saveLocalStore(store);
   return store.students[idx];
@@ -1558,9 +1603,12 @@ export async function deleteAllStudents(): Promise<number> {
 export async function saveStudentResultPdf(
   studentCode: string,
   fileName: string,
-  pdfBuffer: Buffer
+  pdfBuffer: Buffer,
+  score?: number | null
 ): Promise<{ matched: boolean; studentCode: string }> {
   const cleanCode = studentCode.trim();
+  const validScore =
+    score !== undefined && score !== null && !isNaN(Number(score)) ? Number(score) : null;
   const pool = getPgPool();
 
   if (pool && (await ensurePgInitialized(pool))) {
@@ -1583,8 +1631,12 @@ export async function saveStudentResultPdf(
     );
 
     await pool.query(
-      `UPDATE students SET has_result_pdf = true, result_uploaded_at = now() WHERE student_code = $1`,
-      [cleanCode]
+      `UPDATE students
+       SET has_result_pdf = true,
+           result_uploaded_at = now(),
+           score = COALESCE($2, score)
+       WHERE student_code = $1`,
+      [cleanCode, validScore]
     );
 
     return { matched: true, studentCode: cleanCode };
@@ -1599,6 +1651,9 @@ export async function saveStudentResultPdf(
   fs.writeFileSync(path.join(PDF_DIR, `${cleanCode}.pdf`), pdfBuffer);
   store.students[idx].has_result_pdf = true;
   store.students[idx].result_uploaded_at = new Date().toISOString();
+  if (validScore !== null) {
+    store.students[idx].score = validScore;
+  }
   saveLocalStore(store);
 
   return { matched: true, studentCode: cleanCode };

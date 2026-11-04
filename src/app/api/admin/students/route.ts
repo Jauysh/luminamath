@@ -152,6 +152,7 @@ export async function PUT(req: NextRequest) {
       branchCode,
       email,
       phone,
+      score,
     } = body;
 
     if (
@@ -192,6 +193,7 @@ export async function PUT(req: NextRequest) {
       branchCode: Number(branchCode),
       email: sanitizePlainText(email, 140),
       phone: sanitizePlainText(phone, 45),
+      score,
     });
 
     if (!updated) {

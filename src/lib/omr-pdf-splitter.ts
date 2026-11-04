@@ -6,6 +6,7 @@ export interface ExtractedKarnePdf {
   normalizedId: string;
   candidateIds?: string[];
   studentName?: string;
+  score?: number;
   sourceFileName: string;
   pageNumber: number;
   position: 'top' | 'bottom' | 'full';
@@ -123,8 +124,8 @@ function extractTextTokensFromStream(streamText: string): string[] {
 
 function parseCardsFromTokens(
   tokens: string[]
-): Array<{ rawId: string; studentName?: string }> {
-  const cards: Array<{ rawId: string; studentName?: string }> = [];
+): Array<{ rawId: string; studentName?: string; score?: number }> {
+  const cards: Array<{ rawId: string; studentName?: string; score?: number }> = [];
 
   for (let i = 0; i < tokens.length; i++) {
     const tok = tokens[i];
@@ -140,19 +141,46 @@ function parseCardsFromTokens(
 
       if (foundId) {
         let studentName: string | undefined;
-        for (let k = Math.max(0, i - 18); k < i; k++) {
+        let score: number | undefined;
+
+        for (let k = i - 1; k >= Math.max(0, i - 6); k--) {
+          if (tokens[k].includes('Scocre') || tokens[k].includes('Score')) {
+            const candScore = (tokens[k - 1] || '').trim().replace(',', '.');
+            if (/^\d+(?:\.\d+)?$/.test(candScore)) {
+              score = parseFloat(candScore);
+              break;
+            }
+          }
+        }
+
+        for (let k = Math.max(0, i - 35); k < i; k++) {
           const t = tokens[k].trim();
           const dateMatch = t.match(/^([A-ZА-ЯЁĂÂÎȘȚĞÜŞİÖÇ\s\-]{3,})\s+\d{2}\/\d{2}\/\d{4}$/i);
           if (dateMatch) {
             studentName = dateMatch[1].trim();
           }
+          if (score === undefined && t === 'Name' && k + 2 < i) {
+            const candScore = (tokens[k + 2] || '').trim().replace(',', '.');
+            if (/^\d+(?:\.\d+)?$/.test(candScore)) {
+              score = parseFloat(candScore);
+            }
+          }
         }
-        cards.push({ rawId: foundId, studentName });
+        cards.push({ rawId: foundId, studentName, score });
       }
     }
   }
 
   return cards;
+}
+
+function extractFallbackScoreFromStream(streamText: string): number | undefined {
+  const m = streamText.match(/TOTAL\s+SCORE:\s*(\d+(?:[.,]\d+)?)/i);
+  if (m) {
+    const val = parseFloat(m[1].replace(',', '.'));
+    if (!isNaN(val)) return val;
+  }
+  return undefined;
 }
 
 export async function extractKarnesFromPdfBuffer(
@@ -228,6 +256,7 @@ export async function extractKarnesFromPdfBuffer(
       normalizedId: filenameInfo.normalizedId,
       candidateIds: Array.from(candidateSet),
       studentName: filenameInfo.studentName || cards[0]?.studentName,
+      score: cards[0]?.score ?? extractFallbackScoreFromStream(pageStreamText),
       sourceFileName: fileName,
       pageNumber: 1,
       position: 'full',
@@ -275,6 +304,7 @@ export async function extractKarnesFromPdfBuffer(
         normalizedId: topNorm,
         candidateIds: [topNorm, topCard.rawId],
         studentName: topCard.studentName,
+        score: topCard.score,
         sourceFileName: fileName,
         pageNumber: pIdx + 1,
         position: 'top',
@@ -297,6 +327,7 @@ export async function extractKarnesFromPdfBuffer(
         normalizedId: botNorm,
         candidateIds: [botNorm, botCard.rawId],
         studentName: botCard.studentName,
+        score: botCard.score,
         sourceFileName: fileName,
         pageNumber: pIdx + 1,
         position: 'bottom',
@@ -329,6 +360,7 @@ export async function extractKarnesFromPdfBuffer(
         normalizedId: singleNorm,
         candidateIds: [singleNorm, singleCard.rawId],
         studentName: singleCard.studentName,
+        score: singleCard.score ?? extractFallbackScoreFromStream(pageStreamText),
         sourceFileName: fileName,
         pageNumber: pIdx + 1,
         position: isTopHalfOmrLayout ? 'top' : 'full',
@@ -339,12 +371,30 @@ export async function extractKarnesFromPdfBuffer(
 
   // Fallback to filename ID if no internal "Student Num." tokens were matched
   if (results.length === 0) {
+    let fallbackScore: number | undefined;
+    try {
+      const p0 = pages[0];
+      if (p0) {
+        const contents = p0.node.Contents();
+        let st = '';
+        if (contents instanceof PDFArray) {
+          for (let i = 0; i < contents.size(); i++) {
+            st += '\n' + decodePdfStreamObject(srcDoc.context.lookup(contents.get(i)));
+          }
+        } else if (contents) {
+          st = decodePdfStreamObject(srcDoc.context.lookup(contents));
+        }
+        fallbackScore = extractFallbackScoreFromStream(st);
+      }
+    } catch {}
+
     if (filenameInfo) {
       results.push({
         rawId: filenameInfo.rawId,
         normalizedId: filenameInfo.normalizedId,
         candidateIds: filenameInfo.candidateIds,
         studentName: filenameInfo.studentName,
+        score: fallbackScore,
         sourceFileName: fileName,
         pageNumber: 1,
         position: 'full',
@@ -357,6 +407,7 @@ export async function extractKarnesFromPdfBuffer(
           rawId: fallbackId,
           normalizedId: fallbackId,
           candidateIds: [fallbackId],
+          score: fallbackScore,
           sourceFileName: fileName,
           pageNumber: 1,
           position: 'full',

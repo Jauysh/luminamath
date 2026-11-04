@@ -73,6 +73,7 @@ interface AdminStudent {
   phone: string;
   email_sent?: boolean;
   has_result_pdf: boolean;
+  score?: number | null;
   result_uploaded_at: string | null;
   result_email_sent?: boolean;
   result_email_sent_at?: string | null;
@@ -180,6 +181,7 @@ export default function AdminPage() {
   const [editBranchCode, setEditBranchCode] = useState<number>(1);
   const [editEmail, setEditEmail] = useState('');
   const [editPhone, setEditPhone] = useState('');
+  const [editScore, setEditScore] = useState<string>('');
   const [savingEdit, setSavingEdit] = useState(false);
 
   // Bulk PDF / ZIP upload state
@@ -587,6 +589,9 @@ export default function AdminPage() {
     setEditBranchCode(s.branch_code || 1);
     setEditEmail(s.email || '');
     setEditPhone(s.phone || '');
+    setEditScore(
+      s.score !== null && s.score !== undefined ? String(s.score) : ''
+    );
   };
 
   const handleSaveEditStudent = async (e: React.FormEvent) => {
@@ -615,6 +620,7 @@ export default function AdminPage() {
           branchCode: editBranchCode,
           email: editEmail,
           phone: editPhone,
+          score: editScore,
         }),
       });
       const data = await res.json();
@@ -2673,6 +2679,133 @@ export default function AdminPage() {
                   </div>
                 )}
               </div>
+
+              {/* DIPLOMA & MEDAL SCORE THRESHOLDS CONFIGURATION (1st, 2nd, 3rd, Mention) */}
+              <div className="mt-6 pt-6 border-t border-slate-200">
+                <form onSubmit={handleSaveCalendar} className="space-y-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+                        <Award className="w-5 h-5 text-amber-500" />
+                        {locale === 'RU'
+                          ? '🏆 Шкала баллов для Дипломов и Медалей (I, II, III место и Mențiune)'
+                          : locale === 'EN'
+                          ? '🏆 Diploma & Medal Score Thresholds (1st, 2nd, 3rd Place & Honorable Mention)'
+                          : '🏆 Praguri de Punctaj pentru Diplome & Medalii (Locul I, II, III și Mențiune)'}
+                      </h3>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        {locale === 'RU'
+                          ? 'Баллы учеников считываются автоматически из загруженных OMR PDF (или редактируются вручную в списке). Ученики ниже порога Mențiune получают Сертификат участника.'
+                          : locale === 'EN'
+                          ? 'Student scores are extracted automatically from uploaded OMR PDFs (or edited manually). Students below the Honorable Mention threshold receive a Certificate of Participation.'
+                          : 'Punctajul este extras automat din fișierele PDF OMR încărcate (sau editat manual în tabel). Elevii sub pragul de Mențiune primesc Certificat de Participare.'}
+                      </p>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={savingCal}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs sm:text-sm shadow-sm transition-all shrink-0"
+                    >
+                      <Save className="w-4 h-4" />
+                      {savingCal
+                        ? '...'
+                        : locale === 'RU'
+                        ? 'Сохранить пороги баллов'
+                        : locale === 'EN'
+                        ? 'Save Score Thresholds'
+                        : 'Salvează Pragurile de Punctaj'}
+                    </button>
+                  </div>
+
+                  {calSavedMsg && (
+                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-extrabold flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      {t.admin.savedSuccess}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="p-3.5 rounded-2xl bg-amber-50/80 border-2 border-amber-300">
+                      <label className="block text-[11px] font-extrabold uppercase text-amber-900 mb-1">
+                        🥇 1st Place • Gold Medal (≥)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={calForm.threshold_1st ?? 95}
+                        onChange={(e) =>
+                          setCalForm({ ...calForm, threshold_1st: Number(e.target.value) })
+                        }
+                        className="w-full px-3 py-2 rounded-xl border border-amber-300 bg-white text-sm font-mono font-black text-slate-900"
+                      />
+                      <div className="text-[10px] font-semibold text-amber-800 mt-1">
+                        First Prize Diploma (≥ {calForm.threshold_1st ?? 95} p.)
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-slate-100/90 border-2 border-slate-300">
+                      <label className="block text-[11px] font-extrabold uppercase text-slate-800 mb-1">
+                        🥈 2nd Place • Silver Medal (≥)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={calForm.threshold_2nd ?? 90}
+                        onChange={(e) =>
+                          setCalForm({ ...calForm, threshold_2nd: Number(e.target.value) })
+                        }
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-mono font-black text-slate-900"
+                      />
+                      <div className="text-[10px] font-semibold text-slate-600 mt-1">
+                        Second Prize Diploma ({calForm.threshold_2nd ?? 90} –{' '}
+                        {Number(calForm.threshold_1st ?? 95) - 0.01} p.)
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-orange-50/80 border-2 border-orange-300">
+                      <label className="block text-[11px] font-extrabold uppercase text-orange-900 mb-1">
+                        🥉 3rd Place • Bronze Medal (≥)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={calForm.threshold_3rd ?? 85}
+                        onChange={(e) =>
+                          setCalForm({ ...calForm, threshold_3rd: Number(e.target.value) })
+                        }
+                        className="w-full px-3 py-2 rounded-xl border border-orange-300 bg-white text-sm font-mono font-black text-slate-900"
+                      />
+                      <div className="text-[10px] font-semibold text-orange-800 mt-1">
+                        Third Prize Diploma ({calForm.threshold_3rd ?? 85} –{' '}
+                        {Number(calForm.threshold_2nd ?? 90) - 0.01} p.)
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-emerald-50/80 border-2 border-emerald-300">
+                      <label className="block text-[11px] font-extrabold uppercase text-emerald-900 mb-1">
+                        🎖️ Mențiune • Honorable (≥)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={calForm.threshold_mention ?? 80}
+                        onChange={(e) =>
+                          setCalForm({
+                            ...calForm,
+                            threshold_mention: Number(e.target.value),
+                          })
+                        }
+                        className="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-white text-sm font-mono font-black text-slate-900"
+                      />
+                      <div className="text-[10px] font-semibold text-emerald-800 mt-1">
+                        Honorable Mention ({calForm.threshold_mention ?? 80} –{' '}
+                        {Number(calForm.threshold_3rd ?? 85) - 0.01} p.)
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
             </div>
           )}
 
@@ -2961,14 +3094,41 @@ export default function AdminPage() {
                             {locale === 'RU' ? 'Билет' : locale === 'EN' ? 'Pass' : 'Permis'}
                           </a>
 
-                          <a
-                            href={`/api/results/${s.student_code}/certificate`}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-900 text-[11px] font-extrabold border border-amber-200 transition-colors"
-                            title="Certificat de Participare PDF"
-                          >
-                            <Award className="w-3 h-3" />
-                            {locale === 'RU' ? 'Серт.' : locale === 'EN' ? 'Cert.' : 'Certificat'}
-                          </a>
+                          {s.has_result_pdf && (
+                            <a
+                              href={`/api/results/${s.student_code}/certificate?lang=${locale}`}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-900 text-[11px] font-extrabold border border-amber-200 transition-colors"
+                              title="Diplomă / Certificat PDF"
+                            >
+                              <Award className="w-3 h-3" />
+                              {(() => {
+                                const sc =
+                                  s.score !== null && s.score !== undefined
+                                    ? Number(s.score)
+                                    : null;
+                                if (sc === null || isNaN(sc)) {
+                                  return locale === 'RU'
+                                    ? 'Серт.'
+                                    : locale === 'EN'
+                                    ? 'Cert.'
+                                    : 'Certificat';
+                                }
+                                if (sc >= Number(calForm.threshold_1st ?? 95)) {
+                                  return `🥇 I (${sc}p)`;
+                                }
+                                if (sc >= Number(calForm.threshold_2nd ?? 90)) {
+                                  return `🥈 II (${sc}p)`;
+                                }
+                                if (sc >= Number(calForm.threshold_3rd ?? 85)) {
+                                  return `🥉 III (${sc}p)`;
+                                }
+                                if (sc >= Number(calForm.threshold_mention ?? 80)) {
+                                  return `🎖️ M (${sc}p)`;
+                                }
+                                return `🏅 Cert (${sc}p)`;
+                              })()}
+                            </a>
+                          )}
 
                           <button
                             type="button"
@@ -3291,6 +3451,48 @@ export default function AdminPage() {
                     onChange={(e) => setEditPhone(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm"
                   />
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200">
+                <label className="block text-xs font-extrabold uppercase text-amber-950 mb-1">
+                  {locale === 'RU'
+                    ? '🏆 Баллы за экзамен (Score — определяет Диплом I, II, III место / Mențiune / Сертификат)'
+                    : locale === 'EN'
+                    ? '🏆 Exam Score (Determines 1st, 2nd, 3rd Prize Diploma / Honorable Mention / Certificate)'
+                    : '🏆 Punctaj Examen (Determină Diploma de Locul I, II, III / Mențiune / Certificat)'}
+                </label>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Ex: 96.5"
+                    value={editScore}
+                    onChange={(e) => setEditScore(e.target.value)}
+                    className="w-full sm:w-48 px-3.5 py-2 rounded-xl border border-amber-300 bg-white text-sm font-mono font-black text-slate-900"
+                  />
+                  <span className="text-xs font-extrabold text-amber-900">
+                    {(() => {
+                      const sc =
+                        editScore.trim() === '' ? null : Number(editScore.replace(',', '.'));
+                      if (sc === null || isNaN(sc)) {
+                        return '🏅 Certificat de Participare (fără punctaj specificat)';
+                      }
+                      if (sc >= Number(calForm.threshold_1st ?? 95)) {
+                        return '🥇 1st Place • Gold Medal (First Prize Diploma)';
+                      }
+                      if (sc >= Number(calForm.threshold_2nd ?? 90)) {
+                        return '🥈 2nd Place • Silver Medal (Second Prize Diploma)';
+                      }
+                      if (sc >= Number(calForm.threshold_3rd ?? 85)) {
+                        return '🥉 3rd Place • Bronze Medal (Third Prize Diploma)';
+                      }
+                      if (sc >= Number(calForm.threshold_mention ?? 80)) {
+                        return '🎖️ Mențiune • Honorable Mention (Diploma & Medal)';
+                      }
+                      return '🏅 Certificat de Participare';
+                    })()}
+                  </span>
                 </div>
               </div>
 

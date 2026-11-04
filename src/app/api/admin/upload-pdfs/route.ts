@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
       const matchedIds: string[] = [];
 
       for (const s of students) {
+        const sampleScore = 80 + ((Number(s.student_code.slice(-2)) * 7) % 20);
         const pdfBuf = generateSampleOmrPdf({
           studentCode: s.student_code,
           fullName: `${s.first_name} ${s.last_name}`,
@@ -40,9 +41,14 @@ export async function POST(req: NextRequest) {
           school: s.school,
           branchName: s.branch_name_ro || `Branch ${s.branch_code}`,
           examLanguage: s.exam_language,
-          score: 80 + ((Number(s.student_code.slice(-2)) * 7) % 20),
+          score: sampleScore,
         });
-        await saveStudentResultPdf(s.student_code, `${s.student_code}.pdf`, pdfBuf);
+        await saveStudentResultPdf(
+          s.student_code,
+          `${s.student_code}.pdf`,
+          pdfBuf,
+          sampleScore
+        );
         matchedIds.push(s.student_code);
       }
 
@@ -139,7 +145,12 @@ export async function POST(req: NextRequest) {
       for (const cand of candidates) {
         if (!cand || tried.has(cand)) continue;
         tried.add(cand);
-        const resCand = await saveStudentResultPdf(cand, `${cand}.pdf`, karne.pdfBuffer);
+        const resCand = await saveStudentResultPdf(
+          cand,
+          `${cand}.pdf`,
+          karne.pdfBuffer,
+          karne.score
+        );
         if (resCand.matched) {
           matchedCode = cand;
           break;
@@ -161,7 +172,8 @@ export async function POST(req: NextRequest) {
             const resName = await saveStudentResultPdf(
               matchedStudent.student_code,
               `${matchedStudent.student_code}.pdf`,
-              karne.pdfBuffer
+              karne.pdfBuffer,
+              karne.score
             );
             if (resName.matched) {
               matchedCode = matchedStudent.student_code;

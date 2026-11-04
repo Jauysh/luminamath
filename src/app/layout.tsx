@@ -137,6 +137,15 @@ const jsonLdGraph = {
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
       isAccessibleForFree: true,
       inLanguage: ['ro', 'ru', 'en'],
+      image: [
+        'https://luminamath.orizont.md/opengraph-image',
+        'https://luminamath.orizont.md/logos/LuminaMath-Logo.svg',
+      ],
+      performer: {
+        '@type': 'EducationalOrganization',
+        name: 'IPLT „Orizont” — Comisia Națională LuminaMath Moldova',
+        url: 'https://luminamath.orizont.md',
+      },
       organizer: {
         '@id': 'https://luminamath.orizont.md/#organization',
       },
