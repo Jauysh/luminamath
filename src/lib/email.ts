@@ -150,6 +150,33 @@ export async function sendRegistrationEmail(
     EN: '<strong>EN:</strong> Keep your <strong>6-digit Exam ID</strong> for your optical answer sheet (OMR) on exam day, and your <strong>Access PIN</strong> to privately view your PDF result online!',
   };
 
+  const examRulesByLang: Record<'RO' | 'RU' | 'EN', { title: string; items: string[] }> = {
+    RO: {
+      title: '📋 REGULI IMPORTANTE PENTRU ZIUA EXAMENULUI (RO):',
+      items: [
+        '🕙 <strong>Ora începerii:</strong> Examenul începe la ora <strong>10:00</strong>. Elevul trebuie să fie prezent la centrul de examen (școală) cu cel puțin <strong>20 de minute înainte (la ora 09:40)</strong>.',
+        '🖊️ <strong>Instrumente de scris:</strong> Elevii trebuie să aducă cu ei <strong>pix (stilou)</strong>.',
+        '🪪 <strong>Act de identitate:</strong> Elevii trebuie să se prezinte cu <strong>Pașaportul, Buletinul de identitate (ID)</strong>, Certificatul de naștere sau Carnetul de elev.',
+      ],
+    },
+    RU: {
+      title: '📋 ВАЖНЫЕ ПРАВИЛА В ДЕНЬ ЭКЗАМЕНА (RU):',
+      items: [
+        '🕙 <strong>Время начала:</strong> Экзамен начинается в <strong>10:00</strong>. Ученик должен быть в школе (экзаменационном центре) за <strong>20 минут до начала (к 09:40)</strong>.',
+        '🖊️ <strong>Письменные принадлежности:</strong> Ученики должны принести с собой <strong>ручку (pix)</strong>.',
+        '🪪 <strong>Документ:</strong> При себе необходимо иметь <strong>Паспорт, Удостоверение личности (Buletin)</strong>, Свидетельство о рождении или Ученический билет.',
+      ],
+    },
+    EN: {
+      title: '📋 IMPORTANT EXAM DAY INSTRUCTIONS (EN):',
+      items: [
+        '🕙 <strong>Start Time:</strong> The exam starts at <strong>10:00</strong>. The student must arrive at the school (exam center) at least <strong>20 minutes early (by 09:40)</strong>.',
+        '🖊️ <strong>Stationery:</strong> Students must bring a <strong>pen (ballpoint pen)</strong>.',
+        '🪪 <strong>Identification:</strong> Students must bring their <strong>Passport, National ID Card (Buletin)</strong>, Birth Certificate, or Student Card.',
+      ],
+    },
+  };
+
   const linkUrl =
     resultsUrl ||
     `https://luminamath.orizont.md/results?id=${encodeURIComponent(
@@ -316,6 +343,34 @@ export async function sendRegistrationEmail(
               </td>
             </tr>
           </table>
+        </td>
+      </tr>
+
+      <!-- Exam Day Rules (Ordered by Student Language: RO / RU / EN) -->
+      <tr>
+        <td style="padding: 10px 26px;">
+          <div style="background-color: #eff6ff; border: 2px solid #93c5fd; border-radius: 12px; padding: 14px 16px; font-size: 13px; line-height: 1.55; color: #1e3a8a;">
+            ${orderedLangs
+              .map(
+                (l, idx) => `
+              <div style="${
+                idx < 2
+                  ? 'border-bottom: 1px dashed #bfdbfe; padding-bottom: 10px; margin-bottom: 10px;'
+                  : ''
+              }">
+                <div style="font-weight: 900; font-size: 13px; color: #1e3a8a; margin-bottom: 6px;">
+                  ${examRulesByLang[l].title}
+                </div>
+                ${examRulesByLang[l].items
+                  .map(
+                    (item) =>
+                      `<div style="margin-bottom: 4px; color: #1e293b;">${item}</div>`
+                  )
+                  .join('')}
+              </div>`
+              )
+              .join('')}
+          </div>
         </td>
       </tr>
 

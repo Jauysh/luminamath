@@ -530,10 +530,11 @@ export async function generateExamPassPdf(
     color: slateDark,
   });
   const rules = [
-    '1. Prezentati-va la centrul de examen cu cel putin 30 de minute inainte de inceperea probei (la ora 09:30).',
-    '2. Aveti asupra dvs. acest Permis de Acces (tiparit sau pe telefon) si carnetul de elev.',
-    '3. Pe foaia optica de raspuns (OMR), completati exact ID-ul dvs. din 6 cifre: ' +
-      student.student_code,
+    '1. Examenul incepe la ora 10:00. Elevul trebuie sa fie prezent la scoala cu 20 de minute inainte (ora 09:40).',
+    '2. Elevii trebuie sa aduca cu ei pix (stilou / rucka) pentru completarea lucrarii.',
+    '3. Prezentati-va cu Pasaportul, Buletinul de identitate (ID) sau Carnetul de elev + acest Permis (ID: ' +
+      student.student_code +
+      ').',
     '4. Telefoanele mobile, ceasurile inteligente si calculatoarele sunt strict interzise in timpul probei.',
   ];
   rules.forEach((rule, idx) => {

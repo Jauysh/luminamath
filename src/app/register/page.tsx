@@ -329,6 +329,76 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            {/* Important Exam Day Instructions Box (10:00 start, 20 min early, Pen, Passport/Buletin) */}
+            <div className="bg-amber-50/90 border-2 border-amber-400 rounded-2xl p-5 sm:p-6 mb-8 space-y-3">
+              <div className="flex items-center gap-2 text-amber-950 font-extrabold text-sm sm:text-base uppercase tracking-wide">
+                <Calendar className="w-5 h-5 text-amber-600 shrink-0" />
+                <span>
+                  {locale === 'RU'
+                    ? 'Важные правила в день экзамена (Памятка участнику)'
+                    : locale === 'EN'
+                    ? 'Important Exam Day Instructions (Participant Checklist)'
+                    : 'Reguli Importante pentru Ziua Examenului (Instrucțiuni Elev)'}
+                </span>
+              </div>
+              <ul className="space-y-2 text-xs sm:text-sm text-slate-800 font-medium">
+                <li className="flex items-start gap-2.5">
+                  <span className="font-black text-amber-700">🕙</span>
+                  <span>
+                    {locale === 'RU' ? (
+                      <>
+                        <strong>Начало экзамена в 10:00.</strong> Ученик должен прибыть в школу (экзаменационный центр) минимум за <strong>20 минут до начала (к 09:40)</strong>.
+                      </>
+                    ) : locale === 'EN' ? (
+                      <>
+                        <strong>The exam starts at 10:00.</strong> The student must arrive at the exam school at least <strong>20 minutes early (by 09:40)</strong>.
+                      </>
+                    ) : (
+                      <>
+                        <strong>Examenul începe la ora 10:00.</strong> Elevul trebuie să fie prezent la centrul de examen (școală) cu cel puțin <strong>20 de minute înainte (la ora 09:40)</strong>.
+                      </>
+                    )}
+                  </span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="font-black text-amber-700">🖊️</span>
+                  <span>
+                    {locale === 'RU' ? (
+                      <>
+                        <strong>Письменные принадлежности:</strong> обязательно принесите с собой <strong>ручку (pix)</strong>.
+                      </>
+                    ) : locale === 'EN' ? (
+                      <>
+                        <strong>Writing Instruments:</strong> please bring a <strong>pen (ballpoint pen)</strong> with you.
+                      </>
+                    ) : (
+                      <>
+                        <strong>Instrumente de scris:</strong> elevii trebuie să aducă cu ei <strong>pix (stilou)</strong>.
+                      </>
+                    )}
+                  </span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="font-black text-amber-700">🪪</span>
+                  <span>
+                    {locale === 'RU' ? (
+                      <>
+                        <strong>Документ, удостоверяющий личность:</strong> при себе необходимо иметь <strong>Паспорт, Удостоверение личности (Buletin)</strong>, Свидетельство о рождении или Ученический билет, а также этот пропуск (билет с 6-значным ID).
+                      </>
+                    ) : locale === 'EN' ? (
+                      <>
+                        <strong>Identification Document:</strong> students must bring their <strong>Passport, National ID card (Buletin)</strong>, Birth Certificate, or Student Card, along with this 6-digit Exam Pass.
+                      </>
+                    ) : (
+                      <>
+                        <strong>Act de identitate:</strong> elevii trebuie să se prezinte cu <strong>Pașaportul, Buletinul de identitate (ID)</strong>, Certificatul de naștere sau Carnetul de elev, împreună cu acest Permis de Acces (ID-ul din 6 cifre).
+                      </>
+                    )}
+                  </span>
+                </li>
+              </ul>
+            </div>
+
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
               <div className="flex flex-wrap items-stretch sm:items-center gap-3">
